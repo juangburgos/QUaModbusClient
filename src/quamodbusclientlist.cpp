@@ -3,6 +3,9 @@
 #include "quamodbustcpclient.h"
 #include "quamodbusrtuserialclient.h"
 
+#include "quamodbusdatablocklist.h"
+#include "quamodbusdatablock.h"
+
 #include <QUaServer>
 
 QUaModbusClientList::QUaModbusClientList(QUaServer *server)
@@ -11,6 +14,9 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	// register modbus client types
 	server->registerType<QUaModbusTcpClient      >();
 	server->registerType<QUaModbusRtuSerialClient>();
+	server->registerType<QUaModbusDataBlockList  >();
+	server->registerType<QUaModbusDataBlock      >();
+	// register enums
 	server->registerEnum<QModbusDevice::State    >();
 	server->registerEnum<QModbusDevice::Error    >();
 	server->registerEnum<QSerialPort::Parity     >();

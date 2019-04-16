@@ -12,17 +12,22 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 
 QUaProperty * QUaModbusClient::type()
 {
-	return this->browseChild<QUaProperty>("type");
+	return this->browseChild<QUaProperty>("Type");
 }
 
 QUaBaseDataVariable * QUaModbusClient::state()
 {
-	return this->browseChild<QUaBaseDataVariable>("state");
+	return this->browseChild<QUaBaseDataVariable>("State");
 }
 
 QUaBaseDataVariable * QUaModbusClient::lastError()
 {
-	return this->browseChild<QUaBaseDataVariable>("lastError");
+	return this->browseChild<QUaBaseDataVariable>("LastError");
+}
+
+QUaModbusDataBlockList * QUaModbusClient::dataBlocks()
+{
+	return this->browseChild<QUaModbusDataBlockList>("DataBlocks");
 }
 
 void QUaModbusClient::remove()

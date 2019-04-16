@@ -29,12 +29,12 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 
 QUaProperty * QUaModbusTcpClient::networkAddress()
 {
-	return this->browseChild<QUaProperty>("networkAddress");
+	return this->browseChild<QUaProperty>("NetworkAddress");
 }
 
 QUaProperty * QUaModbusTcpClient::networkPort()
 {
-	return this->browseChild<QUaProperty>("networkPort");
+	return this->browseChild<QUaProperty>("NetworkPort");
 }
 
 void QUaModbusTcpClient::on_stateChanged(const QVariant &value)

@@ -8,8 +8,8 @@ class QUaModbusTcpClient : public QUaModbusClient
     Q_OBJECT
 
 	// UA properties
-	Q_PROPERTY(QUaProperty * networkAddress  READ networkAddress)
-	Q_PROPERTY(QUaProperty * networkPort     READ networkPort   )
+	Q_PROPERTY(QUaProperty * NetworkAddress  READ networkAddress)
+	Q_PROPERTY(QUaProperty * NetworkPort     READ networkPort   )
 
 public:
 	Q_INVOKABLE explicit QUaModbusTcpClient(QUaServer *server);

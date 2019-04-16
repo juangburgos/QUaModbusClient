@@ -17,13 +17,17 @@ HEADERS += \
 	quamodbusclientlist.h \
 	quamodbusclient.h \
 	quamodbustcpclient.h \
-	quamodbusrtuserialclient.h
+	quamodbusrtuserialclient.h \
+	quamodbusdatablocklist.h \
+	quamodbusdatablock.h
 
 SOURCES += \
 	quamodbusclientlist.cpp \
 	quamodbusclient.cpp \
 	quamodbustcpclient.cpp \
-	quamodbusrtuserialclient.cpp
+	quamodbusrtuserialclient.cpp \
+	quamodbusdatablocklist.cpp \
+	quamodbusdatablock.cpp
 
 include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)

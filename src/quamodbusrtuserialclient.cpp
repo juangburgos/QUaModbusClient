@@ -44,27 +44,27 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 
 QUaProperty * QUaModbusRtuSerialClient::comPort()
 {
-	return this->browseChild<QUaProperty>("comPort");
+	return this->browseChild<QUaProperty>("ComPort");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::parity()
 {
-	return this->browseChild<QUaProperty>("parity");
+	return this->browseChild<QUaProperty>("Parity");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::baudRate()
 {
-	return this->browseChild<QUaProperty>("baudRate");
+	return this->browseChild<QUaProperty>("BaudRate");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::dataBits()
 {
-	return this->browseChild<QUaProperty>("dataBits");
+	return this->browseChild<QUaProperty>("DataBits");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::stopBits()
 {
-	return this->browseChild<QUaProperty>("stopBits");
+	return this->browseChild<QUaProperty>("StopBits");
 }
 
 void QUaModbusRtuSerialClient::on_stateChanged(const QVariant &value)

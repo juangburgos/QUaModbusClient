@@ -8,11 +8,11 @@ class QUaModbusRtuSerialClient : public QUaModbusClient
     Q_OBJECT
 
 	// UA properties
-	Q_PROPERTY(QUaProperty * comPort  READ comPort )
-	Q_PROPERTY(QUaProperty * parity   READ parity  )
-	Q_PROPERTY(QUaProperty * baudRate READ baudRate)
-	Q_PROPERTY(QUaProperty * dataBits READ dataBits)
-	Q_PROPERTY(QUaProperty * stopBits READ stopBits)
+	Q_PROPERTY(QUaProperty * ComPort  READ comPort )
+	Q_PROPERTY(QUaProperty * Parity   READ parity  )
+	Q_PROPERTY(QUaProperty * BaudRate READ baudRate)
+	Q_PROPERTY(QUaProperty * DataBits READ dataBits)
+	Q_PROPERTY(QUaProperty * StopBits READ stopBits)
 
 public:
 	Q_INVOKABLE explicit QUaModbusRtuSerialClient(QUaServer *server);
