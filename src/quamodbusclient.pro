@@ -13,8 +13,18 @@ INCLUDEPATH += $$PWD/
 
 SOURCES += main.cpp
 
-HEADERS += quamodbusclient.h
-SOURCES += quamodbusclient.cpp
+HEADERS += \
+	quamodbusclientlist.h \
+	quamodbusclient.h \
+	quamodbustcpclient.h \
+	quamodbusrtuserialclient.h
 
+SOURCES += \
+	quamodbusclientlist.cpp \
+	quamodbusclient.cpp \
+	quamodbustcpclient.cpp \
+	quamodbusrtuserialclient.cpp
+
+include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)
 include($$PWD/../libs/QUaServer.git/src/helper/add_qt_path_win.pri)

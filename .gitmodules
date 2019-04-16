@@ -1,3 +1,6 @@
 [submodule "libs/QUaServer.git"]
 	path = libs/QUaServer.git
 	url = https://github.com/juangburgos/QUaServer.git
+[submodule "libs/QDeferred.git"]
+	path = libs/QDeferred.git
+	url = https://github.com/juangburgos/QDeferred.git

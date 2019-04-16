@@ -4,12 +4,10 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	: QUaBaseObject(server)
 {
 	// set defaults
-
-	type()->setValue("Tcp");
-
-	state()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
-	state()->setValue(QModbusDevice::State::UnconnectedState);
-
+	state    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
+	state    ()->setValue(QModbusDevice::State::UnconnectedState);
+	lastError()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
+	lastError()->setValue(QModbusDevice::Error::NoError);
 }
 
 QUaProperty * QUaModbusClient::type()
@@ -22,24 +20,57 @@ QUaBaseDataVariable * QUaModbusClient::state()
 	return this->browseChild<QUaBaseDataVariable>("state");
 }
 
-QString QUaModbusClient::setType(QString strType)
+QUaBaseDataVariable * QUaModbusClient::lastError()
 {
-	// check not connected
-	if (state()->value().value<QModbusDevice::State>() != QModbusDevice::State::UnconnectedState)
+	return this->browseChild<QUaBaseDataVariable>("lastError");
+}
+
+void QUaModbusClient::remove()
+{
+	this->disconnectDevice();
+	this->deleteLater();
+}
+
+void QUaModbusClient::connectDevice()
+{
+	// exec in thread, for thread-safety
+	m_workerThread.execInThread([this]() {
+		m_modbusClient->connectDevice();
+	});
+}
+
+void QUaModbusClient::disconnectDevice()
+{
+	// exec in thread, for thread-safety
+	m_workerThread.execInThread([this]() {
+		m_modbusClient->disconnectDevice();
+	});
+}
+
+QModbusDevice::State QUaModbusClient::getState()
+{
+	return this->state()->value().value<QModbusDevice::State>();
+}
+
+void QUaModbusClient::setupModbusClient()
+{
+	// subscribe to events
+	QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged , this, &QUaModbusClient::on_stateChanged, Qt::QueuedConnection);
+	QObject::connect(m_modbusClient.data(), &QModbusClient::errorOccurred, this, &QUaModbusClient::on_errorChanged, Qt::QueuedConnection);
+}
+
+void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
+{
+	this->state()->setValue(state);
+	// no error if connected correctly
+	if (state == QModbusDevice::State::ConnectedState)
 	{
-		return "Error : Cannot change Modbus client type while connected.";
+		this->lastError()->setValue(QModbusDevice::Error::NoError);
 	}
-	// set type is valid
-	strType = strType.trimmed();
-	if (strType.compare("Tcp", Qt::CaseInsensitive) == 0)
-	{
-		type()->setValue("Tcp");
-		return "Success";
-	}
-	else if (strType.compare("Serial", Qt::CaseInsensitive) == 0)
-	{
-		type()->setValue("Serial");
-		return "Success";
-	}
-	return QString("Error : Invalid Modbus client type %1. Only \"Tcp\" and \"Serial\" types are supported.").arg(strType);
+}
+
+void QUaModbusClient::on_errorChanged(QModbusDevice::Error error)
+{
+	this->lastError()->setValue(error);
+	// TODO : trigger UA Event
 }
