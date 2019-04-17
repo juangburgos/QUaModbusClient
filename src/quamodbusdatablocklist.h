@@ -17,8 +17,7 @@ public:
 
 	// UA methods
 
-	// TODO : add strBlockId and make it displayname/browsename, make sure unique, return QString
-	Q_INVOKABLE void addDataBlock(const quint16 &uiModiconStartAddress, const quint16 &uiLength);
+	Q_INVOKABLE QString addDataBlock(QString strBlockId);
 
 
 private:

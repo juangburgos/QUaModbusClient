@@ -23,6 +23,7 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerEnum<QSerialPort::BaudRate   >();
 	server->registerEnum<QSerialPort::DataBits   >();
 	server->registerEnum<QSerialPort::StopBits   >();
+	server->registerEnum<QUaModbusDataBlock::RegisterType>();
 }
 
 Q_INVOKABLE QString QUaModbusClientList::addTcpClient(QString strClientId)

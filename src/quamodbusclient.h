@@ -13,14 +13,18 @@
 
 #include "quamodbusdatablocklist.h"
 
+class QUaModbusDataBlock;
+
 class QUaModbusClient : public QUaBaseObject
 {
 	friend class QUaModbusDataBlockList;
+	friend class QUaModbusDataBlock;
 
     Q_OBJECT
 
 	// UA properties
-	Q_PROPERTY(QUaProperty * Type READ type)
+	Q_PROPERTY(QUaProperty * Type          READ type         )
+	Q_PROPERTY(QUaProperty * ServerAddress READ serverAddress)
 
 	// UA variables
 	Q_PROPERTY(QUaBaseDataVariable * State     READ state    )
@@ -35,6 +39,7 @@ public:
 	// UA properties
 
 	QUaProperty * type();
+	QUaProperty * serverAddress();
 
 	// UA variables
 

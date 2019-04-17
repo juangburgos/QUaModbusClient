@@ -4,15 +4,24 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	: QUaBaseObject(server)
 {
 	// set defaults
-	state    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
-	state    ()->setValue(QModbusDevice::State::UnconnectedState);
-	lastError()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
-	lastError()->setValue(QModbusDevice::Error::NoError);
+	state        ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
+	state        ()->setValue(QModbusDevice::State::UnconnectedState);
+	lastError    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
+	lastError    ()->setValue(QModbusDevice::Error::NoError);
+	serverAddress()->setDataType(QMetaType::UChar);
+	serverAddress()->setValue(1);
+	// set initial conditions
+	serverAddress()->setWriteAccess(true);
 }
 
 QUaProperty * QUaModbusClient::type()
 {
 	return this->browseChild<QUaProperty>("Type");
+}
+
+QUaProperty * QUaModbusClient::serverAddress()
+{
+	return this->browseChild<QUaProperty>("ServerAddress");
 }
 
 QUaBaseDataVariable * QUaModbusClient::state()
@@ -72,10 +81,22 @@ void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
 	{
 		this->lastError()->setValue(QModbusDevice::Error::NoError);
 	}
+	// only allow to write connection params if not connected
+	if (state == QModbusDevice::State::UnconnectedState)
+	{
+		serverAddress()->setWriteAccess(true);
+	}
+	else
+	{
+		serverAddress()->setWriteAccess(false);
+	}
 }
 
 void QUaModbusClient::on_errorChanged(QModbusDevice::Error error)
 {
 	this->lastError()->setValue(error);
-	// TODO : trigger UA Event
+	if (error != QModbusDevice::Error::NoError)
+	{
+		// TODO : send UA event
+	}
 }

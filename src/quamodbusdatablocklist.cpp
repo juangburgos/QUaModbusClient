@@ -12,15 +12,27 @@ QUaModbusDataBlockList::QUaModbusDataBlockList(QUaServer *server)
 	// NOTE : QObject parent might not be yet available in constructor
 }
 
-//auto client = this->client();
-//qDebug() << client->m_workerThread.getThreadId();
-//qDebug() << client->m_modbusClient->state();
-
-void QUaModbusDataBlockList::addDataBlock(const quint16 &uiModiconStartAddress, const quint16 &uiLength)
+QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 {
-	QUaModbusDataBlock * block = this->addChild<QUaModbusDataBlock>();
-	block->modiconStartAddress()->setValue(uiModiconStartAddress);
-	block->length()->setValue(uiLength);
+	strBlockId = strBlockId.trimmed();
+	// check empty
+	if (strBlockId.isEmpty())
+	{
+		return "Error : Block Id argument cannot be empty.";
+	}
+	// check if id already exists
+	if (this->hasChild(strBlockId))
+	{
+		return "Error : Block Id already exists.";
+	}
+	// create instance
+	auto block = this->addChild<QUaModbusDataBlock>();
+	block->setDisplayName(strBlockId);
+	block->setBrowseName(strBlockId);
+	// start block loop
+	block->startLoop();
+	// return
+	return "Success";
 }
 
 QUaModbusClient * QUaModbusDataBlockList::client()
