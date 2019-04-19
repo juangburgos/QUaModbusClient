@@ -59,10 +59,11 @@ private slots:
 	void on_addressChanged     (const QVariant &value);
 	void on_sizeChanged        (const QVariant &value);
 	void on_samplingTimeChanged(const QVariant &value);
+	void on_dataChanged        (const QVariant &value);
 
 private:
 	int m_loopHandle;
-	QModbusReply * m_reply;
+	QModbusReply  * m_replyRead;
 	QModbusDataUnit m_modbusDataUnit; // NOTE : only modify and access in thread
 	QUaModbusClient * client();
 	void startLoop();
