@@ -9,6 +9,8 @@
 class QUaModbusClient;
 class QUaModbusDataBlockList;
 
+#include "quamodbusvaluelist.h"
+
 class QUaModbusDataBlock : public QUaBaseObject
 {
 	friend class QUaModbusDataBlockList;
@@ -24,6 +26,9 @@ class QUaModbusDataBlock : public QUaBaseObject
 	// UA variables
 	Q_PROPERTY(QUaBaseDataVariable * Data      READ data        )
 	Q_PROPERTY(QUaBaseDataVariable * LastError READ lastError   )
+
+	// UA objects
+	Q_PROPERTY(QUaModbusValueList * Values READ values)
 
 public:
 	Q_INVOKABLE explicit QUaModbusDataBlock(QUaServer *server);
@@ -49,6 +54,10 @@ public:
 
 	QUaBaseDataVariable * data();
 	QUaBaseDataVariable * lastError();
+
+	// UA objects
+
+	QUaModbusValueList * values();
 
 	// UA methods
 

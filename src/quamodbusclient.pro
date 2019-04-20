@@ -19,7 +19,9 @@ HEADERS += \
 	quamodbustcpclient.h \
 	quamodbusrtuserialclient.h \
 	quamodbusdatablocklist.h \
-	quamodbusdatablock.h
+	quamodbusdatablock.h \
+	quamodbusvaluelist.h \
+	quamodbusvalue.h
 
 SOURCES += \
 	quamodbusclientlist.cpp \
@@ -27,7 +29,9 @@ SOURCES += \
 	quamodbustcpclient.cpp \
 	quamodbusrtuserialclient.cpp \
 	quamodbusdatablocklist.cpp \
-	quamodbusdatablock.cpp
+	quamodbusdatablock.cpp \
+	quamodbusvaluelist.cpp \
+	quamodbusvalue.cpp
 
 include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)

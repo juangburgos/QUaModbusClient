@@ -6,6 +6,9 @@
 #include "quamodbusdatablocklist.h"
 #include "quamodbusdatablock.h"
 
+#include "quamodbusvaluelist.h"
+#include "quamodbusvalue.h"
+
 #include <QUaServer>
 
 QUaModbusClientList::QUaModbusClientList(QUaServer *server)
@@ -16,6 +19,8 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerType<QUaModbusRtuSerialClient>();
 	server->registerType<QUaModbusDataBlockList  >();
 	server->registerType<QUaModbusDataBlock      >();
+	server->registerType<QUaModbusValueList      >();
+	server->registerType<QUaModbusValue          >();
 	// register enums
 	server->registerEnum<QModbusDevice::State    >();
 	server->registerEnum<QModbusDevice::Error    >();
@@ -23,7 +28,7 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerEnum<QSerialPort::BaudRate   >();
 	server->registerEnum<QSerialPort::DataBits   >();
 	server->registerEnum<QSerialPort::StopBits   >();
-	server->registerEnum<QUaModbusDataBlock::RegisterType>();
+	//server->registerEnum<QUaModbusDataBlock::RegisterType>();
 }
 
 Q_INVOKABLE QString QUaModbusClientList::addTcpClient(QString strClientId)

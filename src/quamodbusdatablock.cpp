@@ -1,5 +1,6 @@
 #include "quamodbusdatablock.h"
 #include "quamodbusclient.h"
+#include "quamodbusvalue.h"
 
 quint32 QUaModbusDataBlock::m_minSamplingTime = 50;
 
@@ -60,6 +61,11 @@ QUaBaseDataVariable * QUaModbusDataBlock::data()
 QUaBaseDataVariable * QUaModbusDataBlock::lastError()
 {
 	return this->browseChild<QUaBaseDataVariable>("LastError");
+}
+
+QUaModbusValueList * QUaModbusDataBlock::values()
+{
+	return this->browseChild<QUaModbusValueList>("Values");
 }
 
 void QUaModbusDataBlock::remove()
@@ -175,7 +181,7 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			return;
 		}
 		// subscribe to finished
-		QObject::connect(p_reply, &QModbusReply::finished, p_reply, [this, p_reply]() mutable {
+		QObject::connect(p_reply, &QModbusReply::finished, this, [this, p_reply]() mutable {
 			// check if reply still valid
 			if (!p_reply)
 			{
@@ -250,7 +256,7 @@ void QUaModbusDataBlock::startLoop()
 			m_replyRead = nullptr;
 		}
 		// subscribe to finished
-		QObject::connect(m_replyRead, &QModbusReply::finished, m_replyRead, [this]() mutable {
+		QObject::connect(m_replyRead, &QModbusReply::finished, this, [this]() {
 			// check if reply still valid
 			if (!m_replyRead)
 			{
@@ -263,9 +269,15 @@ void QUaModbusDataBlock::startLoop()
 			{
 				// TODO : send UA event
 			}
-			// get modbus values
+			// update block value
 			QVector<quint16> vectValues = m_replyRead->result().values();
 			this->data()->setValue(QVariant::fromValue(vectValues));
+			// update modbus values
+			auto values = this->values()->values();
+			for (int i = 0; i < values.count(); i++)
+			{
+				values.at(i)->updateValue(vectValues);
+			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();
 			m_replyRead = nullptr;
