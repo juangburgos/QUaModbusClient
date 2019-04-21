@@ -58,13 +58,6 @@ public:
 	};
 	Q_ENUM(ValueType)
 
-	enum ValueError 
-	{
-		NoError,
-		MisfitError
-	};
-	Q_ENUM(ValueError)
-
 	// UA properties
 
 	QUaProperty * type();
@@ -80,16 +73,21 @@ public:
 	Q_INVOKABLE void remove();
 
 private slots:
-
+	void on_typeChanged         (const QVariant &value);
+	void on_addressOffsetChanged(const QVariant &value);
+	void on_valueChanged        (const QVariant &value);
 
 private:
 
 	QUaModbusDataBlock * block();
 
-	void updateValue(const QVector<quint16> &block);
+	void setValue(const QVector<quint16> &block, const QModbusDevice::Error &blockError);
+	void setError(const QModbusDevice::Error &blockError);
 
-	static QVariant fromBlockToValue(const QVector<quint16> &block, const QUaModbusValue::ValueType &type);
-	static QVector<quint16> fromValueToBlock(const QVariant &value, const QUaModbusValue::ValueType &type);
+	static int              typeBlockSize(const QUaModbusValue::ValueType &type);
+	static QMetaType::Type  typeToMeta   (const QUaModbusValue::ValueType &type);
+	static QVariant         blockToValue (const QVector<quint16> &block, const QUaModbusValue::ValueType &type);
+	static QVector<quint16> valueToBlock (const QVariant &value        , const QUaModbusValue::ValueType &type);
 	
 };
 

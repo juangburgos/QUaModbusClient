@@ -8,12 +8,14 @@
 
 class QUaModbusClient;
 class QUaModbusDataBlockList;
+class QUaModbusValue;
 
 #include "quamodbusvaluelist.h"
 
 class QUaModbusDataBlock : public QUaBaseObject
 {
 	friend class QUaModbusDataBlockList;
+	friend class QUaModbusValue;
 
     Q_OBJECT
 
@@ -78,6 +80,7 @@ private:
 	void startLoop();
 
 	static quint32 m_minSamplingTime;
+	static QVector<quint16> variantToInt16Vect(const QVariant &value);
 };
 
 

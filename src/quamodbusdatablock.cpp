@@ -18,7 +18,7 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	samplingTime()->setDataType(QMetaType::UInt);
 	samplingTime()->setValue(1000);
 	lastError   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
-	lastError   ()->setValue(QModbusDevice::Error::NoError);
+	lastError   ()->setValue(QModbusDevice::Error::ConfigurationError);
 	// set initial conditions
 	type()        ->setWriteAccess(true);
 	address()     ->setWriteAccess(true);
@@ -140,13 +140,7 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 		return;
 	}
 	// convert data
-	QVector<quint16> data;
-	QSequentialIterable iterable = value.value<QSequentialIterable>();
-	QSequentialIterable::const_iterator it = iterable.begin();
-	const QSequentialIterable::const_iterator end = iterable.end();
-	for (; it != end; ++it) {
-		data << (*it).value<quint16>();
-	}
+	QVector<quint16> data = QUaModbusDataBlock::variantToInt16Vect(value);
 	// exec write request in client thread
 	this->client()->m_workerThread.execInThread([this, data]() {
 		auto client = this->client();
@@ -193,6 +187,12 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			if (error != QModbusDevice::Error::NoError)
 			{
 				// TODO : send UA event
+			}
+			// update modbus errors
+			auto values = this->values()->values();
+			for (int i = 0; i < values.count(); i++)
+			{
+				values.at(i)->setError(error);
 			}
 			// delete reply on next event loop exec
 			p_reply->deleteLater();
@@ -272,11 +272,11 @@ void QUaModbusDataBlock::startLoop()
 			// update block value
 			QVector<quint16> vectValues = m_replyRead->result().values();
 			this->data()->setValue(QVariant::fromValue(vectValues));
-			// update modbus values
+			// update modbus values and errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
 			{
-				values.at(i)->updateValue(vectValues);
+				values.at(i)->setValue(vectValues, error);
 			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();
@@ -284,4 +284,22 @@ void QUaModbusDataBlock::startLoop()
 		}, Qt::QueuedConnection);
 
 	}, samplingTime);
+}
+
+QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)
+{
+	QVector<quint16> data;
+	// check if valid
+	if (!value.isValid())
+	{
+		return data;
+	}
+	// convert
+	QSequentialIterable iterable = value.value<QSequentialIterable>();
+	QSequentialIterable::const_iterator it = iterable.begin();
+	const QSequentialIterable::const_iterator end = iterable.end();
+	for (; it != end; ++it) {
+		data << (*it).value<quint16>();
+	}
+	return data;
 }
