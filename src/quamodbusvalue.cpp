@@ -58,7 +58,7 @@ void QUaModbusValue::on_typeChanged(const QVariant &value)
 	this->value()->setDataType(metaType);
 	// update value is possible
 	auto blockVariant = this->block()->data()->value();
-	auto blockError   = this->block()->lastError()->value().value< QModbusDevice::Error>();
+	auto blockError   = this->block()->lastError()->value().value<QModbusDevice::Error>();
 	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
 	this->setValue(blockData, blockError);
 }
@@ -68,7 +68,7 @@ void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
 	Q_UNUSED(value);
 	// update value is possible
 	auto blockVariant = this->block()->data()->value();
-	auto blockError   = this->block()->lastError()->value().value< QModbusDevice::Error>();
+	auto blockError   = this->block()->lastError()->value().value<QModbusDevice::Error>();
 	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
 	this->setValue(blockData, blockError);
 }
@@ -85,7 +85,7 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 	// check if fits in block
 	int addressOffset = this->addressOffset()->value().value<int>();
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
-	if (addressOffset + typeBlockSize < blockData.count())
+	if (addressOffset + typeBlockSize > blockData.count())
 	{
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant());
@@ -123,7 +123,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusDevice
 	}
 	// check if fits in block
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
-	if (addressOffset + typeBlockSize < block.count())
+	if (addressOffset + typeBlockSize > block.count())
 	{
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant());
@@ -256,13 +256,20 @@ QMetaType::Type QUaModbusValue::typeToMeta(const QUaModbusValue::ValueType & typ
 
 QVariant QUaModbusValue::blockToValue(const QVector<quint16>& block, const QUaModbusValue::ValueType & type)
 {
-	// TODO
-/*
+	QVariant retVar;
 	switch(type)
 	{
 		case Binary0        :
 		{
-
+			Q_ASSERT(block.count() >= 1);
+			if (block.first() > 0)
+			{
+				retVar = QVariant::fromValue(true);
+			}
+			else
+			{
+				retVar = QVariant::fromValue(false);
+			}
 			break;
 		}
 		case Binary1        :
@@ -281,69 +288,274 @@ QVariant QUaModbusValue::blockToValue(const QVector<quint16>& block, const QUaMo
 		case Binary14       :
 		case Binary15       :
 		{
-
+			Q_ASSERT(block.count() >= 1);
+			// shift uiValue bits to right 'type' times
+			quint16 iTmp = block.first() >> type;
+			iTmp &= 0x0001;
+			if (iTmp == 1)
+			{
+				retVar = QVariant::fromValue(true);
+			}
+			else
+			{
+				retVar = QVariant::fromValue(false);
+			}
 			break;
 		}
 		case Decimal        :
 		{
-
+			Q_ASSERT(block.count() >= 1);
+			retVar = QVariant::fromValue((int)block.first());
 			break;
 		}
 		case Int            :
 		{
-
+			Q_ASSERT(block.count() >= 2);
+			// i32 Least Significant Register First
+			int iRes = (int)(((quint32)block.at(1) << 16) | ((quint32)block.at(0)));
+			retVar = QVariant::fromValue(iRes);
 			break;
 		}
 		case IntSwapped     :
 		{
-
+			Q_ASSERT(block.count() >= 2);
+			int iRes = (int)(((quint32)block.at(0) << 16) | ((quint32)block.at(1)));
+			retVar = QVariant::fromValue(iRes);
 			break;
 		}
 		case Float          :
 		{
-
+			Q_ASSERT(block.count() >= 2);
+			float fRes = 0;
+			// f32 Least Significant Register First
+			quint32 iTmp  = (((quint32)block.at(1) << 16) | ((quint32)block.at(0)));
+			memcpy(&fRes, &iTmp, sizeof(quint32));
+			retVar = QVariant::fromValue(fRes);
 			break;
 		}
 		case FloatSwapped   :
 		{
-
+			Q_ASSERT(block.count() >= 2);
+			float fRes = 0;
+			// f32 Most Significant Register First
+			quint32 iTmp = (((quint32)block.at(0) << 16) | ((quint32)block.at(1)));
+			memcpy(&fRes, &iTmp, sizeof(quint32));
+			retVar = QVariant::fromValue(fRes);
 			break;
 		}
 		case Int64          :
 		{
-
+			Q_ASSERT(block.count() >= 4);
+			qint64 iRes = 0;
+			// i64 Least Significant Register First
+			quint64 iTmp = (((quint64)block.at(3) << 48) | 
+				            ((quint64)block.at(2) << 32) | 
+				            ((quint64)block.at(1) << 16) | 
+				            ((quint64)block.at(0)));
+			memcpy(&iRes, &iTmp, sizeof(quint64));
+			retVar = QVariant::fromValue(iRes);
 			break;
 		}
 		case Int64Swapped   :
 		{
-
+			Q_ASSERT(block.count() >= 4);
+			qint64 iRes = 0;
+			// i64 Most Significant Register First
+			quint64 iTmp = (((quint64)block.at(0) << 48) | 
+				            ((quint64)block.at(1) << 32) | 
+				            ((quint64)block.at(2) << 16) | 
+				            ((quint64)block.at(3)));
+			memcpy(&iRes, &iTmp, sizeof(quint64));
+			retVar = QVariant::fromValue(iRes);
 			break;
 		}
 		case Float64        :
 		{
-
+			Q_ASSERT(block.count() >= 4);
+			double dRes = 0;
+			// f64 Least Significant Register First
+			quint64 iTmp = (((quint64)block.at(3) << 48) | 
+				            ((quint64)block.at(2) << 32) | 
+				            ((quint64)block.at(1) << 16) | 
+				            ((quint64)block.at(0)));
+			memcpy(&dRes, &iTmp, sizeof(quint64));
+			retVar = QVariant::fromValue(dRes);
 			break;
 		}
 		case Float64Swapped :
 		{
-
+			Q_ASSERT(block.count() >= 4);
+			double dRes = 0;
+			// f64 Most Significant Register First
+			quint64 iTmp = (((quint64)block.at(0) << 48) | 
+				            ((quint64)block.at(1) << 32) | 
+				            ((quint64)block.at(2) << 16) | 
+				            ((quint64)block.at(3)));
+			memcpy(&dRes, &iTmp, sizeof(quint64));
+			retVar = QVariant::fromValue(dRes);
 			break;
 		}
 		default : // Invalid
 		{
-
 			break;
 		}
 	}
-*/
-
-	return QVariant();
+	return retVar;
 }
 
 QVector<quint16> QUaModbusValue::valueToBlock(const QVariant & value, const QUaModbusValue::ValueType & type)
 {
-	// TODO
-	return QVector<quint16>();
+	QVector<quint16> block;
+	switch(type)
+	{
+		case Binary0        :
+		{
+			block.resize(1);
+			bool bValue = value.toBool();		
+			if (bValue)
+			{
+				block[0] = 1;
+			}
+			else
+			{
+				block[0] = 0;
+			}
+			break;
+		}
+		case Binary1        :
+		case Binary2        :
+		case Binary3        :
+		case Binary4        :
+		case Binary5        :
+		case Binary6        :
+		case Binary7        :
+		case Binary8        :
+		case Binary9        :
+		case Binary10       :
+		case Binary11       :
+		case Binary12       :
+		case Binary13       :
+		case Binary14       :
+		case Binary15       :
+		{
+			block.resize(1);
+			bool bValue = value.toBool();
+			if (bValue)
+			{
+				// shift iTmp bits to left [type] times
+				quint16 iTmp = 0x0001;
+				block[0] = iTmp << type;
+			}
+			else
+			{
+				block[0] = 0;
+			}
+			break;
+		}
+		case Decimal        :
+		{
+			block.resize(1);
+			block[0] = (quint16)value.toUInt();
+			break;
+		}
+		case Int            :
+		{
+			block.resize(2);
+			int iValue = value.toInt();
+			// i32 Least Significant Register First
+			block[0] = (quint16)(iValue & 0x0000FFFFuL);
+			block[1] = (quint16)(iValue >> 16);
+			break;
+		}
+		case IntSwapped     :
+		{
+			block.resize(2);
+			int iValue = value.toInt();
+			// i32 Most Significant Register First
+			block[1] = (quint16)(iValue & 0x0000FFFFuL);
+			block[0] = (quint16)(iValue >> 16);
+			break;
+		}
+		case Float          :
+		{
+			block.resize(2);
+			float fValue = value.toFloat();
+			// f32 Least Significant Register First
+			quint32 iTmp;
+			memcpy(&iTmp, &fValue, sizeof(quint32));
+			block[0] = (quint16)(iTmp & 0x0000FFFFuL);
+			block[1] = (quint16)(iTmp >> 16);
+			break;
+		}
+		case FloatSwapped   :
+		{
+			block.resize(2);
+			float fValue = value.toFloat();
+			// f32 Most Significant Register First
+			quint32 iTmp;
+			memcpy(&iTmp, &fValue, sizeof(quint32));
+			block[1] = (quint16)(iTmp & 0x0000FFFFuL);
+			block[0] = (quint16)(iTmp >> 16);
+			break;
+		}
+		case Int64          :
+		{
+			block.resize(4);
+			qint64 iValue = value.toLongLong();
+			// i64 Least Significant Register First
+			quint64 iTmp;
+			memcpy(&iTmp, &iValue, sizeof(quint64));
+			block[0] = (quint16)(iTmp & 0x000000000000FFFFuLL);
+			block[1] = (quint16)(iTmp >> 16);
+			block[2] = (quint16)(iTmp >> 32);
+			block[3] = (quint16)(iTmp >> 48);
+			break;
+		}
+		case Int64Swapped   :
+		{
+			block.resize(4);
+			qint64 iValue = value.toLongLong();
+			// i64 Most Significant Register First
+			quint64 iTmp;
+			memcpy(&iTmp, &iValue, sizeof(quint64));
+			block[3] = (quint16)(iTmp & 0x000000000000FFFFuLL);
+			block[2] = (quint16)(iTmp >> 16);
+			block[1] = (quint16)(iTmp >> 32);
+			block[0] = (quint16)(iTmp >> 48);
+			break;
+		}
+		case Float64        :
+		{
+			block.resize(4);
+			double dValue = value.toDouble();
+			// f64 Least Significant Register First
+			quint64 iTmp;
+			memcpy(&iTmp, &dValue, sizeof(quint64));
+			block[0] = (quint16)(iTmp & 0x000000000000FFFFuLL);
+			block[1] = (quint16)(iTmp >> 16);
+			block[2] = (quint16)(iTmp >> 32);
+			block[3] = (quint16)(iTmp >> 48);
+			break;
+		}
+		case Float64Swapped :
+		{
+			block.resize(4);
+			double dValue = value.toDouble();
+			// f64 Most Significant Register First
+			quint64 iTmp;
+			memcpy(&iTmp, &dValue, sizeof(quint64));
+			block[3] = (quint16)(iTmp & 0x000000000000FFFFuLL);
+			block[2] = (quint16)(iTmp >> 16);
+			block[1] = (quint16)(iTmp >> 32);
+			block[0] = (quint16)(iTmp >> 48);
+			break;
+		}
+		default : // Invalid
+		{
+			break;
+		}
+	}
+	return block;
 }
 
 QUaModbusDataBlock * QUaModbusValue::block()
