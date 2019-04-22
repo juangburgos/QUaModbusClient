@@ -4,14 +4,23 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	: QUaBaseObject(server)
 {
 	// set defaults
-	state        ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
-	state        ()->setValue(QModbusDevice::State::UnconnectedState);
-	lastError    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
-	lastError    ()->setValue(QModbusDevice::Error::NoError);
-	serverAddress()->setDataType(QMetaType::UChar);
-	serverAddress()->setValue(1);
+	state         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
+	state         ()->setValue(QModbusDevice::State::UnconnectedState);
+	lastError     ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
+	lastError     ()->setValue(QModbusDevice::Error::NoError);
+	serverAddress ()->setDataType(QMetaType::UChar);
+	serverAddress ()->setValue(1);
+	keepConnecting()->setValue(false);
 	// set initial conditions
-	serverAddress()->setWriteAccess(true);
+	serverAddress ()->setWriteAccess(true);
+	keepConnecting()->setWriteAccess(true);
+	// set descriptions
+	type          ()->setDescription("Modbus client communication type (TCP or RTU Serial).");
+	serverAddress ()->setDescription("Modbus server Device Id or Modbus address.");
+	keepConnecting()->setDescription("Whether the client should try to keep connecting after connection failure");
+	state         ()->setDescription("Modbus connection state.");
+	lastError     ()->setDescription("Last error occured at connection level.");
+	dataBlocks    ()->setDescription("List of Modbus data blocks updated through polling.");
 }
 
 QUaProperty * QUaModbusClient::type()
@@ -22,6 +31,11 @@ QUaProperty * QUaModbusClient::type()
 QUaProperty * QUaModbusClient::serverAddress()
 {
 	return this->browseChild<QUaProperty>("ServerAddress");
+}
+
+QUaProperty * QUaModbusClient::keepConnecting()
+{
+	return this->browseChild<QUaProperty>("KeepConnecting");
 }
 
 QUaBaseDataVariable * QUaModbusClient::state()
@@ -85,6 +99,12 @@ void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
 	if (state == QModbusDevice::State::UnconnectedState)
 	{
 		serverAddress()->setWriteAccess(true);
+		// keep connecting if desired
+		bool keepConnecting = this->keepConnecting()->value().toBool();
+		if (keepConnecting)
+		{
+			this->connectDevice();
+		}
 	}
 	else
 	{

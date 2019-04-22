@@ -20,7 +20,7 @@ public:
 	QUaProperty * networkPort();
 
 private slots:
-	void on_stateChanged         (const QVariant &value);
+	void on_stateChanged         (const QModbusDevice::State &state);
 	void on_networkAddressChanged(const QVariant &value);
 	void on_networkPortChanged   (const QVariant &value);
 

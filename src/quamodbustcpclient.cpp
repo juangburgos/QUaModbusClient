@@ -20,11 +20,14 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter   , 502);
 		// setup client (call base class method)
 		this->setupModbusClient();
+		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusTcpClient::on_stateChanged, Qt::QueuedConnection);
 	});
 	// handle changes
-	QObject::connect(state()         , &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_stateChanged         , Qt::QueuedConnection);
 	QObject::connect(networkAddress(), &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkAddressChanged, Qt::QueuedConnection);
 	QObject::connect(networkPort()   , &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkPortChanged   , Qt::QueuedConnection);
+	// set descriptions
+	networkAddress()->setDescription("Network address (IP address or domain name) of the Modbus server.");
+	networkPort()   ->setDescription("Network port (TCP port) of the Modbus server.");
 }
 
 QUaProperty * QUaModbusTcpClient::networkAddress()
@@ -37,9 +40,8 @@ QUaProperty * QUaModbusTcpClient::networkPort()
 	return this->browseChild<QUaProperty>("NetworkPort");
 }
 
-void QUaModbusTcpClient::on_stateChanged(const QVariant &value)
+void QUaModbusTcpClient::on_stateChanged(const QModbusDevice::State &state)
 {
-	QModbusDevice::State state = value.value<QModbusDevice::State>();
 	// only allow to write connection params if not connected
 	if (state == QModbusDevice::State::UnconnectedState)
 	{

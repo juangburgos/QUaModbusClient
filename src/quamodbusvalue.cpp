@@ -11,6 +11,8 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	// set defaults
 	type         ()->setDataTypeEnum(QMetaEnum::fromType<QUaModbusValue::ValueType>());
 	type         ()->setValue(QUaModbusValue::ValueType::Invalid);
+	registersUsed()->setDataType(QMetaType::UShort);
+	registersUsed()->setValue(0);
 	addressOffset()->setDataType(QMetaType::Int);
 	addressOffset()->setValue(-1);
 	lastError    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
@@ -23,11 +25,22 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	QObject::connect(type()         , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_typeChanged         , Qt::QueuedConnection);
 	QObject::connect(addressOffset(), &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_addressOffsetChanged, Qt::QueuedConnection);
 	QObject::connect(value()        , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_valueChanged        , Qt::QueuedConnection);
+	// set descriptions
+	type()         ->setDescription("Data type used to convert the registers to the value.");
+	registersUsed()->setDescription("Number of registeres used by the selected data type");
+	addressOffset()->setDescription("Offset with respect to the data block.");
+	value()        ->setDescription("The value obtained by converting the registers to the selected type.");
+	lastError()    ->setDescription("Last error obtained while converting registers to value.");
 }
 
 QUaProperty * QUaModbusValue::type()
 {
 	return this->browseChild<QUaProperty>("Type");
+}
+
+QUaProperty * QUaModbusValue::registersUsed()
+{
+	return this->browseChild<QUaProperty>("RegistersUsed");
 }
 
 QUaProperty * QUaModbusValue::addressOffset()
@@ -61,6 +74,8 @@ void QUaModbusValue::on_typeChanged(const QVariant &value)
 	auto blockError   = this->block()->lastError()->value().value<QModbusDevice::Error>();
 	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
 	this->setValue(blockData, blockError);
+	// update number of registers used
+	registersUsed()->setValue(QUaModbusValue::typeBlockSize(type));
 }
 
 void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
@@ -81,13 +96,20 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 	auto partBlockData = QUaModbusValue::valueToBlock(value, type);
 	// get current block
 	auto blockVariant = this->block()->data()->value();
+	auto blockError   = this->block()->lastError()->value().value<QModbusDevice::Error>();
 	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
+	// check if is connected
+	if (blockError == QModbusDevice::Error::ConnectionError)
+	{
+		this->value()->setValue(QVariant());
+		lastError()->setValue(blockError);
+		return;
+	}
 	// check if fits in block
 	int addressOffset = this->addressOffset()->value().value<int>();
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > blockData.count())
 	{
-		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant());
 		lastError()->setValue(QModbusDevice::Error::ConfigurationError);
 		return;
@@ -121,30 +143,35 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusDevice
 		lastError()->setValue(QModbusDevice::Error::ConfigurationError);
 		return;
 	}
+	// set writable if block type allows it
+	auto blockType = this->block()->type()->value().value<QUaModbusDataBlock::RegisterType>();
+	if (blockType == QUaModbusDataBlock::RegisterType::Coils ||
+		blockType == QUaModbusDataBlock::RegisterType::HoldingRegisters)
+	{
+		this->value()->setWriteAccess(true);
+	}
+	else
+	{
+		this->value()->setWriteAccess(false);
+	}
 	// check if fits in block
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > block.count())
 	{
-		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant());
-		lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+		auto newError = blockError != QModbusDevice::Error::NoError ? blockError : QModbusDevice::Error::ConfigurationError;
+		lastError()->setValue(newError);
 		return;
 	}
 	// convert value and set it, but leave block error code
-	this->value()->setWriteAccess(true);
 	lastError()->setValue(blockError);
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	this->value()->setValue(value);
 }
 
-void QUaModbusValue::setError(const QModbusDevice::Error & blockError)
-{
-	lastError()->setValue(blockError);
-}
-
 int QUaModbusValue::typeBlockSize(const QUaModbusValue::ValueType & type)
 {
-	int iSize = -1;
+	int iSize = 0;
 	switch (type)
 	{
 		case Binary0:
@@ -305,7 +332,7 @@ QVariant QUaModbusValue::blockToValue(const QVector<quint16>& block, const QUaMo
 		case Decimal        :
 		{
 			Q_ASSERT(block.count() >= 1);
-			retVar = QVariant::fromValue((int)block.first());
+			retVar = QVariant::fromValue(block.first());
 			break;
 		}
 		case Int            :

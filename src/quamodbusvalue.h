@@ -18,6 +18,7 @@ class QUaModbusValue : public QUaBaseObject
 
 	// UA properties
 	Q_PROPERTY(QUaProperty * Type          READ type         )
+	Q_PROPERTY(QUaProperty * RegistersUsed READ registersUsed)
 	Q_PROPERTY(QUaProperty * AddressOffset READ addressOffset)
 
 	// UA variables
@@ -61,6 +62,7 @@ public:
 	// UA properties
 
 	QUaProperty * type();
+	QUaProperty * registersUsed();
 	QUaProperty * addressOffset();
 
 	// UA variables
@@ -82,7 +84,6 @@ private:
 	QUaModbusDataBlock * block();
 
 	void setValue(const QVector<quint16> &block, const QModbusDevice::Error &blockError);
-	void setError(const QModbusDevice::Error &blockError);
 
 	static int              typeBlockSize(const QUaModbusValue::ValueType &type);
 	static QMetaType::Type  typeToMeta   (const QUaModbusValue::ValueType &type);

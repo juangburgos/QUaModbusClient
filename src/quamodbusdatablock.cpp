@@ -31,6 +31,14 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	QObject::connect(size()        , &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_sizeChanged        , Qt::QueuedConnection);
 	QObject::connect(samplingTime(), &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_samplingTimeChanged, Qt::QueuedConnection);
 	QObject::connect(data()        , &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_dataChanged        , Qt::QueuedConnection);
+	// set descriptions
+	type        ()->setDescription("Type of Modbus register for this block.");
+	address     ()->setDescription("Start register address for this block (with respect to the register type).");
+	size        ()->setDescription("Size (in registers) for this block.");
+	samplingTime()->setDescription("Polling time (cycle time) to read this block.");
+	data        ()->setDescription("The current block values as per the last successfull read.");
+	lastError   ()->setDescription("The last error reported while reading or writing this block.");
+	values      ()->setDescription("List of converted values.");
 }
 
 QUaProperty * QUaModbusDataBlock::type()
@@ -144,12 +152,6 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 	// exec write request in client thread
 	this->client()->m_workerThread.execInThread([this, data]() {
 		auto client = this->client();
-		// check if connected
-		auto state = client->state()->value().value<QModbusDevice::State>();
-		if (state != QModbusDevice::State::ConnectedState)
-		{
-			return;
-		}
 		// check if request is valid
 		if (m_modbusDataUnit.registerType() != QModbusDataUnit::RegisterType::Coils &&
 			m_modbusDataUnit.registerType() != QModbusDataUnit::RegisterType::HoldingRegisters)
@@ -158,10 +160,19 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
+			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
+			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			return;
+		}
+		// check if connected
+		auto state = client->state()->value().value<QModbusDevice::State>();
+		if (state != QModbusDevice::State::ConnectedState)
+		{
+			lastError()->setValue(QModbusDevice::Error::ConnectionError);
 			return;
 		}
 		// create data target 
@@ -188,11 +199,11 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			{
 				// TODO : send UA event
 			}
-			// update modbus errors
+			// update values errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
 			{
-				values.at(i)->setError(error);
+				values.at(i)->lastError()->setValue(error);
 			}
 			// delete reply on next event loop exec
 			p_reply->deleteLater();
@@ -217,23 +228,35 @@ void QUaModbusDataBlock::startLoop()
 		{
 			return;
 		}
-		// check if connected
-		auto state = client->state()->value().value<QModbusDevice::State>();
-		if (state != QModbusDevice::State::ConnectedState)
-		{
-			return;
-		}
 		// check if request is valid
 		if (m_modbusDataUnit.registerType() == QModbusDataUnit::RegisterType::Invalid)
 		{
+			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
+			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
+			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			return;
+		}
+		// check if connected
+		auto state = client->state()->value().value<QModbusDevice::State>();
+		if (state != QModbusDevice::State::ConnectedState)
+		{
+			lastError()->setValue(QModbusDevice::Error::ConnectionError);
+			// update values errors
+			auto values = this->values()->values();
+			for (int i = 0; i < values.count(); i++)
+			{
+				auto oldValErr = values.at(i)->lastError()->value().value<QModbusDevice::Error>();
+				if(oldValErr != QModbusDevice::Error::ConfigurationError)
+					values.at(i)->lastError()->setValue(QModbusDevice::Error::ConnectionError);
+			}
 			return;
 		}
 		// create and send request		

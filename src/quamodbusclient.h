@@ -23,8 +23,9 @@ class QUaModbusClient : public QUaBaseObject
     Q_OBJECT
 
 	// UA properties
-	Q_PROPERTY(QUaProperty * Type          READ type         )
-	Q_PROPERTY(QUaProperty * ServerAddress READ serverAddress)
+	Q_PROPERTY(QUaProperty * Type           READ type          )
+	Q_PROPERTY(QUaProperty * ServerAddress  READ serverAddress )
+	Q_PROPERTY(QUaProperty * KeepConnecting READ keepConnecting)
 
 	// UA variables
 	Q_PROPERTY(QUaBaseDataVariable * State     READ state    )
@@ -40,6 +41,7 @@ public:
 
 	QUaProperty * type();
 	QUaProperty * serverAddress();
+	QUaProperty * keepConnecting();
 
 	// UA variables
 
@@ -67,7 +69,6 @@ protected:
 private slots:
 	void on_stateChanged(QModbusDevice::State state);
 	void on_errorChanged(QModbusDevice::Error error);
-
 };
 
 #endif // QUAMODBUSCLIENT_H

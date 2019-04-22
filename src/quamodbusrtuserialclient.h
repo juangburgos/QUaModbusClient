@@ -26,7 +26,7 @@ public:
 	QUaProperty * stopBits();
 
 private slots:
-	void on_stateChanged   (const QVariant &value);
+	void on_stateChanged   (const QModbusDevice::State &state);
 	void on_comPortChanged (const QVariant &value);
 	void on_parityChanged  (const QVariant &value);
 	void on_baudRateChanged(const QVariant &value);

@@ -32,14 +32,20 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, QSerialPort::OneStop   );
 		// setup client (call base class method)
 		this->setupModbusClient();
+		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusRtuSerialClient::on_stateChanged, Qt::QueuedConnection);
 	});
 	// handle state changes
-	QObject::connect(state   (), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_stateChanged   , Qt::QueuedConnection);
 	QObject::connect(comPort (), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_comPortChanged , Qt::QueuedConnection);
 	QObject::connect(parity  (), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_parityChanged  , Qt::QueuedConnection);
 	QObject::connect(baudRate(), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_baudRateChanged, Qt::QueuedConnection);
 	QObject::connect(dataBits(), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_dataBitsChanged, Qt::QueuedConnection);
 	QObject::connect(stopBits(), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_stopBitsChanged, Qt::QueuedConnection);
+	// set descriptions
+	comPort ()->setDescription("Local serial COM port used to connect to the Modbus server.");
+	parity  ()->setDescription("Parity value (for error detection) used to communicate with the Modbus server.");
+	baudRate()->setDescription("Baud Rate value (data rate in bits per second) used to communicate with the Modbus server.");
+	dataBits()->setDescription("Number of Data Bits (in each character) used to communicate with the Modbus server.");
+	stopBits()->setDescription("Number of Stop Bits (sent at the end of every character) used to communicate with the Modbus server.");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::comPort()
@@ -67,9 +73,8 @@ QUaProperty * QUaModbusRtuSerialClient::stopBits()
 	return this->browseChild<QUaProperty>("StopBits");
 }
 
-void QUaModbusRtuSerialClient::on_stateChanged(const QVariant &value)
+void QUaModbusRtuSerialClient::on_stateChanged(const QModbusDevice::State &state)
 {
-	QModbusDevice::State state = value.value<QModbusDevice::State>();
 	// only allow to write connection params if not connected
 	if (state == QModbusDevice::State::UnconnectedState)
 	{
