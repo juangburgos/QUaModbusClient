@@ -6,6 +6,9 @@
 
 #include <QUaBaseObject>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 class QUaModbusDataBlock;
 class QUaModbusValueList;
 
@@ -61,14 +64,14 @@ public:
 
 	// UA properties
 
-	QUaProperty * type();
-	QUaProperty * registersUsed();
-	QUaProperty * addressOffset();
+	QUaProperty * type() const;
+	QUaProperty * registersUsed() const;
+	QUaProperty * addressOffset() const;
 
 	// UA variables
 
-	QUaBaseDataVariable * value();
-	QUaBaseDataVariable * lastError();
+	QUaBaseDataVariable * value() const;
+	QUaBaseDataVariable * lastError() const;
 
 	// UA methods
 
@@ -84,6 +87,10 @@ private:
 	QUaModbusDataBlock * block();
 
 	void setValue(const QVector<quint16> &block, const QModbusDevice::Error &blockError);
+
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const;
+	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 	static int              typeBlockSize(const QUaModbusValue::ValueType &type);
 	static QMetaType::Type  typeToMeta   (const QUaModbusValue::ValueType &type);

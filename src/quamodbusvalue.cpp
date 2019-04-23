@@ -33,27 +33,27 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	lastError()    ->setDescription("Last error obtained while converting registers to value.");
 }
 
-QUaProperty * QUaModbusValue::type()
+QUaProperty * QUaModbusValue::type() const
 {
 	return this->browseChild<QUaProperty>("Type");
 }
 
-QUaProperty * QUaModbusValue::registersUsed()
+QUaProperty * QUaModbusValue::registersUsed() const
 {
 	return this->browseChild<QUaProperty>("RegistersUsed");
 }
 
-QUaProperty * QUaModbusValue::addressOffset()
+QUaProperty * QUaModbusValue::addressOffset() const
 {
 	return this->browseChild<QUaProperty>("AddressOffset");
 }
 
-QUaBaseDataVariable * QUaModbusValue::value()
+QUaBaseDataVariable * QUaModbusValue::value() const
 {
 	return this->browseChild<QUaBaseDataVariable>("Value");
 }
 
-QUaBaseDataVariable * QUaModbusValue::lastError()
+QUaBaseDataVariable * QUaModbusValue::lastError() const
 {
 	return this->browseChild<QUaBaseDataVariable>("LastError");
 }
@@ -167,6 +167,23 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusDevice
 	lastError()->setValue(blockError);
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	this->value()->setValue(value);
+}
+
+QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
+{
+	// add value element
+	QDomElement elemValue = domDoc.createElement(QUaModbusValue::metaObject()->className());
+	// set value attributes
+	elemValue.setAttribute("BrowseName"   , this->browseName());
+	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QUaModbusValue::ValueType>().valueToKey(type()->value().value<QUaModbusValue::ValueType>()));
+	elemValue.setAttribute("AddressOffset", addressOffset()->value().toInt());
+	// return value element
+	return elemValue;
+}
+
+void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
 }
 
 int QUaModbusValue::typeBlockSize(const QUaModbusValue::ValueType & type)

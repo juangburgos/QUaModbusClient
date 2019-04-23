@@ -3,11 +3,19 @@
 
 #include <QUaFolderObject>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 class QUaModbusClient;
+class QUaModbusTcpClient;
+class QUaModbusRtuSerialClient;
 class QUaModbusDataBlock;
 
 class QUaModbusDataBlockList : public QUaFolderObject
 {
+	friend class QUaModbusClient;
+	friend class QUaModbusTcpClient;
+	friend class QUaModbusRtuSerialClient;
 	friend class QUaModbusDataBlock;
 
     Q_OBJECT
@@ -22,6 +30,10 @@ public:
 
 private:
 	QUaModbusClient * client();
+
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const;
+	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 };
 

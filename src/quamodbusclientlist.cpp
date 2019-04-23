@@ -39,3 +39,37 @@ Q_INVOKABLE QString QUaModbusClientList::addRtuSerialClient(QString strClientId)
 {
 	return this->addClient<QUaModbusRtuSerialClient>(strClientId);
 }
+
+Q_INVOKABLE QString QUaModbusClientList::xmlConfig()
+{
+	QDomDocument doc;
+	// set xml header
+	QDomProcessingInstruction header = doc.createProcessingInstruction("xml", "version='1.0' encoding='UTF-8'");
+	doc.appendChild(header);
+	// convert config to xml
+	this->toDomElement(doc);
+	// get config
+	return doc.toByteArray();
+}
+
+QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
+{
+	// add client list element
+	QDomElement elemListClients = domDoc.createElement(QUaModbusClientList::metaObject()->className());
+	domDoc.appendChild(elemListClients);
+	// loop children and add them as children
+	auto clients = this->browseChildren<QUaModbusClient>();
+	for (int i = 0; i < clients.count(); i++)
+	{
+		auto client = clients.at(i);
+		QDomElement elemClient = client->toDomElement(domDoc);
+		elemListClients.appendChild(elemClient);
+	}
+	// return list element
+	return elemListClients;
+}
+
+void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
+}

@@ -23,32 +23,32 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	dataBlocks    ()->setDescription("List of Modbus data blocks updated through polling.");
 }
 
-QUaProperty * QUaModbusClient::type()
+QUaProperty * QUaModbusClient::type() const
 {
 	return this->browseChild<QUaProperty>("Type");
 }
 
-QUaProperty * QUaModbusClient::serverAddress()
+QUaProperty * QUaModbusClient::serverAddress() const
 {
 	return this->browseChild<QUaProperty>("ServerAddress");
 }
 
-QUaProperty * QUaModbusClient::keepConnecting()
+QUaProperty * QUaModbusClient::keepConnecting() const
 {
 	return this->browseChild<QUaProperty>("KeepConnecting");
 }
 
-QUaBaseDataVariable * QUaModbusClient::state()
+QUaBaseDataVariable * QUaModbusClient::state() const
 {
 	return this->browseChild<QUaBaseDataVariable>("State");
 }
 
-QUaBaseDataVariable * QUaModbusClient::lastError()
+QUaBaseDataVariable * QUaModbusClient::lastError() const
 {
 	return this->browseChild<QUaBaseDataVariable>("LastError");
 }
 
-QUaModbusDataBlockList * QUaModbusClient::dataBlocks()
+QUaModbusDataBlockList * QUaModbusClient::dataBlocks() const
 {
 	return this->browseChild<QUaModbusDataBlockList>("DataBlocks");
 }
@@ -85,6 +85,16 @@ void QUaModbusClient::setupModbusClient()
 	// subscribe to events
 	QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged , this, &QUaModbusClient::on_stateChanged, Qt::QueuedConnection);
 	QObject::connect(m_modbusClient.data(), &QModbusClient::errorOccurred, this, &QUaModbusClient::on_errorChanged, Qt::QueuedConnection);
+}
+
+QDomElement QUaModbusClient::toDomElement(QDomDocument & domDoc) const
+{
+	return QDomElement();
+}
+
+void QUaModbusClient::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
 }
 
 void QUaModbusClient::on_stateChanged(QModbusDevice::State state)

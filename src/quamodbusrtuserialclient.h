@@ -3,8 +3,12 @@
 
 #include "quamodbusclient.h"
 
+class QUaModbusClientList;
+
 class QUaModbusRtuSerialClient : public QUaModbusClient
 {
+	friend class QUaModbusClientList;
+
     Q_OBJECT
 
 	// UA properties
@@ -19,11 +23,16 @@ public:
 
 	// UA properties
 
-	QUaProperty * comPort ();
-	QUaProperty * parity  ();
-	QUaProperty * baudRate();
-	QUaProperty * dataBits();
-	QUaProperty * stopBits();
+	QUaProperty * comPort () const;
+	QUaProperty * parity  () const;
+	QUaProperty * baudRate() const;
+	QUaProperty * dataBits() const;
+	QUaProperty * stopBits() const;
+
+protected:
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const override;
+	void        fromDomElement(QDomElement  & domElem, QString &strError) override;
 
 private slots:
 	void on_stateChanged   (const QModbusDevice::State &state);

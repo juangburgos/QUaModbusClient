@@ -30,14 +30,36 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	networkPort()   ->setDescription("Network port (TCP port) of the Modbus server.");
 }
 
-QUaProperty * QUaModbusTcpClient::networkAddress()
+QUaProperty * QUaModbusTcpClient::networkAddress() const
 {
 	return this->browseChild<QUaProperty>("NetworkAddress");
 }
 
-QUaProperty * QUaModbusTcpClient::networkPort()
+QUaProperty * QUaModbusTcpClient::networkPort() const
 {
 	return this->browseChild<QUaProperty>("NetworkPort");
+}
+
+QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
+{
+	// add client element
+	QDomElement elemTcpClient = domDoc.createElement(QUaModbusTcpClient::metaObject()->className());
+	// set client attributes
+	elemTcpClient.setAttribute("BrowseName"    , this->browseName());
+	elemTcpClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
+	elemTcpClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
+	elemTcpClient.setAttribute("NetworkAddress", networkAddress()->value().toString());
+	elemTcpClient.setAttribute("NetworkPort"   , networkPort   ()->value().toUInt());
+	// add block list element
+	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
+	elemTcpClient.appendChild(elemBlockList);
+	// return client element
+	return elemTcpClient;
+}
+
+void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
 }
 
 void QUaModbusTcpClient::on_stateChanged(const QModbusDevice::State &state)

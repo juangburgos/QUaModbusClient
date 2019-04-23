@@ -3,8 +3,12 @@
 
 #include "quamodbusclient.h"
 
+class QUaModbusClientList;
+
 class QUaModbusTcpClient : public QUaModbusClient
 {
+	friend class QUaModbusClientList;
+
     Q_OBJECT
 
 	// UA properties
@@ -16,8 +20,13 @@ public:
 
 	// UA properties
 
-	QUaProperty * networkAddress();
-	QUaProperty * networkPort();
+	QUaProperty * networkAddress() const;
+	QUaProperty * networkPort() const;
+
+protected:
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const override;
+	void        fromDomElement(QDomElement  & domElem, QString &strError) override;;
 
 private slots:
 	void on_stateChanged         (const QModbusDevice::State &state);

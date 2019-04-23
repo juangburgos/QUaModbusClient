@@ -11,12 +11,17 @@
 #include <QUaBaseDataVariable>
 #include <QUaProperty>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 #include "quamodbusdatablocklist.h"
 
+class QUaModbusClientList;
 class QUaModbusDataBlock;
 
 class QUaModbusClient : public QUaBaseObject
 {
+	friend class QUaModbusClientList;
 	friend class QUaModbusDataBlockList;
 	friend class QUaModbusDataBlock;
 
@@ -39,18 +44,18 @@ public:
 
 	// UA properties
 
-	QUaProperty * type();
-	QUaProperty * serverAddress();
-	QUaProperty * keepConnecting();
+	QUaProperty * type() const;
+	QUaProperty * serverAddress() const;
+	QUaProperty * keepConnecting() const;
 
 	// UA variables
 
-	QUaBaseDataVariable * state();
-	QUaBaseDataVariable * lastError();
+	QUaBaseDataVariable * state() const;
+	QUaBaseDataVariable * lastError() const;
 
 	// UA objects
 
-	QUaModbusDataBlockList * dataBlocks();
+	QUaModbusDataBlockList * dataBlocks() const;
 
 	// UA methods
 
@@ -65,6 +70,10 @@ protected:
 
 	QModbusDevice::State getState();
 	void setupModbusClient();
+
+	// XML import / export
+	virtual QDomElement toDomElement  (QDomDocument & domDoc) const;
+	virtual void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 private slots:
 	void on_stateChanged(QModbusDevice::State state);

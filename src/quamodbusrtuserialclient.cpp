@@ -48,29 +48,54 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	stopBits()->setDescription("Number of Stop Bits (sent at the end of every character) used to communicate with the Modbus server.");
 }
 
-QUaProperty * QUaModbusRtuSerialClient::comPort()
+QUaProperty * QUaModbusRtuSerialClient::comPort() const
 {
 	return this->browseChild<QUaProperty>("ComPort");
 }
 
-QUaProperty * QUaModbusRtuSerialClient::parity()
+QUaProperty * QUaModbusRtuSerialClient::parity() const
 {
 	return this->browseChild<QUaProperty>("Parity");
 }
 
-QUaProperty * QUaModbusRtuSerialClient::baudRate()
+QUaProperty * QUaModbusRtuSerialClient::baudRate() const
 {
 	return this->browseChild<QUaProperty>("BaudRate");
 }
 
-QUaProperty * QUaModbusRtuSerialClient::dataBits()
+QUaProperty * QUaModbusRtuSerialClient::dataBits() const
 {
 	return this->browseChild<QUaProperty>("DataBits");
 }
 
-QUaProperty * QUaModbusRtuSerialClient::stopBits()
+QUaProperty * QUaModbusRtuSerialClient::stopBits() const
 {
 	return this->browseChild<QUaProperty>("StopBits");
+}
+
+QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
+{
+	// add client list element
+	QDomElement elemSerialClient = domDoc.createElement(QUaModbusRtuSerialClient::metaObject()->className());
+	// set client attributes
+	elemSerialClient.setAttribute("BrowseName"    , this->browseName());
+	elemSerialClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
+	elemSerialClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
+	elemSerialClient.setAttribute("ComPort"       , comPort()->value().toString());
+	elemSerialClient.setAttribute("Parity"  , QMetaEnum::fromType<QSerialPort::Parity>  ().valueToKey(parity  ()->value().value<QSerialPort::Parity>  ()));
+	elemSerialClient.setAttribute("BaudRate", QMetaEnum::fromType<QSerialPort::BaudRate>().valueToKey(baudRate()->value().value<QSerialPort::BaudRate>()));
+	elemSerialClient.setAttribute("DataBits", QMetaEnum::fromType<QSerialPort::DataBits>().valueToKey(dataBits()->value().value<QSerialPort::DataBits>()));
+	elemSerialClient.setAttribute("StopBits", QMetaEnum::fromType<QSerialPort::StopBits>().valueToKey(stopBits()->value().value<QSerialPort::StopBits>()));
+	// add block list element
+	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
+	elemSerialClient.appendChild(elemBlockList);
+	// return list element
+	return elemSerialClient;
+}
+
+void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
 }
 
 void QUaModbusRtuSerialClient::on_stateChanged(const QModbusDevice::State &state)

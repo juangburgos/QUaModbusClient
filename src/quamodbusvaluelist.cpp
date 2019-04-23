@@ -42,3 +42,25 @@ QList<QUaModbusValue*> QUaModbusValueList::values()
 {
 	return this->browseChildren<QUaModbusValue>();
 }
+
+QDomElement QUaModbusValueList::toDomElement(QDomDocument & domDoc) const
+{
+	// add value list element
+	QDomElement elemListValues = domDoc.createElement(QUaModbusValueList::metaObject()->className());
+	domDoc.appendChild(elemListValues);
+	// loop children and add them as children
+	auto values = this->browseChildren<QUaModbusValue>();
+	for (int i = 0; i < values.count(); i++)
+	{
+		auto value = values.at(i);
+		QDomElement elemValue = value->toDomElement(domDoc);
+		elemListValues.appendChild(elemValue);
+	}
+	// return value element
+	return elemListValues;
+}
+
+void QUaModbusValueList::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
+}

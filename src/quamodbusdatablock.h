@@ -6,6 +6,9 @@
 
 #include <QUaBaseObject>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 class QUaModbusClient;
 class QUaModbusDataBlockList;
 class QUaModbusValue;
@@ -26,14 +29,15 @@ class QUaModbusDataBlock : public QUaBaseObject
 	Q_PROPERTY(QUaProperty * SamplingTime READ samplingTime)
 
 	// UA variables
-	Q_PROPERTY(QUaBaseDataVariable * Data      READ data        )
-	Q_PROPERTY(QUaBaseDataVariable * LastError READ lastError   )
+	Q_PROPERTY(QUaBaseDataVariable * Data      READ data     )
+	Q_PROPERTY(QUaBaseDataVariable * LastError READ lastError)
 
 	// UA objects
 	Q_PROPERTY(QUaModbusValueList * Values READ values)
 
 public:
 	Q_INVOKABLE explicit QUaModbusDataBlock(QUaServer *server);
+	~QUaModbusDataBlock();
 
 	enum RegisterType 
 	{
@@ -47,19 +51,19 @@ public:
 
 	// UA properties
 
-	QUaProperty * type        ();
-	QUaProperty * address     ();
-	QUaProperty * size        ();
-	QUaProperty * samplingTime();
+	QUaProperty * type        () const;
+	QUaProperty * address     () const;
+	QUaProperty * size        () const;
+	QUaProperty * samplingTime() const;
 
 	// UA variables
 
-	QUaBaseDataVariable * data();
-	QUaBaseDataVariable * lastError();
+	QUaBaseDataVariable * data() const;
+	QUaBaseDataVariable * lastError() const;
 
 	// UA objects
 
-	QUaModbusValueList * values();
+	QUaModbusValueList * values() const;
 
 	// UA methods
 
@@ -84,10 +88,12 @@ private:
 	QUaModbusClient * client();
 	void startLoop();
 
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const;
+	void        fromDomElement(QDomElement  & domElem, QString &strError);
+
 	static quint32 m_minSamplingTime;
 	static QVector<quint16> variantToInt16Vect(const QVariant &value);
 };
-
-
 
 #endif // QUAMODBUSDATABLOCK_H

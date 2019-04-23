@@ -39,3 +39,25 @@ QUaModbusClient * QUaModbusDataBlockList::client()
 {
 	return dynamic_cast<QUaModbusClient*>(this->parent());
 }
+
+QDomElement QUaModbusDataBlockList::toDomElement(QDomDocument & domDoc) const
+{
+	// add block list element
+	QDomElement elemListBlocks = domDoc.createElement(QUaModbusDataBlockList::metaObject()->className());
+	domDoc.appendChild(elemListBlocks);
+	// loop children and add them as children
+	auto blocks = this->browseChildren<QUaModbusDataBlock>();
+	for (int i = 0; i < blocks.count(); i++)
+	{
+		auto block = blocks.at(i);
+		QDomElement elemBlock = block->toDomElement(domDoc);
+		elemListBlocks.appendChild(elemBlock);
+	}
+	// return block element
+	return elemListBlocks;
+}
+
+void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
+}

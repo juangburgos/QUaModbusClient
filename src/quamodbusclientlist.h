@@ -3,6 +3,9 @@
 
 #include <QUaFolderObject>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 class QUaModbusClientList : public QUaFolderObject
 {
     Q_OBJECT
@@ -16,9 +19,17 @@ public:
 
 	Q_INVOKABLE QString addRtuSerialClient(QString strClientId);
 
+	Q_INVOKABLE QString xmlConfig();
+
+	//Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
+
 private:
 	template<typename T>
 	QString addClient(QString strClientId);
+
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const;
+	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 };
 

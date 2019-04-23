@@ -1,9 +1,10 @@
 QT += core serialbus serialport network
 QT -= gui
+QT += xml
 
 CONFIG += c++11
 
-TARGET = QUaModbusClient
+TARGET  = QUaModbusClient
 CONFIG += console
 CONFIG -= app_bundle
 

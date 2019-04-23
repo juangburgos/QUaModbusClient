@@ -43,37 +43,43 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	values      ()->setDescription("List of converted values.");
 }
 
-QUaProperty * QUaModbusDataBlock::type()
+QUaModbusDataBlock::~QUaModbusDataBlock()
+{
+	// stop loop
+	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+}
+
+QUaProperty * QUaModbusDataBlock::type() const
 {
 	return this->browseChild<QUaProperty>("Type");
 }
 
-QUaProperty * QUaModbusDataBlock::address()
+QUaProperty * QUaModbusDataBlock::address() const
 {
 	return this->browseChild<QUaProperty>("Address");
 }
 
-QUaProperty * QUaModbusDataBlock::size()
+QUaProperty * QUaModbusDataBlock::size() const
 {
 	return this->browseChild<QUaProperty>("Size");
 }
 
-QUaProperty * QUaModbusDataBlock::samplingTime()
+QUaProperty * QUaModbusDataBlock::samplingTime() const
 {
 	return this->browseChild<QUaProperty>("SamplingTime");
 }
 
-QUaBaseDataVariable * QUaModbusDataBlock::data()
+QUaBaseDataVariable * QUaModbusDataBlock::data() const
 {
 	return this->browseChild<QUaBaseDataVariable>("Data");
 }
 
-QUaBaseDataVariable * QUaModbusDataBlock::lastError()
+QUaBaseDataVariable * QUaModbusDataBlock::lastError() const
 {
 	return this->browseChild<QUaBaseDataVariable>("LastError");
 }
 
-QUaModbusValueList * QUaModbusDataBlock::values()
+QUaModbusValueList * QUaModbusDataBlock::values() const
 {
 	return this->browseChild<QUaModbusValueList>("Values");
 }
@@ -199,10 +205,6 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			// handle error
 			auto error = p_reply->error();
 			this->lastError()->setValue(error);
-			if (error != QModbusDevice::Error::NoError)
-			{
-				// TODO : send UA event
-			}
 			// update values errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
@@ -308,10 +310,6 @@ void QUaModbusDataBlock::startLoop()
 			// handle error
 			auto error = m_replyRead->error();
 			this->lastError()->setValue(error);
-			if (error != QModbusDevice::Error::NoError)
-			{
-				// TODO : send UA event
-			}
 			// update block value
 			QVector<quint16> vectValues = m_replyRead->result().values();
 			this->data()->setValue(QVariant::fromValue(vectValues));
@@ -327,6 +325,28 @@ void QUaModbusDataBlock::startLoop()
 		}, Qt::QueuedConnection);
 
 	}, samplingTime);
+}
+
+QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
+{
+	// add block element
+	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::metaObject()->className());
+	// set block attributes
+	elemBlock.setAttribute("BrowseName"  , this->browseName());
+	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>().valueToKey(type()->value().value<QUaModbusDataBlock::RegisterType>()));
+	elemBlock.setAttribute("Address"     , address()->value().toInt());
+	elemBlock.setAttribute("Size"        , size()->value().toUInt());
+	elemBlock.setAttribute("SamplingTime", samplingTime()->value().toUInt());
+	// add value list element
+	auto elemValueList = values()->toDomElement(domDoc);
+	elemBlock.appendChild(elemValueList);
+	// return block element
+	return elemBlock;
+}
+
+void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strError)
+{
+	// TODO
 }
 
 QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)

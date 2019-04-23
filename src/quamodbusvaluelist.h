@@ -3,6 +3,9 @@
 
 #include <QUaFolderObject>
 
+#include <QDomDocument>
+#include <QDomElement>
+
 class QUaModbusDataBlock;
 
 class QUaModbusValueList : public QUaFolderObject
@@ -24,6 +27,10 @@ private:
 	QUaModbusDataBlock * block();
 
 	QList<QUaModbusValue*> values();
+
+	// XML import / export
+	QDomElement toDomElement  (QDomDocument & domDoc) const;
+	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 };
 
