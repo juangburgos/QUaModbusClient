@@ -65,12 +65,17 @@ public:
 
 	Q_INVOKABLE void remove();
 
+signals:
+	// to safely update error in ua server thread
+	void updateLastError(const QModbusDevice::Error &error);
+
 private slots:
 	void on_typeChanged        (const QVariant &value);
 	void on_addressChanged     (const QVariant &value);
 	void on_sizeChanged        (const QVariant &value);
 	void on_samplingTimeChanged(const QVariant &value);
 	void on_dataChanged        (const QVariant &value);
+	void on_updateLastError    (const QModbusDevice::Error &error);
 
 private:
 	int m_loopHandle;

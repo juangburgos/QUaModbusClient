@@ -31,6 +31,8 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	QObject::connect(size()        , &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_sizeChanged        , Qt::QueuedConnection);
 	QObject::connect(samplingTime(), &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_samplingTimeChanged, Qt::QueuedConnection);
 	QObject::connect(data()        , &QUaBaseVariable::valueChanged, this, &QUaModbusDataBlock::on_dataChanged        , Qt::QueuedConnection);
+	// to safely update error in ua server thread
+	QObject::connect(this, &QUaModbusDataBlock::updateLastError, this, &QUaModbusDataBlock::on_updateLastError);
 	// set descriptions
 	type        ()->setDescription("Type of Modbus register for this block.");
 	address     ()->setDescription("Start register address for this block (with respect to the register type).");
@@ -160,19 +162,19 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		// check if connected
 		auto state = client->state()->value().value<QModbusDevice::State>();
 		if (state != QModbusDevice::State::ConnectedState)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConnectionError);
+			emit this->updateLastError(QModbusDevice::Error::ConnectionError);
 			return;
 		}
 		// create data target 
@@ -182,14 +184,16 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 		QModbusReply * p_reply = client->m_modbusClient->sendWriteRequest(dataToWrite, serverAddress);
 		if (!p_reply)
 		{
-			// TODO : send UA event
+			emit this->updateLastError(QModbusDevice::Error::ReplyAbortedError);
 			return;
 		}
 		// subscribe to finished
 		QObject::connect(p_reply, &QModbusReply::finished, this, [this, p_reply]() mutable {
+			// NOTE : exec'd in ua server thread (not in worker thread)
 			// check if reply still valid
 			if (!p_reply)
 			{
+				lastError()->setValue(QModbusDevice::Error::ReplyAbortedError);
 				return;
 			}
 			// handle error
@@ -212,6 +216,26 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 	});
 }
 
+void QUaModbusDataBlock::on_updateLastError(const QModbusDevice::Error & error)
+{
+	lastError()->setValue(error);
+	// check if need to check errors in values
+	if (error != QModbusDevice::Error::ConnectionError)
+	{
+		return;
+	}
+	// update errors in values
+	auto values = this->values()->values();
+	for (int i = 0; i < values.count(); i++)
+	{
+		auto oldValErr = values.at(i)->lastError()->value().value<QModbusDevice::Error>();
+		if (oldValErr != QModbusDevice::Error::ConfigurationError)
+		{
+			values.at(i)->lastError()->setValue(QModbusDevice::Error::ConnectionError);
+		}
+	}
+}
+
 QUaModbusClient * QUaModbusDataBlock::client()
 {
 	return dynamic_cast<QUaModbusDataBlockList*>(this->parent())->client();
@@ -231,32 +255,24 @@ void QUaModbusDataBlock::startLoop()
 		// check if request is valid
 		if (m_modbusDataUnit.registerType() == QModbusDataUnit::RegisterType::Invalid)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
 			return;
 		}
 		// check if connected
 		auto state = client->state()->value().value<QModbusDevice::State>();
 		if (state != QModbusDevice::State::ConnectedState)
 		{
-			lastError()->setValue(QModbusDevice::Error::ConnectionError);
-			// update values errors
-			auto values = this->values()->values();
-			for (int i = 0; i < values.count(); i++)
-			{
-				auto oldValErr = values.at(i)->lastError()->value().value<QModbusDevice::Error>();
-				if(oldValErr != QModbusDevice::Error::ConfigurationError)
-					values.at(i)->lastError()->setValue(QModbusDevice::Error::ConnectionError);
-			}
+			emit this->updateLastError(QModbusDevice::Error::ConnectionError);
 			return;
 		}
 		// create and send request		
@@ -269,20 +285,24 @@ void QUaModbusDataBlock::startLoop()
 		// check if no error
 		if (!m_replyRead)
 		{
+			emit this->updateLastError(QModbusDevice::Error::ReplyAbortedError);
 			return;
 		}
-		// check if finished immediately
+		// check if finished immediately (ignore)
 		if (m_replyRead->isFinished())
 		{
 			// broadcast replies return immediately
 			m_replyRead->deleteLater();
 			m_replyRead = nullptr;
+			return;
 		}
 		// subscribe to finished
 		QObject::connect(m_replyRead, &QModbusReply::finished, this, [this]() {
+			// NOTE : exec'd in ua server thread (not in worker thread)
 			// check if reply still valid
 			if (!m_replyRead)
 			{
+				lastError()->setValue(QModbusDevice::Error::ReplyAbortedError);
 				return;
 			}
 			// handle error
