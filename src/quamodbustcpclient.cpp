@@ -43,10 +43,10 @@ QUaProperty * QUaModbusTcpClient::networkPort() const
 QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client element
-	QDomElement elemTcpClient = domDoc.createElement(QUaModbusTcpClient::metaObject()->className());
+	QDomElement elemTcpClient = domDoc.createElement(QUaModbusTcpClient::staticMetaObject.className());
 	// set client attributes
 	elemTcpClient.setAttribute("BrowseName"    , this->browseName());
-	elemTcpClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
+	elemTcpClient.setAttribute("ServerAddress" , serverAddress ()->value().toUInt());
 	elemTcpClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
 	elemTcpClient.setAttribute("NetworkAddress", networkAddress()->value().toString());
 	elemTcpClient.setAttribute("NetworkPort"   , networkPort   ()->value().toUInt());
@@ -59,7 +59,64 @@ QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// get client attributes (BrowseName must be already set)
+	QString strBrowseName = domElem.attribute("BrowseName");
+	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	bool bOK;
+	// ServerAddress
+	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
+	if (bOK)
+	{
+		this->serverAddress()->setValue(serverAddress);
+	}
+	else
+	{
+		strError += QString("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(serverAddress).arg(strBrowseName);
+	}
+	// KeepConnecting
+	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
+	if (bOK)
+	{
+		this->keepConnecting()->setValue(keepConnecting);
+	}
+	else
+	{
+		strError += QString("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n").arg(keepConnecting).arg(strBrowseName);
+	}
+	// NetworkAddress
+	auto networkAddress = domElem.attribute("NetworkAddress");
+	if (!networkAddress.isEmpty())
+	{
+		this->networkAddress()->setValue(networkAddress);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_networkAddressChanged(networkAddress);
+	}
+	else
+	{
+		strError += QString("Error : Invalid NetworkAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(networkAddress).arg(strBrowseName);
+	}
+	// NetworkPort
+	auto networkPort = domElem.attribute("NetworkPort").toUInt(&bOK);
+	if (bOK)
+	{
+		this->networkPort()->setValue(networkPort);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_networkPortChanged(networkPort);
+	}
+	else
+	{
+		strError += QString("Error : Invalid NetworkPort attribute '%1' in Modbus client %2. Ignoring.\n").arg(networkPort).arg(strBrowseName);
+	}
+	// get block list
+	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
+	if (!elemBlockList.isNull())
+	{
+		dataBlocks()->fromDomElement(elemBlockList, strError);
+	}
+	else
+	{
+		strError += QString("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg(strBrowseName);
+	}
 }
 
 void QUaModbusTcpClient::on_stateChanged(const QModbusDevice::State &state)
@@ -79,9 +136,8 @@ void QUaModbusTcpClient::on_stateChanged(const QModbusDevice::State &state)
 
 void QUaModbusTcpClient::on_networkAddressChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_networkAddressChanged", 
-		"Cannot change network address while connected.");
+	//Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState);
+	// NOTE : if connected, will not change until reconnect
 	QString strNetworkAddress = value.toString();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, strNetworkAddress]() {
@@ -91,9 +147,8 @@ void QUaModbusTcpClient::on_networkAddressChanged(const QVariant & value)
 
 void QUaModbusTcpClient::on_networkPortChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_networkPortChanged",
-		"Cannot change network port while connected.");
+	//Q_ASSERT(this->getState() == QModbusDevice::State::UnconnectedState);
+	// NOTE : if connected, will not change until reconnect
 	quint16 uiPort = value.value<quint16>();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, uiPort]() {

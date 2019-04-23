@@ -43,8 +43,10 @@ QUaModbusClient * QUaModbusDataBlockList::client()
 QDomElement QUaModbusDataBlockList::toDomElement(QDomDocument & domDoc) const
 {
 	// add block list element
-	QDomElement elemListBlocks = domDoc.createElement(QUaModbusDataBlockList::metaObject()->className());
+	QDomElement elemListBlocks = domDoc.createElement(QUaModbusDataBlockList::staticMetaObject.className());
 	domDoc.appendChild(elemListBlocks);
+	// set attributes
+	elemListBlocks.setAttribute("BrowseName", this->browseName());
 	// loop children and add them as children
 	auto blocks = this->browseChildren<QUaModbusDataBlock>();
 	for (int i = 0; i < blocks.count(); i++)
@@ -59,5 +61,44 @@ QDomElement QUaModbusDataBlockList::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// add blocks
+	QDomNodeList listBlocks = domElem.elementsByTagName(QUaModbusDataBlock::staticMetaObject.className());
+	for (int i = 0; i < listBlocks.count(); i++)
+	{
+		QDomElement elemBlock = listBlocks.at(i).toElement();
+		Q_ASSERT(!elemBlock.isNull());
+		if (!elemBlock.hasAttribute("BrowseName"))
+		{
+			strError += "Error : Cannot add Block without BrowseName attribute. Skipping.\n";
+			continue;
+		}
+		QString strBrowseName = elemBlock.attribute("BrowseName");
+		if (strBrowseName.isEmpty())
+		{
+			strError += "Error : Cannot add Block with empty BrowseName attribute. Skipping.\n";
+			continue;
+		}
+		// check if exists
+		auto block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
+		if (block)
+		{
+			strError += QString("Warning : Block with %1 BrowseName already exists. Overwriting Block configuration.\n").arg(strBrowseName);
+			// overwrite block config
+			// NOTE : loop already should have started
+			block->fromDomElement(elemBlock, strError);
+			continue;
+		}
+		block = this->addChild<QUaModbusDataBlock>();
+		if (!block)
+		{
+			strError += QString("Error : Failed to create Block with %1 BrowseName. Skipping.\n").arg(strBrowseName);
+			continue;
+		}
+		block->setDisplayName(strBrowseName);
+		block->setBrowseName (strBrowseName);
+		// set block config
+		block->fromDomElement(elemBlock, strError);
+		// start block loop
+		block->startLoop();
+	}
 }

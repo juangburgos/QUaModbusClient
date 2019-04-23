@@ -330,7 +330,7 @@ void QUaModbusDataBlock::startLoop()
 QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 {
 	// add block element
-	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::metaObject()->className());
+	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::staticMetaObject.className());
 	// set block attributes
 	elemBlock.setAttribute("BrowseName"  , this->browseName());
 	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>().valueToKey(type()->value().value<QUaModbusDataBlock::RegisterType>()));
@@ -346,7 +346,69 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// get client attributes (BrowseName must be already set)
+	QString strBrowseName = domElem.attribute("BrowseName", "");
+	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	bool bOK;
+	// Type
+	auto type = QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->type()->setValue(type);
+		// NOTE : force internal update
+		this->on_typeChanged(type);
+	}
+	else
+	{
+		strError += QString("Error : Invalid Type attribute '%1' in Block %2. Ignoring.\n").arg(type).arg(strBrowseName);
+	}
+	
+	// Address
+	auto address = domElem.attribute("Address").toInt(&bOK);
+	if (bOK)
+	{
+		this->address()->setValue(address);
+		// NOTE : force internal update
+		this->on_addressChanged(address);
+	}
+	else
+	{
+		strError += QString("Error : Invalid Address attribute '%1' in Block %2. Ignoring.\n").arg(address).arg(strBrowseName);
+	}
+	// Size
+	auto size = domElem.attribute("Size").toUInt(&bOK);
+	if (bOK)
+	{
+		this->size()->setValue(size);
+		// NOTE : force internal update
+		this->on_sizeChanged(size);
+	}
+	else
+	{
+		strError += QString("Error : Invalid Size attribute '%1' in Block %2. Ignoring.\n").arg(size).arg(strBrowseName);
+	}
+	// SamplingTime
+	auto samplingTime = domElem.attribute("SamplingTime").toUInt(&bOK);
+	if (bOK)
+	{
+		this->samplingTime()->setValue(samplingTime);
+		// NOTE : force internal update
+		this->on_samplingTimeChanged(samplingTime);
+	}
+	else
+	{
+		strError += QString("Error : Invalid SamplingTime attribute '%1' in Block %2. Ignoring.\n").arg(samplingTime).arg(strBrowseName);
+	}
+	// get value list
+	QDomElement elemValueList = domElem.firstChildElement(QUaModbusValueList::staticMetaObject.className());
+	if (!elemValueList.isNull())
+	{
+		values()->fromDomElement(elemValueList, strError);
+	}
+	else
+	{
+		strError += QString("Error : Block %1 does not have a QUaModbusValueList child. No values will be loaded.\n").arg(strBrowseName);
+	}
 }
 
 QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)

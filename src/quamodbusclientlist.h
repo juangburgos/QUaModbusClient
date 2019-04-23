@@ -21,7 +21,7 @@ public:
 
 	Q_INVOKABLE QString xmlConfig();
 
-	//Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
+	Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
 
 private:
 	template<typename T>

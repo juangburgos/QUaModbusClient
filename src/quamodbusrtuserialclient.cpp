@@ -76,7 +76,7 @@ QUaProperty * QUaModbusRtuSerialClient::stopBits() const
 QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element
-	QDomElement elemSerialClient = domDoc.createElement(QUaModbusRtuSerialClient::metaObject()->className());
+	QDomElement elemSerialClient = domDoc.createElement(QUaModbusRtuSerialClient::staticMetaObject.className());
 	// set client attributes
 	elemSerialClient.setAttribute("BrowseName"    , this->browseName());
 	elemSerialClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
@@ -95,7 +95,100 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// get client attributes (BrowseName must be already set)
+	QString strBrowseName = domElem.attribute("BrowseName", "");
+	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	bool bOK;
+	// ServerAddress
+	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
+	if (bOK)
+	{
+		this->serverAddress()->setValue(serverAddress);
+	}
+	else
+	{
+		strError += QString("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(serverAddress).arg(strBrowseName);
+	}
+	// KeepConnecting
+	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
+	if (bOK)
+	{
+		this->keepConnecting()->setValue(keepConnecting);
+	}
+	else
+	{
+		strError += QString("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n").arg(keepConnecting).arg(strBrowseName);
+	}
+	// ComPort
+	auto comPort = domElem.attribute("ComPort");
+	if (!comPort.isEmpty())
+	{
+		this->comPort()->setValue(comPort);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_comPortChanged(comPort);
+	}
+	else
+	{
+		strError += QString("Error : Invalid ComPort attribute '%1' in Modbus client %2. Ignoring.\n").arg(comPort).arg(strBrowseName);
+	}
+	// Parity
+	auto parity = QMetaEnum::fromType<QSerialPort::Parity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->parity()->setValue(parity);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_parityChanged(parity);
+	}
+	else
+	{
+		strError += QString("Error : Invalid Parity attribute '%1' in Modbus client %2. Ignoring.\n").arg(parity).arg(strBrowseName);
+	}
+	// BaudRate
+	auto baudRate = QMetaEnum::fromType<QSerialPort::BaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->baudRate()->setValue(baudRate);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_baudRateChanged(baudRate);
+	}
+	else
+	{
+		strError += QString("Error : Invalid BaudRate attribute '%1' in Modbus client %2. Ignoring.\n").arg(baudRate).arg(strBrowseName);
+	}
+	// DataBits
+	auto dataBits = QMetaEnum::fromType<QSerialPort::DataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->dataBits()->setValue(dataBits);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_dataBitsChanged(dataBits);
+	}
+	else
+	{
+		strError += QString("Error : Invalid DataBits attribute '%1' in Modbus client %2. Ignoring.\n").arg(dataBits).arg(strBrowseName);
+	}
+	// StopBits
+	auto stopBits = QMetaEnum::fromType<QSerialPort::StopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->stopBits()->setValue(stopBits);
+		// NOTE : force internal update (if connected won't apply until reconnect)
+		this->on_stopBitsChanged(stopBits);
+	}
+	else
+	{
+		strError += QString("Error : Invalid StopBits attribute '%1' in Modbus client %2. Ignoring.\n").arg(stopBits).arg(strBrowseName);
+	}
+	// get block list
+	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
+	if (!elemBlockList.isNull())
+	{
+		dataBlocks()->fromDomElement(elemBlockList, strError);
+	}
+	else
+	{
+		strError += QString("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg(strBrowseName);
+	}
 }
 
 void QUaModbusRtuSerialClient::on_stateChanged(const QModbusDevice::State &state)

@@ -89,12 +89,18 @@ void QUaModbusClient::setupModbusClient()
 
 QDomElement QUaModbusClient::toDomElement(QDomDocument & domDoc) const
 {
+	// must never reach here
+	Q_ASSERT(false);
+	Q_UNUSED(domDoc);
 	return QDomElement();
 }
 
 void QUaModbusClient::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// must never reach here
+	Q_ASSERT(false);
+	Q_UNUSED(domElem);
+	Q_UNUSED(strError);
 }
 
 void QUaModbusClient::on_stateChanged(QModbusDevice::State state)

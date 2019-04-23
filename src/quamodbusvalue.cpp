@@ -172,7 +172,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusDevice
 QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 {
 	// add value element
-	QDomElement elemValue = domDoc.createElement(QUaModbusValue::metaObject()->className());
+	QDomElement elemValue = domDoc.createElement(QUaModbusValue::staticMetaObject.className());
 	// set value attributes
 	elemValue.setAttribute("BrowseName"   , this->browseName());
 	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QUaModbusValue::ValueType>().valueToKey(type()->value().value<QUaModbusValue::ValueType>()));
@@ -183,7 +183,34 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	// TODO
+	// get client attributes (BrowseName must be already set)
+	QString strBrowseName = domElem.attribute("BrowseName", "");
+	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	bool bOK;
+	// Type
+	auto type = QMetaEnum::fromType<QUaModbusValue::ValueType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->type()->setValue(type);
+		// NOTE : force internal update
+		this->on_typeChanged(type);
+	}
+	else
+	{
+		strError += QString("Error : Invalid Type attribute '%1' in Value %2. Ignoring.\n").arg(type).arg(strBrowseName);
+	}
+	// AddressOffset
+	auto addressOffset = domElem.attribute("AddressOffset").toInt(&bOK);
+	if (bOK)
+	{
+		this->addressOffset()->setValue(addressOffset);
+		// NOTE : force internal update
+		this->on_addressOffsetChanged(addressOffset);
+	}
+	else
+	{
+		strError += QString("Error : Invalid AddressOffset attribute '%1' in Value %2. Ignoring.\n").arg(addressOffset).arg(strBrowseName);
+	}
 }
 
 int QUaModbusValue::typeBlockSize(const QUaModbusValue::ValueType & type)
