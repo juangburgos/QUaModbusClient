@@ -7,6 +7,7 @@ quint32 QUaModbusDataBlock::m_minSamplingTime = 50;
 QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	: QUaBaseObject(server)
 {
+	m_loopHandle = -1;
 	m_replyRead  = nullptr;
 	// NOTE : QObject parent might not be yet available in constructor
 	type   ()->setDataTypeEnum(QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>());
@@ -41,12 +42,6 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	data        ()->setDescription("The current block values as per the last successfull read.");
 	lastError   ()->setDescription("The last error reported while reading or writing this block.");
 	values      ()->setDescription("List of converted values.");
-}
-
-QUaModbusDataBlock::~QUaModbusDataBlock()
-{
-	// stop loop
-	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
 }
 
 QUaProperty * QUaModbusDataBlock::type() const
@@ -86,7 +81,15 @@ QUaModbusValueList * QUaModbusDataBlock::values() const
 
 void QUaModbusDataBlock::remove()
 {
-	this->deleteLater();
+	// stop loop
+	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+	m_loopHandle = -1;
+	// call deleteLater in thread, so thread has time to stop loop first
+	// NOTE : deleteLater will delete the object in the correct thread anyways
+	this->client()->m_workerThread.execInThread([this]() {
+		// then delete
+		this->deleteLater();	
+	}, Qt::EventPriority::LowEventPriority);
 }
 
 void QUaModbusDataBlock::on_typeChanged(const QVariant &value)
@@ -140,6 +143,7 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 	}
 	// stop old loop
 	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+	m_loopHandle = -1;
 	// start new loop
 	this->startLoop();
 	// update ua sample interval for data
@@ -325,6 +329,11 @@ void QUaModbusDataBlock::startLoop()
 		}, Qt::QueuedConnection);
 
 	}, samplingTime);
+}
+
+bool QUaModbusDataBlock::loopRunning()
+{
+	return m_loopHandle >= 0;
 }
 
 QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const

@@ -136,6 +136,11 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		}
 		// set client config
 		client->fromDomElement(elemClient, strError);
+		// connect if keepConnecting is set
+		if (client->keepConnecting()->value().toBool())
+		{
+			client->connectDevice();
+		}
 	}
 	// add Serial clients
 	QDomNodeList listSerialClients = domElem.elementsByTagName(QUaModbusRtuSerialClient::staticMetaObject.className());
@@ -170,5 +175,10 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		}
 		// set client config
 		client->fromDomElement(elemClient, strError);
+		// connect if keepConnecting is set
+		if (client->keepConnecting()->value().toBool())
+		{
+			client->connectDevice();
+		}
 	}
 }

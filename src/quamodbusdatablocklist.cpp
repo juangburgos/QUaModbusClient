@@ -98,7 +98,10 @@ void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & str
 		block->setBrowseName (strBrowseName);
 		// set block config
 		block->fromDomElement(elemBlock, strError);
-		// start block loop
-		block->startLoop();
+		// start block loop if setting samplingTime didn't
+		if (!block->loopRunning())
+		{
+			block->startLoop();
+		}
 	}
 }

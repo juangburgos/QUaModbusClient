@@ -37,7 +37,6 @@ class QUaModbusDataBlock : public QUaBaseObject
 
 public:
 	Q_INVOKABLE explicit QUaModbusDataBlock(QUaServer *server);
-	~QUaModbusDataBlock();
 
 	enum RegisterType 
 	{
@@ -87,6 +86,7 @@ private:
 	QModbusDataUnit m_modbusDataUnit; // NOTE : only modify and access in thread
 	QUaModbusClient * client();
 	void startLoop();
+	bool loopRunning();
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
