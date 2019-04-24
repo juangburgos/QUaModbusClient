@@ -14,7 +14,9 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	// instantiate client
 	m_workerThread.execInThread([this]() {
 		// instantiate in thread so it runs on the thread
-		m_modbusClient.reset(new QModbusTcpClient(nullptr));
+		m_modbusClient.reset(new QModbusTcpClient(nullptr), [](QObject * client) {
+			client->deleteLater();
+		});
 		// defaults
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, "127.0.0.1");
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter   , 502);
