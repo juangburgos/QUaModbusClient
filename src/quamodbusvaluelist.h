@@ -7,6 +7,7 @@
 #include <QDomElement>
 
 class QUaModbusDataBlock;
+class QUaModbusValue;
 
 class QUaModbusValueList : public QUaFolderObject
 {
