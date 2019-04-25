@@ -6,6 +6,9 @@
 //        and was getting "lnk2019 unresolved external symbol template function" without it
 #include <QUaServer>
 
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
+
 QUaModbusValueList::QUaModbusValueList(QUaServer *server)
 	: QUaFolderObject(server)
 {
@@ -20,13 +23,27 @@ QString QUaModbusValueList::addValue(QString strValueId)
 	{
 		return "Error : Value Id argument cannot be empty.";
 	}
+	// check valid length
+	if (strValueId.count() > 10)
+	{
+		return "Error : Value Id cannot contain more than 6 characters.";
+	}
+	// check valid characters
+	QRegularExpression rx("^[a-zA-Z0-9_]*$");
+	QRegularExpressionMatch match = rx.match(strValueId, 0, QRegularExpression::PartialPreferCompleteMatch);
+	if (!match.hasMatch())
+	{
+		return "Error : Value Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.";
+	}
 	// check if id already exists
 	if (this->hasChild(strValueId))
 	{
 		return "Error : Value Id already exists.";
 	}
 	// create instance
-	auto block = this->addChild<QUaModbusValue>();
+	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
+	//QString strNodeId = QString("ns=1;s=%1").arg(this->nodeBrowsePath().join(".") + "." + strClientId);
+	auto block = this->addChild<QUaModbusValue>(/*strNodeId*/);
 	block->setDisplayName(strValueId);
 	block->setBrowseName(strValueId);
 	// return
@@ -90,14 +107,13 @@ void QUaModbusValueList::fromDomElement(QDomElement & domElem, QString & strErro
 			value->fromDomElement(elemValue, strError);
 			continue;
 		}
-		value = this->addChild<QUaModbusValue>();
+		this->addValue(strBrowseName);
+		value = this->browseChild<QUaModbusValue>(strBrowseName);
 		if (!value)
 		{
 			strError += QString("Error : Failed to create Value with %1 BrowseName. Skipping.\n").arg(strBrowseName);
 			continue;
 		}
-		value->setDisplayName(strBrowseName);
-		value->setBrowseName(strBrowseName);
 		// set value config
 		value->fromDomElement(elemValue, strError);
 	}

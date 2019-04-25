@@ -29,6 +29,9 @@ public:
 	QUaProperty * dataBits() const;
 	QUaProperty * stopBits() const;
 
+	static QString ComPorts;
+	static QMap<int, QByteArray> EnumComPorts();
+
 protected:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;

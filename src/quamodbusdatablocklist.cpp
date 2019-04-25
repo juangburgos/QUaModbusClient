@@ -6,6 +6,9 @@
 //        and was getting "lnk2019 unresolved external symbol template function" without it
 #include <QUaServer>
 
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
+
 QUaModbusDataBlockList::QUaModbusDataBlockList(QUaServer *server)
 	: QUaFolderObject(server)
 {
@@ -20,13 +23,27 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 	{
 		return "Error : Block Id argument cannot be empty.";
 	}
+	// check valid length
+	if (strBlockId.count() > 6)
+	{
+		return "Error : Block Id cannot contain more than 6 characters.";
+	}
+	// check valid characters
+	QRegularExpression rx("^[a-zA-Z0-9_]*$");
+	QRegularExpressionMatch match = rx.match(strBlockId, 0, QRegularExpression::PartialPreferCompleteMatch);
+	if (!match.hasMatch())
+	{
+		return "Error : Block Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.";
+	}
 	// check if id already exists
 	if (this->hasChild(strBlockId))
 	{
 		return "Error : Block Id already exists.";
 	}
 	// create instance
-	auto block = this->addChild<QUaModbusDataBlock>();
+	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
+	//QString strNodeId = QString("ns=1;s=%1").arg(this->nodeBrowsePath().join(".") + "." + strClientId);
+	auto block = this->addChild<QUaModbusDataBlock>(/*strNodeId*/);
 	block->setDisplayName(strBlockId);
 	block->setBrowseName(strBlockId);
 	// start block loop
@@ -88,14 +105,13 @@ void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & str
 			block->fromDomElement(elemBlock, strError);
 			continue;
 		}
-		block = this->addChild<QUaModbusDataBlock>();
+		this->addDataBlock(strBrowseName);
+		block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (!block)
 		{
 			strError += QString("Error : Failed to create Block with %1 BrowseName. Skipping.\n").arg(strBrowseName);
 			continue;
 		}
-		block->setDisplayName(strBrowseName);
-		block->setBrowseName (strBrowseName);
 		// set block config
 		block->fromDomElement(elemBlock, strError);
 		// start block loop if setting samplingTime didn't

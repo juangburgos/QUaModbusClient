@@ -1,11 +1,14 @@
 #include "quamodbusrtuserialclient.h"
 
+#include <QSerialPortInfo>
+
 QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
 	// set defaults
 	type    ()->setValue("Serial");
-	comPort ()->setValue("COM0");
+	comPort ()->setDataTypeEnum(QUaModbusRtuSerialClient::ComPorts);
+	comPort ()->setValue(0);
 	parity  ()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::Parity>());
 	parity  ()->setValue(QSerialPort::EvenParity);
 	baudRate()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::BaudRate>());
@@ -27,7 +30,7 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 			client->deleteLater();
 		});
 		// defaults
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, "COM0");
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, QString(QUaModbusRtuSerialClient::EnumComPorts().value(0)));
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialParityParameter  , QSerialPort::EvenParity);
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, QSerialPort::Baud19200 );
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, QSerialPort::Data8     );
@@ -75,6 +78,20 @@ QUaProperty * QUaModbusRtuSerialClient::stopBits() const
 	return this->browseChild<QUaProperty>("StopBits");
 }
 
+QString QUaModbusRtuSerialClient::ComPorts = "QUaModbusRtuSerialClient::ComPorts";
+
+QMap<int, QByteArray> QUaModbusRtuSerialClient::EnumComPorts()
+{
+	QMap<int, QByteArray> mapPorts;
+	QList<QSerialPortInfo> list = QSerialPortInfo::availablePorts();
+	for (int i = 0; i < list.count(); i++)
+	{
+		QSerialPortInfo portInfo = list.at(i);
+		mapPorts.insert(i, portInfo.portName().toUtf8());
+	}
+	return mapPorts;
+}
+
 QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element
@@ -83,7 +100,7 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 	elemSerialClient.setAttribute("BrowseName"    , this->browseName());
 	elemSerialClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
 	elemSerialClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
-	elemSerialClient.setAttribute("ComPort"       , comPort()->value().toString());
+	elemSerialClient.setAttribute("ComPort"       , QString(QUaModbusRtuSerialClient::EnumComPorts().value(comPort()->value().toInt())));
 	elemSerialClient.setAttribute("Parity"  , QMetaEnum::fromType<QSerialPort::Parity>  ().valueToKey(parity  ()->value().value<QSerialPort::Parity>  ()));
 	elemSerialClient.setAttribute("BaudRate", QMetaEnum::fromType<QSerialPort::BaudRate>().valueToKey(baudRate()->value().value<QSerialPort::BaudRate>()));
 	elemSerialClient.setAttribute("DataBits", QMetaEnum::fromType<QSerialPort::DataBits>().valueToKey(dataBits()->value().value<QSerialPort::DataBits>()));
@@ -125,7 +142,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	auto comPort = domElem.attribute("ComPort");
 	if (!comPort.isEmpty())
 	{
-		this->comPort()->setValue(comPort);
+		this->comPort()->setValue(QUaModbusRtuSerialClient::EnumComPorts().key(comPort.toUtf8(), 0));
 		// NOTE : force internal update (if connected won't apply until reconnect)
 		this->on_comPortChanged(comPort);
 	}
@@ -219,7 +236,7 @@ void QUaModbusRtuSerialClient::on_comPortChanged(const QVariant & value)
 	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
 		"QUaModbusTcpClient::on_comPortChanged",
 		"Cannot change com port while connected.");
-	QString strComPort = value.toString();
+	QString strComPort = QUaModbusRtuSerialClient::EnumComPorts().value(value.toInt());
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, strComPort]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, strComPort);
