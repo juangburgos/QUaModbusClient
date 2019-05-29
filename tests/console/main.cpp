@@ -3,7 +3,7 @@
 
 #include <QUaServer>
 
-#include "quamodbusclientlist.h"
+#include <QUaModbusClientList>
 
 int main(int argc, char *argv[])
 {
