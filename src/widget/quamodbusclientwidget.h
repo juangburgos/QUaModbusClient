@@ -9,7 +9,9 @@ namespace Ui {
 class QUaModbusClientWidget;
 }
 
+class QUaModbusClient;
 class QUaModbusClientList;
+class QUaModbusClientDialog;
 
 class QUaModbusClientWidget : public QWidget
 {
@@ -40,6 +42,11 @@ private:
 	QUaModbusClientList * m_listClients;
 	QStandardItemModel    m_modelClients;
 	QSortFilterProxyModel m_proxyClients;
+
+	void showNewClientDialog(QUaModbusClientDialog &dialog);
+	void handleClientAdded  (const QString &strClientId);
+	void showNewBlockDialog (QUaModbusClient * client, QUaModbusClientDialog &dialog);
+	void handleBlockAdded   (const QString &strClientId, const QString &strBlockId);
 };
 
 #endif // QUAMODBUSCLIENTWIDGET_H

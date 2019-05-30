@@ -63,6 +63,8 @@ public:
 	Q_INVOKABLE void connectDevice();
 	Q_INVOKABLE void disconnectDevice();
 
+signals:
+	void stateChanged(QModbusDevice::State state);
 
 protected:
 	QLambdaThreadWorker           m_workerThread;

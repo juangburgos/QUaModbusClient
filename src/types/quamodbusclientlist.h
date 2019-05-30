@@ -42,24 +42,24 @@ inline QString QUaModbusClientList::addClient(QString strClientId)
 	// check empty
 	if (strClientId.isEmpty())
 	{
-		return "Error : Client Id argument cannot be empty.";
+		return tr("%1 : Client Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
 	if (strClientId.count() > 6)
 	{
-		return "Error : Client Id cannot contain more than 6 characters.";
+		return tr("%1 : Client Id cannot contain more than 6 characters.").arg("Error");
 	}
 	// check valid characters
 	QRegularExpression rx("^[a-zA-Z0-9_]*$");
 	QRegularExpressionMatch match = rx.match(strClientId, 0, QRegularExpression::PartialPreferCompleteMatch);
 	if (!match.hasMatch())
 	{
-		return "Error : Client Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.";
+		return tr("%1 : Client Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
 	if (this->hasChild(strClientId))
 	{
-		return "Error : Client Id already exists.";
+		return tr("%1 : Client Id already exists.").arg("Error");
 	}
 	// create instance
 	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed

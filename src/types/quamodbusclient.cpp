@@ -15,12 +15,12 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	serverAddress ()->setWriteAccess(true);
 	keepConnecting()->setWriteAccess(true);
 	// set descriptions
-	type          ()->setDescription("Modbus client communication type (TCP or RTU Serial).");
-	serverAddress ()->setDescription("Modbus server Device Id or Modbus address.");
-	keepConnecting()->setDescription("Whether the client should try to keep connecting after connection failure");
-	state         ()->setDescription("Modbus connection state.");
-	lastError     ()->setDescription("Last error occured at connection level.");
-	dataBlocks    ()->setDescription("List of Modbus data blocks updated through polling.");
+	type          ()->setDescription(tr("Modbus client communication type (TCP or RTU Serial)."));
+	serverAddress ()->setDescription(tr("Modbus server Device Id or Modbus address."));
+	keepConnecting()->setDescription(tr("Whether the client should try to keep connecting after connection failure"));
+	state         ()->setDescription(tr("Modbus connection state."));
+	lastError     ()->setDescription(tr("Last error occured at connection level."));
+	dataBlocks    ()->setDescription(tr("List of Modbus data blocks updated through polling."));
 }
 
 QUaProperty * QUaModbusClient::type() const
@@ -126,6 +126,10 @@ void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
 	{
 		serverAddress()->setWriteAccess(false);
 	}
+	// NOTE : need to add custom signal because OPC UA valueChanged
+	//        only works for changed through network
+	// emit
+	emit this->stateChanged(state);
 }
 
 void QUaModbusClient::on_errorChanged(QModbusDevice::Error error)

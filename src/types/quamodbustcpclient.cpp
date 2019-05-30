@@ -28,8 +28,8 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	QObject::connect(networkAddress(), &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkAddressChanged, Qt::QueuedConnection);
 	QObject::connect(networkPort()   , &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkPortChanged   , Qt::QueuedConnection);
 	// set descriptions
-	networkAddress()->setDescription("Network address (IP address or domain name) of the Modbus server.");
-	networkPort()   ->setDescription("Network port (TCP port) of the Modbus server.");
+	networkAddress()->setDescription(tr("Network address (IP address or domain name) of the Modbus server."));
+	networkPort()   ->setDescription(tr("Network port (TCP port) of the Modbus server."));
 }
 
 QUaProperty * QUaModbusTcpClient::networkAddress() const
@@ -73,7 +73,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(serverAddress).arg(strBrowseName);
+		strError += QString(tr("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n")).arg(serverAddress).arg(strBrowseName);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
@@ -83,7 +83,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n").arg(keepConnecting).arg(strBrowseName);
+		strError += QString(tr("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n")).arg(keepConnecting).arg(strBrowseName);
 	}
 	// NetworkAddress
 	auto networkAddress = domElem.attribute("NetworkAddress");
@@ -95,7 +95,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid NetworkAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(networkAddress).arg(strBrowseName);
+		strError += QString(tr("Error : Invalid NetworkAddress attribute '%1' in Modbus client %2. Ignoring.\n")).arg(networkAddress).arg(strBrowseName);
 	}
 	// NetworkPort
 	auto networkPort = domElem.attribute("NetworkPort").toUInt(&bOK);
@@ -107,7 +107,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid NetworkPort attribute '%1' in Modbus client %2. Ignoring.\n").arg(networkPort).arg(strBrowseName);
+		strError += QString(tr("Error : Invalid NetworkPort attribute '%1' in Modbus client %2. Ignoring.\n")).arg(networkPort).arg(strBrowseName);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
@@ -117,7 +117,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg(strBrowseName);
+		strError += QString(tr("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n")).arg(strBrowseName);
 	}
 }
 

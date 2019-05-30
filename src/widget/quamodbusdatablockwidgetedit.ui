@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QUaModbusDataBlockWidgetEdit</class>
+ <widget class="QWidget" name="QUaModbusDataBlockWidgetEdit">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>260</width>
+    <height>124</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item row="1" column="0">
+    <widget class="QLabel" name="labelType">
+     <property name="toolTip">
+      <string>Modbus register type.</string>
+     </property>
+     <property name="text">
+      <string>Type :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="comboBoxType">
+     <property name="toolTip">
+      <string>Modbus register type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="labelAddress">
+     <property name="toolTip">
+      <string>Start Modbus address of the block.</string>
+     </property>
+     <property name="text">
+      <string>Address :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="spinBoxAddress">
+     <property name="toolTip">
+      <string>Start Modbus address of the block.</string>
+     </property>
+     <property name="maximum">
+      <number>65535</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="labelSize">
+     <property name="toolTip">
+      <string>Size of the block in number of registers.</string>
+     </property>
+     <property name="text">
+      <string>Size :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="spinBoxSize">
+     <property name="toolTip">
+      <string>Size of the block in number of registers.</string>
+     </property>
+     <property name="maximum">
+      <number>130</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="labelSamplingTime">
+     <property name="toolTip">
+      <string>Sampling time [msec] to request the block data.</string>
+     </property>
+     <property name="text">
+      <string>Sampling Time :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="spinBoxSampling">
+     <property name="toolTip">
+      <string>Sampling time [msec] to request the block data.</string>
+     </property>
+     <property name="minimum">
+      <number>50</number>
+     </property>
+     <property name="maximum">
+      <number>999999999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="labelId">
+     <property name="toolTip">
+      <string>Unique, not empty, alphanumeric Id.</string>
+     </property>
+     <property name="text">
+      <string>Block Id :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="lineEditId">
+     <property name="toolTip">
+      <string>Unique, not empty, alphanumeric Id.</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

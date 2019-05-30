@@ -1,21 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <author/>
- <comment/>
- <exportmacro/>
  <class>QUaModbusClientWidgetEdit</class>
  <widget class="QWidget" name="QUaModbusClientWidgetEdit">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>299</width>
+    <height>346</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="frameCommon">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="1" column="0">
+       <widget class="QLabel" name="labelType">
+        <property name="toolTip">
+         <string>Select etiher a TCP or a Serial Modbus client</string>
+        </property>
+        <property name="text">
+         <string>Client Type :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="comboBoxType">
+        <property name="toolTip">
+         <string>Select etiher a TCP or a Serial Modbus client</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="labelModbusAddress">
+        <property name="toolTip">
+         <string>Modbus Device Address</string>
+        </property>
+        <property name="text">
+         <string>Device Address :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spinBoxDeviceAddress">
+        <property name="toolTip">
+         <string>Modbus Device Address</string>
+        </property>
+        <property name="maximum">
+         <number>255</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelKeepConnect">
+        <property name="toolTip">
+         <string>Retry connection indefinetively if connection fails.</string>
+        </property>
+        <property name="text">
+         <string>Keep Connecting :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="checkBoxKeepConnect">
+        <property name="toolTip">
+         <string>Retry connection indefinetively if connection fails.</string>
+        </property>
+        <property name="text">
+         <string>Disabled</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelId">
+        <property name="text">
+         <string>Client Id :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEditId"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frameTcp">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QFormLayout" name="formLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelTcpAddress">
+        <property name="toolTip">
+         <string>Number that uniquely identifies a host on a TCP/IP network.</string>
+        </property>
+        <property name="text">
+         <string>IP Address :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEditAddress">
+        <property name="toolTip">
+         <string>Number that uniquely identifies a host on a TCP/IP network.</string>
+        </property>
+        <property name="placeholderText">
+         <string>E.g. 127.0.0.1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="labelTcpPort">
+        <property name="toolTip">
+         <string>16-bit unsigned number as an endpoint for host-to-host connectivity.</string>
+        </property>
+        <property name="text">
+         <string>Port :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBoxPort">
+        <property name="toolTip">
+         <string>16-bit unsigned number as an endpoint for host-to-host connectivity.</string>
+        </property>
+        <property name="maximum">
+         <number>70000</number>
+        </property>
+        <property name="value">
+         <number>502</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frameSerial">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QFormLayout" name="formLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelComPort">
+        <property name="toolTip">
+         <string>Serial communication interface.</string>
+        </property>
+        <property name="text">
+         <string>COM Port :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="comboBoxComPort">
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="labelParity">
+        <property name="toolTip">
+         <string>Bit added to a string of binary code to ensure that the total number of 1-bits in the string is even or odd.</string>
+        </property>
+        <property name="text">
+         <string>Parity :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="comboBoxParity">
+        <property name="toolTip">
+         <string>Bit added to a string of binary code to ensure that the total number of 1-bits in the string is even or odd.</string>
+        </property>
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="labelBaudRate">
+        <property name="toolTip">
+         <string>Data rate in bits per second.</string>
+        </property>
+        <property name="text">
+         <string>Baud Rate :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="comboBoxBaudRate">
+        <property name="toolTip">
+         <string>Data rate in bits per second.</string>
+        </property>
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelDatabits">
+        <property name="toolTip">
+         <string>The number of data bits in each character.</string>
+        </property>
+        <property name="text">
+         <string>Data Bits :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="comboBoxDataBits">
+        <property name="toolTip">
+         <string>The number of data bits in each character.</string>
+        </property>
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelStopBits">
+        <property name="toolTip">
+         <string>Bits sent at the end of every character allow the receiving signal hardware to detect the end of a character and to resynchronise with the character stream.</string>
+        </property>
+        <property name="text">
+         <string>Stop Bits :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QComboBox" name="comboBoxStopBits">
+        <property name="toolTip">
+         <string>Bits sent at the end of every character allow the receiving signal hardware to detect the end of a character and to resynchronise with the character stream.</string>
+        </property>
+        <property name="editable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
  </widget>
- <pixmapfunction/>
+ <resources/>
  <connections/>
 </ui>
