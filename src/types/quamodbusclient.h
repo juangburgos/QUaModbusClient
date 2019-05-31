@@ -19,6 +19,9 @@
 class QUaModbusClientList;
 class QUaModbusDataBlock;
 
+typedef QModbusDevice::State QModbusState;
+typedef QModbusDevice::Error QModbusError;
+
 class QUaModbusClient : public QUaBaseObject
 {
 	friend class QUaModbusClientList;
@@ -63,14 +66,24 @@ public:
 	Q_INVOKABLE void connectDevice();
 	Q_INVOKABLE void disconnectDevice();
 
+	// C++ API
+
+	QModbusState getState() const;
+
+	quint8 getServerAddress() const;
+	void   setServerAddress(const quint8 &serverAddress);
+
+	bool   getKeepConnecting() const;
+	void   setKeepConnecting(const bool &keepConnecting);
+
 signals:
-	void stateChanged(QModbusDevice::State state);
+	void stateChanged(QModbusState state);
+	void lastErrorChanged(QModbusError error);
 
 protected:
 	QLambdaThreadWorker           m_workerThread;
 	QSharedPointer<QModbusClient> m_modbusClient;
 
-	QModbusDevice::State getState();
 	void setupModbusClient();
 
 	// XML import / export
@@ -78,8 +91,8 @@ protected:
 	virtual void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 private slots:
-	void on_stateChanged(QModbusDevice::State state);
-	void on_errorChanged(QModbusDevice::Error error);
+	void on_stateChanged(QModbusState state);
+	void on_errorChanged(QModbusError error);
 };
 
 #endif // QUAMODBUSCLIENT_H

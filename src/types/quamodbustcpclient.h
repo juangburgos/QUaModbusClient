@@ -23,6 +23,19 @@ public:
 	QUaProperty * networkAddress() const;
 	QUaProperty * networkPort() const;
 
+	// C++ API (all is read/write)
+
+	QString  getNetworkAddress() const;
+	void     setNetworkAddress(const QString &strNetworkAddress);
+
+	quint16  getNetworkPort() const;
+	void     setNetworkPort(const quint16 &networkPort);
+
+signals:
+	// C++ API
+	void networkAddressChanged(const QString &strNetworkAddress);
+	void networkPortChanged(const quint16 &networkPort);
+
 protected:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;

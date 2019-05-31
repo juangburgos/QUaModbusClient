@@ -12,8 +12,6 @@
 #include <QUaModbusDataBlock>
 #include <QUaModbusDataBlockWidgetEdit>
 
-typedef QModbusDevice::State QModbusState;
-
 QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusClientWidget)
@@ -33,7 +31,6 @@ QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
 	// setup params table
 	ui->treeViewModbus->setModel(&m_proxyClients);
 	ui->treeViewModbus->setAlternatingRowColors(true);
-	//ui->treeViewModbus->horizontalHeader()->setStretchLastSection(true);
 	ui->treeViewModbus->setSortingEnabled(true);
 	ui->treeViewModbus->setSelectionBehavior(QAbstractItemView::SelectRows);
 }
@@ -113,11 +110,11 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			auto cliTcp = m_listClients->browseChild<QUaModbusTcpClient>(strId);
 			Q_CHECK_PTR(cliTcp);
 			// common
-			cliTcp->serverAddress ()->setValue(widgetNewClient->deviceAddress());
-			cliTcp->keepConnecting()->setValue(widgetNewClient->keepConnecting());
+			cliTcp->setServerAddress (widgetNewClient->deviceAddress());
+			cliTcp->setKeepConnecting(widgetNewClient->keepConnecting());
 			// tcp
-			cliTcp->networkAddress()->setValue(widgetNewClient->ipAddress());
-			cliTcp->networkPort   ()->setValue(widgetNewClient->networkPort());
+			cliTcp->setNetworkAddress(widgetNewClient->ipAddress());
+			cliTcp->setNetworkPort   (widgetNewClient->networkPort());
 		}
 		break;
 	case QUaModbusClientWidgetEdit::Serial:
@@ -134,14 +131,14 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			auto cliSerial = m_listClients->browseChild<QUaModbusRtuSerialClient>(strId);
 			Q_CHECK_PTR(cliSerial);
 			// common
-			cliSerial->serverAddress ()->setValue(widgetNewClient->deviceAddress());
-			cliSerial->keepConnecting()->setValue(widgetNewClient->keepConnecting());
+			cliSerial->setServerAddress (widgetNewClient->deviceAddress());
+			cliSerial->setKeepConnecting(widgetNewClient->keepConnecting());
 			// serial
-			cliSerial->comPort ()->setValue(widgetNewClient->comPortKey());
-			cliSerial->parity  ()->setValue(widgetNewClient->parity()    );
-			cliSerial->baudRate()->setValue(widgetNewClient->baudRate()  );
-			cliSerial->dataBits()->setValue(widgetNewClient->dataBits()  );
-			cliSerial->stopBits()->setValue(widgetNewClient->stopBits()  );
+			cliSerial->setComPortKey(widgetNewClient->comPortKey());
+			cliSerial->setParity    (widgetNewClient->parity()    );
+			cliSerial->setBaudRate  (widgetNewClient->baudRate()  );
+			cliSerial->setDataBits  (widgetNewClient->dataBits()  );
+			cliSerial->setStopBits  (widgetNewClient->stopBits()  );
 		}
 		break;
 	case QUaModbusClientWidgetEdit::Invalid:
@@ -157,29 +154,32 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 {
 	// get client
-	auto cli  = m_listClients->browseChild<QUaModbusClient>(strClientId);
-	Q_ASSERT_X(cli, "QUaModbusClientWidget", "Client instance must already exist in OPC UA");
-	auto root = m_modelClients.invisibleRootItem();
+	auto client  = m_listClients->browseChild<QUaModbusClient>(strClientId);
+	Q_ASSERT_X(client, "QUaModbusClientWidget", "Client instance must already exist in OPC UA");
+	auto parent = m_modelClients.invisibleRootItem();
+
 	// object column
-	auto row  = root->rowCount();
-	auto iobj = new QStandardItem(strClientId);
-	root->setChild(row, (int)Headers::Objects, iobj);
+	auto row  = parent->rowCount();
+	auto iObj = new QStandardItem(strClientId);
+	parent->setChild(row, (int)Headers::Objects, iObj);
+
 	// status column
 	auto enumState = QMetaEnum::fromType<QModbusState>();
-	auto state     = cli->state();
+	auto state     = client->state();
 	auto modState  = state->value().value<QModbusState>();
 	auto strState  = QString(enumState.valueToKey(modState));
-	auto istat     = new QStandardItem(strState);
-	root->setChild(row, (int)Headers::Status, istat);
-	QObject::connect(cli, &QUaModbusClient::stateChanged, this,
-	[istat, state, enumState](QModbusDevice::State state) {
-		Q_CHECK_PTR(istat);
+	auto iStat     = new QStandardItem(strState);
+	parent->setChild(row, (int)Headers::Status, iStat);
+	QObject::connect(client, &QUaModbusClient::stateChanged, this,
+	[iStat, enumState](QModbusState state) {
+		Q_CHECK_PTR(iStat);
 		auto strState = QString(enumState.valueToKey(state));
-		istat->setText(strState);
+		iStat->setText(strState);
 	});
+
 	// options
-	auto iacts = new QStandardItem();
-	root->setChild(row, (int)Headers::Actions, iacts);
+	auto iActs = new QStandardItem();
+	parent->setChild(row, (int)Headers::Actions, iActs);
 	QWidget     *pWidget = new QWidget;
 	QHBoxLayout *pLayout = new QHBoxLayout;
 	QPushButton *pButCon = new QPushButton;
@@ -192,19 +192,19 @@ void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 	pButCon->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 	//pButDel->setEnabled(this->allowActions()); // TODO
 	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
-	QObject::connect(pButCon, &QPushButton::clicked, [this, cli, pButCon]() {
-		Q_CHECK_PTR(cli);
-		auto state    = cli->state();
+	QObject::connect(pButCon, &QPushButton::clicked, [this, client, pButCon]() {
+		Q_CHECK_PTR(client);
+		auto state    = client->state();
 		auto modState = state->value().value<QModbusState>();
 		if (modState == QModbusState::UnconnectedState)
 		{
-			cli->connectDevice();
+			client->connectDevice();
 			return;
 		}
-		cli->disconnectDevice();
+		client->disconnectDevice();
 	});
-	QObject::connect(cli, &QUaModbusClient::stateChanged, this,
-	[pButCon](QModbusDevice::State state) {
+	QObject::connect(client, &QUaModbusClient::stateChanged, this,
+	[pButCon](QModbusState state) {
 		if (state == QModbusState::UnconnectedState)
 		{
 			pButCon->setText(tr("Connect"));
@@ -212,7 +212,6 @@ void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 		}
 		pButCon->setText(tr("Disconnect"));
 	});
-
 	// add block button
 	pButBlk->setText(tr("Add Block"));
 	pButBlk->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -220,17 +219,16 @@ void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 	pButBlk->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 	//pButDel->setEnabled(this->allowActions()); // TODO
 	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
-	QObject::connect(pButBlk, &QPushButton::clicked, [this, cli]() {
-		Q_CHECK_PTR(cli);
+	QObject::connect(pButBlk, &QPushButton::clicked, [this, client]() {
+		Q_CHECK_PTR(client);
 		// use block edit widget
 		QUaModbusDataBlockWidgetEdit * widgetNewBlock = new QUaModbusDataBlockWidgetEdit;
 		QUaModbusClientDialog dialog;
 		// NOTE : dialog takes ownershit
 		dialog.setWidget(widgetNewBlock);
 		// NOTE : call in own method to we can recall it if fails
-		this->showNewBlockDialog(cli, dialog);
+		this->showNewBlockDialog(client, dialog);
 	});
-
 	// delete button
 	pButDel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	pButDel->setText(tr("Delete"));
@@ -238,32 +236,31 @@ void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 	pButDel->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 	//pButDel->setEnabled(this->allowActions()); // TODO
 	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
-	QObject::connect(pButDel, &QPushButton::clicked, [this, cli, iobj]() {
-		Q_CHECK_PTR(cli);
-		Q_CHECK_PTR(iobj);
-		cli->remove();
-		m_modelClients.removeRows(iobj->index().row(), 1);
+	QObject::connect(pButDel, &QPushButton::clicked, [this, client, iObj]() {
+		Q_CHECK_PTR(client);
+		Q_CHECK_PTR(iObj);
+		client->remove();
+		m_modelClients.removeRows(iObj->index().row(), 1);
 	});
-
 	// layout
 	pLayout->addWidget(pButCon);
 	pLayout->addWidget(pButBlk);
 	pLayout->addWidget(pButDel);
 	pLayout->setContentsMargins(5, 0, 5, 0);
 	pWidget->setLayout(pLayout);
-	ui->treeViewModbus->setIndexWidget(m_proxyClients.mapFromSource(iacts->index()), pWidget);
+	ui->treeViewModbus->setIndexWidget(m_proxyClients.mapFromSource(iActs->index()), pWidget);
 
 	// subscribe to block addition
 	// NOTE : needs to be a queued connection because we want to wait until browseName is set
-	auto listBlocks = cli->dataBlocks();
+	auto listBlocks = client->dataBlocks();
 	QObject::connect(listBlocks, &QUaNode::childAdded, this,
-	[this, strClientId](QUaNode * node) {
+	[this, client, iObj](QUaNode * node) {
 		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
 		Q_CHECK_PTR(block);
 		// add to gui
 		QString strBlockId = block->browseName();
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
-		this->handleBlockAdded(strClientId, strBlockId);
+		this->handleBlockAdded(client, iObj, strBlockId);
 	}, Qt::QueuedConnection);
 
 }
@@ -290,14 +287,84 @@ void QUaModbusClientWidget::showNewBlockDialog(QUaModbusClient * client, QUaModb
 		this->showNewBlockDialog(client, dialog);
 		return;
 	}
-	// setup new block
-	auto blockType  = widgetNewBlock->type();
-
-	// TODO :
-
+	// set properties
+	auto block = listBlocks->browseChild<QUaModbusDataBlock>(strBlockId);
+	Q_CHECK_PTR(block);
+	block->setType        (widgetNewBlock->type()        );
+	block->setAddress     (widgetNewBlock->address()     );
+	block->setSize        (widgetNewBlock->size()        );
+	block->setSamplingTime(widgetNewBlock->samplingTime());
+	// NOTE : new block is added to GUI using OPC UA events 
 }
 
-void QUaModbusClientWidget::handleBlockAdded(const QString & strClientId, const QString & strBlockId)
+void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandardItem * parent, const QString & strBlockId)
 {
-	// TODO :
+	// get block
+	auto listBlocks = client->dataBlocks();
+	auto block      = listBlocks->browseChild<QUaModbusDataBlock>(strBlockId);
+	Q_ASSERT_X(block, "QUaModbusClientWidget", "Block instance must already exist in OPC UA");
+
+	// object column
+	auto row = parent->rowCount();
+	auto iObj = new QStandardItem(strBlockId);
+	parent->setChild(row, (int)Headers::Objects, iObj);
+
+	// status column
+	auto enumError = QMetaEnum::fromType<QModbusError>();
+	auto error     = block->lastError();
+	auto modError  = error->value().value<QModbusError>();
+	auto strError  = QString(enumError.valueToKey(modError));
+	auto iErr      = new QStandardItem(strError);
+	parent->setChild(row, (int)Headers::Status, iErr);
+	QObject::connect(block, &QUaModbusDataBlock::lastErrorChanged, this,
+	[iErr, enumError](QModbusError error) {
+		Q_CHECK_PTR(iErr);
+		auto strState = QString(enumError.valueToKey(error));
+		iErr->setText(strState);
+	});
+
+	// options
+	auto iActs = new QStandardItem();
+	parent->setChild(row, (int)Headers::Actions, iActs);
+	QWidget     *pWidget = new QWidget;
+	QHBoxLayout *pLayout = new QHBoxLayout;
+	QPushButton *pButVal = new QPushButton;
+	QPushButton *pButDel = new QPushButton;
+	// add value button
+	pButVal->setText(tr("Add Value"));
+	pButVal->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	pButVal->setObjectName("AddValue");
+	pButVal->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+	//pButDel->setEnabled(this->allowActions()); // TODO
+	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
+	QObject::connect(pButVal, &QPushButton::clicked, [this, block]() {
+		Q_CHECK_PTR(block);
+		//// use value edit widget
+		//QUaModbusValueWidgetEdit * widgetNewValue = new QUaModbusValueWidgetEdit;
+		//QUaModbusClientDialog dialog;
+		//// NOTE : dialog takes ownershit
+		//dialog.setWidget(widgetNewValue);
+		//// NOTE : call in own method to we can recall it if fails
+		//this->showNewValueDialog(client, dialog);
+	});
+	// delete button
+	pButDel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	pButDel->setText(tr("Delete"));
+	pButDel->setObjectName("Delete");
+	pButDel->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+	//pButDel->setEnabled(this->allowActions()); // TODO
+	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
+	QObject::connect(pButDel, &QPushButton::clicked, [block, parent, iObj]() {
+		Q_CHECK_PTR(block);
+		Q_CHECK_PTR(iObj);
+		block->remove();
+		parent->removeRows(iObj->index().row(), 1);
+	});
+	// layout
+	pLayout->addWidget(pButVal);
+	pLayout->addWidget(pButDel);
+	pLayout->setContentsMargins(5, 0, 5, 0);
+	pWidget->setLayout(pLayout);
+	ui->treeViewModbus->setIndexWidget(m_proxyClients.mapFromSource(iActs->index()), pWidget);
+
 }

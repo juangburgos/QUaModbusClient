@@ -12,6 +12,8 @@
 class QUaModbusDataBlock;
 class QUaModbusValueList;
 
+typedef QModbusDevice::Error QModbusError;
+
 class QUaModbusValue : public QUaBaseObject
 {
 	friend class QUaModbusValueList;
@@ -61,6 +63,7 @@ public:
 		Float64Swapped = 24, // f64 Most Significant Register First
 	};
 	Q_ENUM(ValueType)
+	typedef QUaModbusValue::ValueType QModbusValueType;
 
 	// UA properties
 
@@ -77,6 +80,29 @@ public:
 
 	Q_INVOKABLE void remove();
 
+	// C++ API
+	QModbusValueType getType() const;
+	void             setType(const QModbusValueType &type);
+
+	quint16 getRegistersUsed() const;
+
+	int  getAddressOffset() const;
+	void setAddressOffset(const int &addressOffset);
+
+	QVariant getValue() const;
+	void     setValue(const QVariant &value);
+
+	QModbusError getLastError() const;
+	void         setLastError(const QModbusError &error);
+
+signals:
+	// C++ API
+	void typeChanged         (const QModbusValueType &type         );
+	void registersUsedChanged(const quint16          &registersUsed);
+	void addressOffsetChanged(const int              &addressOffset);
+	void valueChanged        (const QVariant         &value        );
+	void lastErrorChanged    (const QModbusError     &error        );
+
 private slots:
 	void on_typeChanged         (const QVariant &value);
 	void on_addressOffsetChanged(const QVariant &value);
@@ -86,19 +112,19 @@ private:
 
 	QUaModbusDataBlock * block();
 
-	void setValue(const QVector<quint16> &block, const QModbusDevice::Error &blockError);
+	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
 	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
-	static int              typeBlockSize(const QUaModbusValue::ValueType &type);
-	static QMetaType::Type  typeToMeta   (const QUaModbusValue::ValueType &type);
-	static QVariant         blockToValue (const QVector<quint16> &block, const QUaModbusValue::ValueType &type);
-	static QVector<quint16> valueToBlock (const QVariant &value        , const QUaModbusValue::ValueType &type);
+	static int              typeBlockSize(const QModbusValueType &type);
+	static QMetaType::Type  typeToMeta   (const QModbusValueType &type);
+	static QVariant         blockToValue (const QVector<quint16> &block, const QModbusValueType &type);
+	static QVector<quint16> valueToBlock (const QVariant         &value, const QModbusValueType &type);
 	
 };
 
-
+typedef QUaModbusValue::ValueType QModbusValueType;
 
 #endif // QUAMODBUSVALUE_H

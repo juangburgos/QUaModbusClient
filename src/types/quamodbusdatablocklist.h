@@ -30,6 +30,7 @@ public:
 
 private:
 	QUaModbusClient * client();
+	QList<QUaModbusDataBlock*> blocks();
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

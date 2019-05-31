@@ -1,13 +1,15 @@
 #include "quamodbusclient.h"
 
+#include <QUaModbusDataBlock>
+
 QUaModbusClient::QUaModbusClient(QUaServer *server)
 	: QUaBaseObject(server)
 {
 	// set defaults
-	state         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::State>());
-	state         ()->setValue(QModbusDevice::State::UnconnectedState);
-	lastError     ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
-	lastError     ()->setValue(QModbusDevice::Error::NoError);
+	state         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusState>());
+	state         ()->setValue(QModbusState::UnconnectedState);
+	lastError     ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
+	lastError     ()->setValue(QModbusError::NoError);
 	serverAddress ()->setDataType(QMetaType::UChar);
 	serverAddress ()->setValue(1);
 	keepConnecting()->setValue(false);
@@ -75,9 +77,29 @@ void QUaModbusClient::disconnectDevice()
 	});
 }
 
-QModbusDevice::State QUaModbusClient::getState()
+quint8 QUaModbusClient::getServerAddress() const
 {
-	return this->state()->value().value<QModbusDevice::State>();
+	return this->serverAddress()->value().value<quint8>();
+}
+
+void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
+{
+	this->serverAddress()->setValue(serverAddress);
+}
+
+bool QUaModbusClient::getKeepConnecting() const
+{
+	return this->keepConnecting()->value().toBool();
+}
+
+void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
+{
+	this->keepConnecting()->setValue(keepConnecting);
+}
+
+QModbusState QUaModbusClient::getState() const
+{
+	return this->state()->value().value<QModbusState>();
 }
 
 void QUaModbusClient::setupModbusClient()
@@ -103,16 +125,16 @@ void QUaModbusClient::fromDomElement(QDomElement & domElem, QString & strError)
 	Q_UNUSED(strError);
 }
 
-void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
+void QUaModbusClient::on_stateChanged(QModbusState state)
 {
 	this->state()->setValue(state);
 	// no error if connected correctly
-	if (state == QModbusDevice::State::ConnectedState)
+	if (state == QModbusState::ConnectedState)
 	{
-		this->lastError()->setValue(QModbusDevice::Error::NoError);
+		this->lastError()->setValue(QModbusError::NoError);
 	}
 	// only allow to write connection params if not connected
-	if (state == QModbusDevice::State::UnconnectedState)
+	if (state == QModbusState::UnconnectedState)
 	{
 		serverAddress()->setWriteAccess(true);
 		// keep connecting if desired
@@ -127,16 +149,30 @@ void QUaModbusClient::on_stateChanged(QModbusDevice::State state)
 		serverAddress()->setWriteAccess(false);
 	}
 	// NOTE : need to add custom signal because OPC UA valueChanged
-	//        only works for changed through network
+	//        only works for changes through network
 	// emit
 	emit this->stateChanged(state);
+	// update block errors
+	if (state == QModbusState::ConnectedState)
+	{
+		return;
+	}
+	auto blocks = this->dataBlocks()->blocks();
+	for (int i = 0; i < blocks.count(); i++)
+	{
+		blocks.at(i)->setLastError(QModbusError::ConnectionError);
+	}
 }
 
-void QUaModbusClient::on_errorChanged(QModbusDevice::Error error)
+void QUaModbusClient::on_errorChanged(QModbusError error)
 {
 	this->lastError()->setValue(error);
-	if (error != QModbusDevice::Error::NoError)
+	if (error != QModbusError::NoError)
 	{
 		// TODO : send UA event
 	}
+	// NOTE : need to add custom signal because OPC UA valueChanged
+	//        only works for changes through network
+	// emit
+	emit this->lastErrorChanged(error);
 }

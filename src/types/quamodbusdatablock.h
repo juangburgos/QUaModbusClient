@@ -15,6 +15,9 @@ class QUaModbusValue;
 
 #include "quamodbusvaluelist.h"
 
+typedef QModbusDevice::State QModbusState;
+typedef QModbusDevice::Error QModbusError;
+
 class QUaModbusDataBlock : public QUaBaseObject
 {
 	friend class QUaModbusDataBlockList;
@@ -38,6 +41,7 @@ class QUaModbusDataBlock : public QUaBaseObject
 public:
 	Q_INVOKABLE explicit QUaModbusDataBlock(QUaServer *server);
 
+	// register as Q_ENUM
 	enum RegisterType 
 	{
 		Invalid          = QModbusDataUnit::RegisterType::Invalid         ,
@@ -47,6 +51,7 @@ public:
 		HoldingRegisters = QModbusDataUnit::RegisterType::HoldingRegisters
 	};
 	Q_ENUM(RegisterType)
+	typedef QUaModbusDataBlock::RegisterType QUaModbusDataBlockType;
 
 	// UA properties
 
@@ -68,17 +73,46 @@ public:
 
 	Q_INVOKABLE void remove();
 
+	// C++ API (all is read/write)
+
+	QUaModbusDataBlockType getType() const;
+	void                   setType(const QUaModbusDataBlockType &type);
+
+	int  getAddress() const;
+	void setAddress(const int &address);
+
+	quint32 getSize() const;
+	void    setSize(const quint32 &size);
+
+	quint32 getSamplingTime() const;
+	void    setSamplingTime(const quint32 &samplingTime);
+
+	QVector<quint16> getData() const;
+	void             setData(const QVector<quint16> &data);
+
+	QModbusError getLastError() const;
+	void         setLastError(const QModbusError &error);
+
 signals:
-	// to safely update error in ua server thread
-	void updateLastError(const QModbusDevice::Error &error);
+	// C++ API
+	void typeChanged        (const QUaModbusDataBlockType &type        );
+	void addressChanged     (const int                    &address     );
+	void sizeChanged        (const quint32                &size        );
+	void samplingTimeChanged(const quint32                &samplingTime);
+	void dataChanged        (const QVector<quint16>       &data        );
+	void lastErrorChanged   (const QModbusError           &error       );
+
+	// (internal) to safely update error in ua server thread
+	void updateLastError(const QModbusError &error);
 
 private slots:
-	void on_typeChanged        (const QVariant &value);
-	void on_addressChanged     (const QVariant &value);
-	void on_sizeChanged        (const QVariant &value);
-	void on_samplingTimeChanged(const QVariant &value);
-	void on_dataChanged        (const QVariant &value);
-	void on_updateLastError    (const QModbusDevice::Error &error);
+	// handle UA change events (also reused in C++ API and triggers C++ API events)
+	void on_typeChanged        (const QVariant     &value);
+	void on_addressChanged     (const QVariant     &value);
+	void on_sizeChanged        (const QVariant     &value);
+	void on_samplingTimeChanged(const QVariant     &value);
+	void on_dataChanged        (const QVariant     &value);
+	void on_updateLastError    (const QModbusError &error);
 
 private:
 	int m_loopHandle;
@@ -95,5 +129,7 @@ private:
 	static quint32 m_minSamplingTime;
 	static QVector<quint16> variantToInt16Vect(const QVariant &value);
 };
+
+typedef QUaModbusDataBlock::RegisterType QUaModbusDataBlockType;
 
 #endif // QUAMODBUSDATABLOCK_H

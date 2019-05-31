@@ -9,13 +9,13 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	type    ()->setValue("Serial");
 	comPort ()->setDataTypeEnum(QUaModbusRtuSerialClient::ComPorts);
 	comPort ()->setValue(0);
-	parity  ()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::Parity>());
+	parity  ()->setDataTypeEnum(QMetaEnum::fromType<QParity>());
 	parity  ()->setValue(QSerialPort::EvenParity);
-	baudRate()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::BaudRate>());
+	baudRate()->setDataTypeEnum(QMetaEnum::fromType<QBaudRate>());
 	baudRate()->setValue(QSerialPort::Baud19200);
-	dataBits()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::DataBits>());
+	dataBits()->setDataTypeEnum(QMetaEnum::fromType<QDataBits>());
 	dataBits()->setValue(QSerialPort::Data8);
-	stopBits()->setDataTypeEnum(QMetaEnum::fromType<QSerialPort::StopBits>());
+	stopBits()->setDataTypeEnum(QMetaEnum::fromType<QStopBits>());
 	stopBits()->setValue(QSerialPort::OneStop);
 	// set initial conditions
 	comPort ()->setWriteAccess(true);
@@ -101,10 +101,10 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 	elemSerialClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
 	elemSerialClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
 	elemSerialClient.setAttribute("ComPort"       , QString(QUaModbusRtuSerialClient::EnumComPorts().value(comPort()->value().toInt())));
-	elemSerialClient.setAttribute("Parity"  , QMetaEnum::fromType<QSerialPort::Parity>  ().valueToKey(parity  ()->value().value<QSerialPort::Parity>  ()));
-	elemSerialClient.setAttribute("BaudRate", QMetaEnum::fromType<QSerialPort::BaudRate>().valueToKey(baudRate()->value().value<QSerialPort::BaudRate>()));
-	elemSerialClient.setAttribute("DataBits", QMetaEnum::fromType<QSerialPort::DataBits>().valueToKey(dataBits()->value().value<QSerialPort::DataBits>()));
-	elemSerialClient.setAttribute("StopBits", QMetaEnum::fromType<QSerialPort::StopBits>().valueToKey(stopBits()->value().value<QSerialPort::StopBits>()));
+	elemSerialClient.setAttribute("Parity"  , QMetaEnum::fromType<QParity>  ().valueToKey(parity  ()->value().value<QParity>  ()));
+	elemSerialClient.setAttribute("BaudRate", QMetaEnum::fromType<QBaudRate>().valueToKey(baudRate()->value().value<QBaudRate>()));
+	elemSerialClient.setAttribute("DataBits", QMetaEnum::fromType<QDataBits>().valueToKey(dataBits()->value().value<QDataBits>()));
+	elemSerialClient.setAttribute("StopBits", QMetaEnum::fromType<QStopBits>().valueToKey(stopBits()->value().value<QStopBits>()));
 	// add block list element
 	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
 	elemSerialClient.appendChild(elemBlockList);
@@ -151,7 +151,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 		strError += QString("Error : Invalid ComPort attribute '%1' in Modbus client %2. Ignoring.\n").arg(comPort).arg(strBrowseName);
 	}
 	// Parity
-	auto parity = QMetaEnum::fromType<QSerialPort::Parity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
+	auto parity = QMetaEnum::fromType<QParity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->parity()->setValue(parity);
@@ -163,7 +163,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 		strError += QString("Error : Invalid Parity attribute '%1' in Modbus client %2. Ignoring.\n").arg(parity).arg(strBrowseName);
 	}
 	// BaudRate
-	auto baudRate = QMetaEnum::fromType<QSerialPort::BaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
+	auto baudRate = QMetaEnum::fromType<QBaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->baudRate()->setValue(baudRate);
@@ -175,7 +175,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 		strError += QString("Error : Invalid BaudRate attribute '%1' in Modbus client %2. Ignoring.\n").arg(baudRate).arg(strBrowseName);
 	}
 	// DataBits
-	auto dataBits = QMetaEnum::fromType<QSerialPort::DataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
+	auto dataBits = QMetaEnum::fromType<QDataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->dataBits()->setValue(dataBits);
@@ -187,7 +187,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 		strError += QString("Error : Invalid DataBits attribute '%1' in Modbus client %2. Ignoring.\n").arg(dataBits).arg(strBrowseName);
 	}
 	// StopBits
-	auto stopBits = QMetaEnum::fromType<QSerialPort::StopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
+	auto stopBits = QMetaEnum::fromType<QStopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->stopBits()->setValue(stopBits);
@@ -233,60 +233,128 @@ void QUaModbusRtuSerialClient::on_stateChanged(const QModbusDevice::State &state
 
 void QUaModbusRtuSerialClient::on_comPortChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_comPortChanged",
-		"Cannot change com port while connected.");
+	// NOTE : if connected, will not change until reconnect
 	QString strComPort = QUaModbusRtuSerialClient::EnumComPorts().value(value.toInt());
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, strComPort]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, strComPort);
 	});
+	// emit
+	emit this->comPortChanged(strComPort);
 }
 
 void QUaModbusRtuSerialClient::on_parityChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_parityChanged",
-		"Cannot change parity while connected.");
-	QSerialPort::Parity parity = value.value<QSerialPort::Parity>();
+	// NOTE : if connected, will not change until reconnect
+	QParity parity = value.value<QParity>();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, parity]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialParityParameter, parity);
 	});
+	// emit
+	emit this->parityChanged(parity);
 }
 
 void QUaModbusRtuSerialClient::on_baudRateChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_baudRateChanged",
-		"Cannot change baud rate while connected.");
-	QSerialPort::BaudRate baudRate = value.value<QSerialPort::BaudRate>();
+	// NOTE : if connected, will not change until reconnect
+	QBaudRate baudRate = value.value<QBaudRate>();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, baudRate]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, baudRate);
 	});
+	// emit
+	emit this->baudRateChanged(baudRate);
 }
 
 void QUaModbusRtuSerialClient::on_dataBitsChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_dataBitsChanged",
-		"Cannot change data bits while connected.");
-	QSerialPort::DataBits dataBits = value.value<QSerialPort::DataBits>();
+	// NOTE : if connected, will not change until reconnect
+	QDataBits dataBits = value.value<QDataBits>();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, dataBits]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, dataBits);
 	});
+	// emit
+	emit this->dataBitsChanged(dataBits);
 }
 
 void QUaModbusRtuSerialClient::on_stopBitsChanged(const QVariant & value)
 {
-	Q_ASSERT_X(this->getState() == QModbusDevice::State::UnconnectedState,
-		"QUaModbusTcpClient::on_stopBitsChanged",
-		"Cannot change stop bits while connected.");
-	QSerialPort::StopBits stopBits = value.value<QSerialPort::StopBits>();
+	// NOTE : if connected, will not change until reconnect
+	QStopBits stopBits = value.value<QStopBits>();
 	// set in thread, for thread-safety
 	m_workerThread.execInThread([this, stopBits]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, stopBits);
 	});
+	// emit
+	emit this->stopBitsChanged(stopBits);
+}
+
+QString QUaModbusRtuSerialClient::getComPort() const
+{
+	auto key = this->comPort()->value().toInt();
+	return QUaModbusRtuSerialClient::EnumComPorts().value(key);
+}
+
+void QUaModbusRtuSerialClient::setComPort(const QString & strComPort)
+{
+	auto comPort = QUaModbusRtuSerialClient::EnumComPorts().key(strComPort.toUtf8(), 0);
+	this->comPort()->setValue(comPort);
+	this->on_comPortChanged(comPort);
+}
+
+int QUaModbusRtuSerialClient::getComPortKey() const
+{
+	return this->comPort()->value().toInt();
+}
+
+void QUaModbusRtuSerialClient::setComPortKey(const int & comPort)
+{
+	this->comPort()->setValue(comPort);
+	this->on_comPortChanged(comPort);
+}
+
+QParity QUaModbusRtuSerialClient::getParity() const
+{
+	return this->parity()->value().value<QParity>();
+}
+
+void QUaModbusRtuSerialClient::setParity(const QParity & parity)
+{
+	this->parity()->setValue(parity);
+	this->on_parityChanged(parity);
+}
+
+QBaudRate QUaModbusRtuSerialClient::getBaudRate() const
+{
+	return this->baudRate()->value().value<QBaudRate>();
+}
+
+void QUaModbusRtuSerialClient::setBaudRate(const QBaudRate & baudRate)
+{
+	this->baudRate()->setValue(baudRate);
+	this->on_baudRateChanged(baudRate);
+}
+
+QDataBits QUaModbusRtuSerialClient::getDataBits() const
+{
+	return this->dataBits()->value().value<QDataBits>();
+}
+
+void QUaModbusRtuSerialClient::setDataBits(const QDataBits & dataBits)
+{
+	this->dataBits()->setValue(dataBits);
+	this->on_dataBitsChanged(dataBits);
+}
+
+QStopBits QUaModbusRtuSerialClient::getStopBits() const
+{
+	return this->stopBits()->value().value<QStopBits>();
+}
+
+void QUaModbusRtuSerialClient::setStopBits(const QStopBits & stopBits)
+{
+	this->stopBits()->setValue(stopBits);
+	this->on_stopBitsChanged(stopBits);
 }

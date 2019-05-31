@@ -5,6 +5,11 @@
 
 class QUaModbusClientList;
 
+typedef QSerialPort::Parity   QParity;
+typedef QSerialPort::BaudRate QBaudRate;
+typedef QSerialPort::DataBits QDataBits;
+typedef QSerialPort::StopBits QStopBits;
+
 class QUaModbusRtuSerialClient : public QUaModbusClient
 {
 	friend class QUaModbusClientList;
@@ -32,18 +37,47 @@ public:
 	static QString ComPorts;
 	static QMap<int, QByteArray> EnumComPorts();
 
+	// C++ API (all is read/write)
+
+	QString   getComPort() const;
+	void      setComPort(const QString &strComPort);
+
+	int       getComPortKey() const;
+	void      setComPortKey(const int &comPort);
+
+	QParity   getParity() const;
+	void      setParity(const QParity &parity);
+
+	QBaudRate getBaudRate() const;
+	void      setBaudRate(const QBaudRate &baudRate);
+
+	QDataBits getDataBits() const;
+	void      setDataBits(const QDataBits &dataBits);
+
+	QStopBits getStopBits() const;
+	void      setStopBits(const QStopBits &stopBits);
+
+signals:
+	// C++ API
+	void comPortChanged (const QString   &strComPort);
+	void parityChanged  (const QParity   &parity    );
+	void baudRateChanged(const QBaudRate &baudRate  );
+	void dataBitsChanged(const QDataBits &dataBits  );
+	void stopBitsChanged(const QStopBits &stopBits  );
+
 protected:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;
 	void        fromDomElement(QDomElement  & domElem, QString &strError) override;
 
 private slots:
-	void on_stateChanged   (const QModbusDevice::State &state);
 	void on_comPortChanged (const QVariant &value);
 	void on_parityChanged  (const QVariant &value);
 	void on_baudRateChanged(const QVariant &value);
 	void on_dataBitsChanged(const QVariant &value);
 	void on_stopBitsChanged(const QVariant &value);
+	// internal
+	void on_stateChanged   (const QModbusDevice::State &state);
 };
 
 #endif // QUAMODBUSRTUSERIALCLIENT_H

@@ -42,6 +42,28 @@ QUaProperty * QUaModbusTcpClient::networkPort() const
 	return this->browseChild<QUaProperty>("NetworkPort");
 }
 
+QString QUaModbusTcpClient::getNetworkAddress() const
+{
+	return this->networkAddress()->value().toString();
+}
+
+void QUaModbusTcpClient::setNetworkAddress(const QString & strNetworkAddress)
+{
+	this->networkAddress()->setValue(strNetworkAddress);
+	this->on_networkAddressChanged(strNetworkAddress);
+}
+
+quint16 QUaModbusTcpClient::getNetworkPort() const
+{
+	return this->networkPort()->value().value<quint16>();
+}
+
+void QUaModbusTcpClient::setNetworkPort(const quint16 & networkPort)
+{
+	this->networkPort()->setValue(networkPort);
+	this->on_networkPortChanged(networkPort);
+}
+
 QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client element
@@ -145,6 +167,8 @@ void QUaModbusTcpClient::on_networkAddressChanged(const QVariant & value)
 	m_workerThread.execInThread([this, strNetworkAddress]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, strNetworkAddress);
 	});
+	// emit
+	emit this->networkAddressChanged(strNetworkAddress);
 }
 
 void QUaModbusTcpClient::on_networkPortChanged(const QVariant & value)
@@ -156,5 +180,6 @@ void QUaModbusTcpClient::on_networkPortChanged(const QVariant & value)
 	m_workerThread.execInThread([this, uiPort]() {
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter, uiPort);
 	});
-
+	// emit
+	emit this->networkPortChanged(uiPort);
 }

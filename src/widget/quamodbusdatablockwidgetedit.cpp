@@ -7,7 +7,7 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 {
     ui->setupUi(this);
 	// setup parity combo
-	auto metaBlockType = QMetaEnum::fromType<QModbusBlockType>();
+	auto metaBlockType = QMetaEnum::fromType<QUaModbusDataBlockType>();
 	for (int i = 0; i < metaBlockType.keyCount(); i++)
 	{
 		auto enumBlock = metaBlockType.value(i);
@@ -15,7 +15,7 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 		ui->comboBoxType->addItem(strBlock, enumBlock);
 	}
 	// setup initial values
-	this->setType(QModbusBlockType::HoldingRegisters);
+	this->setType(QUaModbusDataBlockType::HoldingRegisters);
 	this->setAddress(0);
 	this->setSize(10);
 	this->setSamplingTime(1000);
@@ -36,14 +36,14 @@ void QUaModbusDataBlockWidgetEdit::strId(const QString & strId)
 	ui->lineEditId->setText(strId);
 }
 
-QModbusBlockType QUaModbusDataBlockWidgetEdit::type() const
+QUaModbusDataBlockType QUaModbusDataBlockWidgetEdit::type() const
 {
-	return ui->comboBoxType->currentData().value<QModbusBlockType>();
+	return ui->comboBoxType->currentData().value<QUaModbusDataBlockType>();
 }
 
-void QUaModbusDataBlockWidgetEdit::setType(const QModbusBlockType & type)
+void QUaModbusDataBlockWidgetEdit::setType(const QUaModbusDataBlockType & type)
 {
-	auto strType = QString(QMetaEnum::fromType<QModbusBlockType>().valueToKey(type));
+	auto strType = QString(QMetaEnum::fromType<QUaModbusDataBlockType>().valueToKey(type));
 	Q_ASSERT(ui->comboBoxType->findText(strType) >= 0);
 	ui->comboBoxType->setCurrentText(strType);
 }

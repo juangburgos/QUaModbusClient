@@ -5,8 +5,6 @@
 
 #include <QUaModbusDataBlock>
 
-typedef QUaModbusDataBlock::RegisterType QModbusBlockType;
-
 namespace Ui {
 class QUaModbusDataBlockWidgetEdit;
 }
@@ -22,8 +20,8 @@ public:
 	QString          id() const;
 	void             strId(const QString &strId);
 
-	QModbusBlockType type() const;
-	void             setType(const QModbusBlockType &type);
+	QUaModbusDataBlockType type() const;
+	void                   setType(const QUaModbusDataBlockType &type);
 
 	int              address() const;
 	void             setAddress(const int &address);

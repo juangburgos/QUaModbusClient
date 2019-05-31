@@ -10,16 +10,16 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	m_loopHandle = -1;
 	m_replyRead  = nullptr;
 	// NOTE : QObject parent might not be yet available in constructor
-	type   ()->setDataTypeEnum(QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>());
-	type   ()->setValue(QUaModbusDataBlock::RegisterType::Invalid);
+	type   ()->setDataTypeEnum(QMetaEnum::fromType<QUaModbusDataBlockType>());
+	type   ()->setValue(QUaModbusDataBlockType::Invalid);
 	address()->setDataType(QMetaType::Int);
 	address()->setValue(-1);
 	size   ()->setDataType(QMetaType::UInt);
 	size   ()->setValue(0);
 	samplingTime()->setDataType(QMetaType::UInt);
 	samplingTime()->setValue(1000);
-	lastError   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDevice::Error>());
-	lastError   ()->setValue(QModbusDevice::Error::ConfigurationError);
+	lastError   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
+	lastError   ()->setValue(QModbusError::ConnectionError);
 	// set initial conditions
 	type()        ->setWriteAccess(true);
 	address()     ->setWriteAccess(true);
@@ -35,13 +35,13 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	// to safely update error in ua server thread
 	QObject::connect(this, &QUaModbusDataBlock::updateLastError, this, &QUaModbusDataBlock::on_updateLastError);
 	// set descriptions
-	type        ()->setDescription("Type of Modbus register for this block.");
-	address     ()->setDescription("Start register address for this block (with respect to the register type).");
-	size        ()->setDescription("Size (in registers) for this block.");
-	samplingTime()->setDescription("Polling time (cycle time) to read this block.");
-	data        ()->setDescription("The current block values as per the last successfull read.");
-	lastError   ()->setDescription("The last error reported while reading or writing this block.");
-	values      ()->setDescription("List of converted values.");
+	type        ()->setDescription(tr("Type of Modbus register for this block."));
+	address     ()->setDescription(tr("Start register address for this block (with respect to the register type)."));
+	size        ()->setDescription(tr("Size (in registers) for this block."));
+	samplingTime()->setDescription(tr("Polling time (cycle time) to read this block."));
+	data        ()->setDescription(tr("The current block values as per the last successfull read."));
+	lastError   ()->setDescription(tr("The last error reported while reading or writing this block."));
+	values      ()->setDescription(tr("List of converted values."));
 }
 
 QUaProperty * QUaModbusDataBlock::type() const
@@ -94,14 +94,14 @@ void QUaModbusDataBlock::remove()
 
 void QUaModbusDataBlock::on_typeChanged(const QVariant &value)
 {
-	auto type = value.value<QModbusDataUnit::RegisterType>();
+	auto type = value.value<QUaModbusDataBlockType>();
 	// set in thread for safety
 	this->client()->m_workerThread.execInThread([this, type]() {
-		m_modbusDataUnit.setRegisterType(type);
+		m_modbusDataUnit.setRegisterType((QModbusDataUnit::RegisterType)type);
 	});
 	// set data writable according to type
-	if (type == QUaModbusDataBlock::RegisterType::Coils ||
-		type == QUaModbusDataBlock::RegisterType::HoldingRegisters)
+	if (type == QUaModbusDataBlockType::Coils ||
+		type == QUaModbusDataBlockType::HoldingRegisters)
 	{
 		data()->setWriteAccess(true);
 	}
@@ -109,6 +109,8 @@ void QUaModbusDataBlock::on_typeChanged(const QVariant &value)
 	{
 		data()->setWriteAccess(false);
 	}
+	// emit
+	emit this->typeChanged(type);
 }
 
 void QUaModbusDataBlock::on_addressChanged(const QVariant & value)
@@ -118,6 +120,8 @@ void QUaModbusDataBlock::on_addressChanged(const QVariant & value)
 	this->client()->m_workerThread.execInThread([this, address]() {
 		m_modbusDataUnit.setStartAddress(address);
 	});
+	// emit
+	emit this->addressChanged(address);
 }
 
 void QUaModbusDataBlock::on_sizeChanged(const QVariant & value)
@@ -127,6 +131,8 @@ void QUaModbusDataBlock::on_sizeChanged(const QVariant & value)
 	this->client()->m_workerThread.execInThread([this, size]() {
 		m_modbusDataUnit.setValueCount(size);
 	});
+	// emit
+	emit this->sizeChanged(size);
 }
 
 void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
@@ -139,6 +145,8 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 		// set minumum
 		this->samplingTime()->setValue(QUaModbusDataBlock::m_minSamplingTime);
 		// the previous will trigger the event again
+		// emit
+		emit this->samplingTimeChanged(QUaModbusDataBlock::m_minSamplingTime);
 		return;
 	}
 	// stop old loop
@@ -148,14 +156,16 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 	this->startLoop();
 	// update ua sample interval for data
 	this->data()->setMinimumSamplingInterval((double)samplingTime);
+	// emit
+	emit this->samplingTimeChanged(samplingTime);
 }
 
 void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 {
 	// should not happen but just in case
-	auto type = this->type()->value().value<QModbusDataUnit::RegisterType>();
-	if (type != QModbusDataUnit::RegisterType::Coils &&
-		type != QModbusDataUnit::RegisterType::HoldingRegisters)
+	auto type = this->type()->value().value<QUaModbusDataBlockType>();
+	if (type != QUaModbusDataBlockType::Coils &&
+		type != QUaModbusDataBlockType::HoldingRegisters)
 	{
 		return;
 	}
@@ -165,26 +175,26 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 	this->client()->m_workerThread.execInThread([this, data]() {
 		auto client = this->client();
 		// check if request is valid
-		if (m_modbusDataUnit.registerType() != QModbusDataUnit::RegisterType::Coils &&
-			m_modbusDataUnit.registerType() != QModbusDataUnit::RegisterType::HoldingRegisters)
+		if (m_modbusDataUnit.registerType() != QUaModbusDataBlockType::Coils &&
+			m_modbusDataUnit.registerType() != QUaModbusDataBlockType::HoldingRegisters)
 		{
 			return;
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
 		}
 		// check if connected
-		auto state = client->state()->value().value<QModbusDevice::State>();
-		if (state != QModbusDevice::State::ConnectedState)
+		auto state = client->state()->value().value<QModbusState>();
+		if (state != QModbusState::ConnectedState)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConnectionError);
+			emit this->updateLastError(QModbusError::ConnectionError);
 			return;
 		}
 		// create data target 
@@ -194,7 +204,7 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 		QModbusReply * p_reply = client->m_modbusClient->sendWriteRequest(dataToWrite, serverAddress);
 		if (!p_reply)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ReplyAbortedError);
+			emit this->updateLastError(QModbusError::ReplyAbortedError);
 			return;
 		}
 		// subscribe to finished
@@ -203,30 +213,38 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			// check if reply still valid
 			if (!p_reply)
 			{
-				lastError()->setValue(QModbusDevice::Error::ReplyAbortedError);
+				auto error = QModbusError::ReplyAbortedError;
+				lastError()->setValue(error);
+				// emit
+				emit this->lastErrorChanged(error);
 				return;
 			}
 			// handle error
 			auto error = p_reply->error();
 			this->lastError()->setValue(error);
+			// emit
+			emit this->lastErrorChanged(error);
 			// update values errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
 			{
 				values.at(i)->lastError()->setValue(error);
+				// TODO : create and use C++ API to update block error
 			}
 			// delete reply on next event loop exec
 			p_reply->deleteLater();
 			p_reply = nullptr;
 		}, Qt::QueuedConnection);
 	});
+	// emit
+	emit this->dataChanged(data);
 }
 
-void QUaModbusDataBlock::on_updateLastError(const QModbusDevice::Error & error)
+void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 {
 	lastError()->setValue(error);
 	// check if need to check errors in values
-	if (error != QModbusDevice::Error::ConnectionError)
+	if (error != QModbusError::ConnectionError)
 	{
 		return;
 	}
@@ -234,12 +252,17 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusDevice::Error & error)
 	auto values = this->values()->values();
 	for (int i = 0; i < values.count(); i++)
 	{
-		auto oldValErr = values.at(i)->lastError()->value().value<QModbusDevice::Error>();
-		if (oldValErr != QModbusDevice::Error::ConfigurationError)
+		auto oldValErr = values.at(i)->lastError()->value().value<QModbusError>();
+		if (oldValErr != QModbusError::ConfigurationError)
 		{
-			values.at(i)->lastError()->setValue(QModbusDevice::Error::ConnectionError);
+			values.at(i)->lastError()->setValue(QModbusError::ConnectionError);
+			// TODO : create and use C++ API to update block error
 		}
 	}
+	// NOTE : need to add custom signal because OPC UA valueChanged
+	//        only works for changes through network
+	// emit
+	emit this->lastErrorChanged(error);
 }
 
 QUaModbusClient * QUaModbusDataBlock::client()
@@ -259,26 +282,26 @@ void QUaModbusDataBlock::startLoop()
 			return;
 		}
 		// check if request is valid
-		if (m_modbusDataUnit.registerType() == QModbusDataUnit::RegisterType::Invalid)
+		if (m_modbusDataUnit.registerType() == QUaModbusDataBlockType::Invalid)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.startAddress() < 0)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
 		}
 		if (m_modbusDataUnit.valueCount() == 0)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConfigurationError);
+			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
 		}
 		// check if connected
-		auto state = client->state()->value().value<QModbusDevice::State>();
-		if (state != QModbusDevice::State::ConnectedState)
+		auto state = client->state()->value().value<QModbusState>();
+		if (state != QModbusState::ConnectedState)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ConnectionError);
+			emit this->updateLastError(QModbusError::ConnectionError);
 			return;
 		}
 		// create and send request		
@@ -291,7 +314,7 @@ void QUaModbusDataBlock::startLoop()
 		// check if no error
 		if (!m_replyRead)
 		{
-			emit this->updateLastError(QModbusDevice::Error::ReplyAbortedError);
+			emit this->updateLastError(QModbusError::ReplyAbortedError);
 			return;
 		}
 		// check if finished immediately (ignore)
@@ -308,12 +331,17 @@ void QUaModbusDataBlock::startLoop()
 			// check if reply still valid
 			if (!m_replyRead)
 			{
-				lastError()->setValue(QModbusDevice::Error::ReplyAbortedError);
+				auto error = QModbusError::ReplyAbortedError;
+				lastError()->setValue(error);
+				// emit
+				emit this->lastErrorChanged(error);
 				return;
 			}
 			// handle error
 			auto error = m_replyRead->error();
 			this->lastError()->setValue(error);
+			// emit
+			emit this->lastErrorChanged(error);
 			// update block value
 			QVector<quint16> vectValues = m_replyRead->result().values();
 			this->data()->setValue(QVariant::fromValue(vectValues));
@@ -322,6 +350,7 @@ void QUaModbusDataBlock::startLoop()
 			for (int i = 0; i < values.count(); i++)
 			{
 				values.at(i)->setValue(vectValues, error);
+				// TODO : create and use C++ API to update block error
 			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();
@@ -342,7 +371,7 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::staticMetaObject.className());
 	// set block attributes
 	elemBlock.setAttribute("BrowseName"  , this->browseName());
-	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>().valueToKey(type()->value().value<QUaModbusDataBlock::RegisterType>()));
+	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QUaModbusDataBlockType>().valueToKey(type()->value().value<QUaModbusDataBlockType>()));
 	elemBlock.setAttribute("Address"     , address()->value().toInt());
 	elemBlock.setAttribute("Size"        , size()->value().toUInt());
 	elemBlock.setAttribute("SamplingTime", samplingTime()->value().toUInt());
@@ -360,7 +389,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
 	bool bOK;
 	// Type
-	auto type = QMetaEnum::fromType<QUaModbusDataBlock::RegisterType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
+	auto type = QMetaEnum::fromType<QUaModbusDataBlockType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->type()->setValue(type);
@@ -369,7 +398,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid Type attribute '%1' in Block %2. Ignoring.\n").arg(type).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Type attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(type).arg(strBrowseName);
 	}
 	
 	// Address
@@ -382,7 +411,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid Address attribute '%1' in Block %2. Ignoring.\n").arg(address).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Address attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(address).arg(strBrowseName);
 	}
 	// Size
 	auto size = domElem.attribute("Size").toUInt(&bOK);
@@ -394,7 +423,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid Size attribute '%1' in Block %2. Ignoring.\n").arg(size).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Size attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(size).arg(strBrowseName);
 	}
 	// SamplingTime
 	auto samplingTime = domElem.attribute("SamplingTime").toUInt(&bOK);
@@ -406,7 +435,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Invalid SamplingTime attribute '%1' in Block %2. Ignoring.\n").arg(samplingTime).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(samplingTime).arg(strBrowseName);
 	}
 	// get value list
 	QDomElement elemValueList = domElem.firstChildElement(QUaModbusValueList::staticMetaObject.className());
@@ -416,7 +445,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString("Error : Block %1 does not have a QUaModbusValueList child. No values will be loaded.\n").arg(strBrowseName);
+		strError += QString(tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n")).arg("Error").arg(strBrowseName);
 	}
 }
 
@@ -436,4 +465,71 @@ QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)
 		data << (*it).value<quint16>();
 	}
 	return data;
+}
+
+QUaModbusDataBlockType QUaModbusDataBlock::getType() const
+{
+	return this->type()->value().value<QUaModbusDataBlockType>();
+}
+
+void QUaModbusDataBlock::setType(const QUaModbusDataBlockType & type)
+{
+	this->type()->setValue(type);
+	this->on_typeChanged(type);
+}
+
+int QUaModbusDataBlock::getAddress() const
+{
+	return this->address()->value().toInt();
+}
+
+void QUaModbusDataBlock::setAddress(const int & address)
+{
+	this->address()->setValue(address);
+	this->on_addressChanged(address);
+}
+
+quint32 QUaModbusDataBlock::getSize() const
+{
+	return this->size()->value().value<quint32>();
+}
+
+void QUaModbusDataBlock::setSize(const quint32 & size)
+{
+	this->size()->setValue(size);
+	this->on_sizeChanged(size);
+}
+
+quint32 QUaModbusDataBlock::getSamplingTime() const
+{
+	return this->samplingTime()->value().value<quint32>();
+}
+
+void QUaModbusDataBlock::setSamplingTime(const quint32 & samplingTime)
+{
+	this->samplingTime()->setValue(samplingTime);
+	this->on_samplingTimeChanged(samplingTime);
+}
+
+QVector<quint16> QUaModbusDataBlock::getData() const
+{
+	return QUaModbusDataBlock::variantToInt16Vect(this->data()->value());
+}
+
+void QUaModbusDataBlock::setData(const QVector<quint16>& data)
+{
+	auto varData = QVariant::fromValue(data);
+	this->data()->setValue(varData);
+	this->on_dataChanged(varData);
+}
+
+QModbusError QUaModbusDataBlock::getLastError() const
+{
+	return this->lastError()->value().value<QModbusError>();
+}
+
+void QUaModbusDataBlock::setLastError(const QModbusError & error)
+{
+	this->lastError()->setValue(error);
+	this->on_updateLastError(error);
 }

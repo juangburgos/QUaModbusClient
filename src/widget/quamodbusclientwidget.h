@@ -46,7 +46,7 @@ private:
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
 	void handleClientAdded  (const QString &strClientId);
 	void showNewBlockDialog (QUaModbusClient * client, QUaModbusClientDialog &dialog);
-	void handleBlockAdded   (const QString &strClientId, const QString &strBlockId);
+	void handleBlockAdded   (QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
 };
 
 #endif // QUAMODBUSCLIENTWIDGET_H

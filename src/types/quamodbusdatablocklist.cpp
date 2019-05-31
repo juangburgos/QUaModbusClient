@@ -57,6 +57,11 @@ QUaModbusClient * QUaModbusDataBlockList::client()
 	return dynamic_cast<QUaModbusClient*>(this->parent());
 }
 
+QList<QUaModbusDataBlock*> QUaModbusDataBlockList::blocks()
+{
+	return this->browseChildren<QUaModbusDataBlock>();
+}
+
 QDomElement QUaModbusDataBlockList::toDomElement(QDomDocument & domDoc) const
 {
 	// add block list element
