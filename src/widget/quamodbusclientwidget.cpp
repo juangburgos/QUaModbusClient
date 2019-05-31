@@ -11,6 +11,8 @@
 #include <QUaModbusRtuSerialClient>
 #include <QUaModbusDataBlock>
 #include <QUaModbusDataBlockWidgetEdit>
+#include <QUaModbusValueWidgetEdit>
+#include <QUaModbusValue>
 
 QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
     QWidget(parent),
@@ -262,7 +264,6 @@ void QUaModbusClientWidget::handleClientAdded(const QString & strClientId)
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		this->handleBlockAdded(client, iObj, strBlockId);
 	}, Qt::QueuedConnection);
-
 }
 
 void QUaModbusClientWidget::showNewBlockDialog(QUaModbusClient * client, QUaModbusClientDialog &dialog)
@@ -339,13 +340,13 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 	//!this->allowActions() ? pButDel->setVisible(false) : nullptr; // NOTE : fixes flicker
 	QObject::connect(pButVal, &QPushButton::clicked, [this, block]() {
 		Q_CHECK_PTR(block);
-		//// use value edit widget
-		//QUaModbusValueWidgetEdit * widgetNewValue = new QUaModbusValueWidgetEdit;
-		//QUaModbusClientDialog dialog;
-		//// NOTE : dialog takes ownershit
-		//dialog.setWidget(widgetNewValue);
-		//// NOTE : call in own method to we can recall it if fails
-		//this->showNewValueDialog(client, dialog);
+		// use value edit widget
+		QUaModbusValueWidgetEdit * widgetNewValue = new QUaModbusValueWidgetEdit;
+		QUaModbusClientDialog dialog;
+		// NOTE : dialog takes ownershit
+		dialog.setWidget(widgetNewValue);
+		// NOTE : call in own method to we can recall it if fails
+		this->showNewValueDialog(block, dialog);
 	});
 	// delete button
 	pButDel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -367,4 +368,26 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 	pWidget->setLayout(pLayout);
 	ui->treeViewModbus->setIndexWidget(m_proxyClients.mapFromSource(iActs->index()), pWidget);
 
+	// subscribe to value addition
+	// NOTE : needs to be a queued connection because we want to wait until browseName is set
+	auto listValues = block->values();
+	QObject::connect(listValues, &QUaNode::childAdded, this,
+		[this, block, iObj](QUaNode * node) {
+		auto value = dynamic_cast<QUaModbusValue*>(node);
+		Q_CHECK_PTR(value);
+		// add to gui
+		QString strValueId = value->browseName();
+		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
+		this->handleValueAdded(block, iObj, strValueId);
+	}, Qt::QueuedConnection);
+}
+
+void QUaModbusClientWidget::showNewValueDialog(QUaModbusDataBlock * block, QUaModbusClientDialog & dialog)
+{
+	// TODO
+}
+
+void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStandardItem * parent, const QString & strValueId)
+{
+	// TODO
 }

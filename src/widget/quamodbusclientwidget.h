@@ -12,6 +12,7 @@ class QUaModbusClientWidget;
 class QUaModbusClient;
 class QUaModbusClientList;
 class QUaModbusClientDialog;
+class QUaModbusDataBlock;
 
 class QUaModbusClientWidget : public QWidget
 {
@@ -47,6 +48,8 @@ private:
 	void handleClientAdded  (const QString &strClientId);
 	void showNewBlockDialog (QUaModbusClient * client, QUaModbusClientDialog &dialog);
 	void handleBlockAdded   (QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
+	void showNewValueDialog (QUaModbusDataBlock * block, QUaModbusClientDialog &dialog);
+	void handleValueAdded   (QUaModbusDataBlock * block, QStandardItem * parent, const QString &strValueId);
 };
 
 #endif // QUAMODBUSCLIENTWIDGET_H
