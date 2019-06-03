@@ -5,6 +5,10 @@
 QUaModbusClient::QUaModbusClient(QUaServer *server)
 	: QUaBaseObject(server)
 {
+	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusError>("QModbusError");
+	}
 	// set defaults
 	state         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusState>());
 	state         ()->setValue(QModbusState::UnconnectedState);
@@ -95,6 +99,17 @@ bool QUaModbusClient::getKeepConnecting() const
 void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
 {
 	this->keepConnecting()->setValue(keepConnecting);
+}
+
+QModbusError QUaModbusClient::getLastError() const
+{
+	return this->lastError()->value().value<QModbusError>();
+}
+
+void QUaModbusClient::setLastError(const QModbusError & error)
+{
+	this->lastError()->setValue(error);
+	this->on_errorChanged(error);
 }
 
 QModbusState QUaModbusClient::getState() const

@@ -23,11 +23,12 @@ public:
 
 	Q_INVOKABLE QString addValue(QString strValueId);
 
+	// C++ API
+
+	QList<QUaModbusValue*> values();
 
 private:
 	QUaModbusDataBlock * block();
-
-	QList<QUaModbusValue*> values();
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

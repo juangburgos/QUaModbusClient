@@ -45,7 +45,7 @@ private:
 	QSortFilterProxyModel m_proxyClients;
 
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
-	void handleClientAdded  (const QString &strClientId);
+	void handleClientAdded  (QUaModbusClient * client);
 	void showNewBlockDialog (QUaModbusClient * client, QUaModbusClientDialog &dialog);
 	void handleBlockAdded   (QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
 	void showNewValueDialog (QUaModbusDataBlock * block, QUaModbusClientDialog &dialog);

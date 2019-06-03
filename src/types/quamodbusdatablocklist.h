@@ -27,10 +27,12 @@ public:
 
 	Q_INVOKABLE QString addDataBlock(QString strBlockId);
 
+	// C++ API
+
+	QList<QUaModbusDataBlock*> blocks();
 
 private:
 	QUaModbusClient * client();
-	QList<QUaModbusDataBlock*> blocks();
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

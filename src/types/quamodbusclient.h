@@ -76,9 +76,12 @@ public:
 	bool   getKeepConnecting() const;
 	void   setKeepConnecting(const bool &keepConnecting);
 
+	QModbusError getLastError() const;
+	void         setLastError(const QModbusError &error);
+
 signals:
-	void stateChanged(QModbusState state);
-	void lastErrorChanged(QModbusError error);
+	void stateChanged    (const QModbusState &state);
+	void lastErrorChanged(const QModbusError &error);
 
 protected:
 	QLambdaThreadWorker           m_workerThread;

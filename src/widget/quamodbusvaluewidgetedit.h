@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include <QUaModbusValue>
+
 namespace Ui {
 class QUaModbusValueWidgetEdit;
 }
@@ -14,6 +16,15 @@ class QUaModbusValueWidgetEdit : public QWidget
 public:
     explicit QUaModbusValueWidgetEdit(QWidget *parent = nullptr);
     ~QUaModbusValueWidgetEdit();
+
+	QString          id() const;
+	void             strId(const QString &strId);
+
+	QModbusValueType type() const;
+	void             setType(const QModbusValueType &type);
+
+	quint16          offset() const;
+	void             setOffset(const quint16 &size);
 
 private:
     Ui::QUaModbusValueWidgetEdit *ui;

@@ -214,23 +214,12 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 			if (!p_reply)
 			{
 				auto error = QModbusError::ReplyAbortedError;
-				lastError()->setValue(error);
-				// emit
-				emit this->lastErrorChanged(error);
+				this->setLastError(error);
 				return;
 			}
 			// handle error
 			auto error = p_reply->error();
-			this->lastError()->setValue(error);
-			// emit
-			emit this->lastErrorChanged(error);
-			// update values errors
-			auto values = this->values()->values();
-			for (int i = 0; i < values.count(); i++)
-			{
-				values.at(i)->lastError()->setValue(error);
-				// TODO : create and use C++ API to update block error
-			}
+			this->setLastError(error);
 			// delete reply on next event loop exec
 			p_reply->deleteLater();
 			p_reply = nullptr;
@@ -242,7 +231,11 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 
 void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 {
-	lastError()->setValue(error);
+	this->lastError()->setValue(error);
+	// NOTE : need to add custom signal because OPC UA valueChanged
+	//        only works for changes through network
+	// emit
+	emit this->lastErrorChanged(error);
 	// check if need to check errors in values
 	if (error != QModbusError::ConnectionError)
 	{
@@ -252,17 +245,12 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	auto values = this->values()->values();
 	for (int i = 0; i < values.count(); i++)
 	{
-		auto oldValErr = values.at(i)->lastError()->value().value<QModbusError>();
+		auto oldValErr = values.at(i)->getLastError();
 		if (oldValErr != QModbusError::ConfigurationError)
 		{
-			values.at(i)->lastError()->setValue(QModbusError::ConnectionError);
-			// TODO : create and use C++ API to update block error
+			values.at(i)->setLastError(QModbusError::ConnectionError);
 		}
 	}
-	// NOTE : need to add custom signal because OPC UA valueChanged
-	//        only works for changes through network
-	// emit
-	emit this->lastErrorChanged(error);
 }
 
 QUaModbusClient * QUaModbusDataBlock::client()
@@ -275,6 +263,11 @@ void QUaModbusDataBlock::startLoop()
 	auto samplingTime = this->samplingTime()->value().value<quint32>();
 	// exec read request in client thread
 	m_loopHandle = this->client()->m_workerThread.startLoopInThread([this]() {
+		Q_ASSERT(m_loopHandle > 0);
+		if (m_loopHandle < 0)
+		{
+			return;
+		}
 		auto client = this->client();
 		// check if ongoing request
 		if (m_replyRead)
@@ -332,16 +325,12 @@ void QUaModbusDataBlock::startLoop()
 			if (!m_replyRead)
 			{
 				auto error = QModbusError::ReplyAbortedError;
-				lastError()->setValue(error);
-				// emit
-				emit this->lastErrorChanged(error);
+				this->setLastError(error);
 				return;
 			}
 			// handle error
 			auto error = m_replyRead->error();
-			this->lastError()->setValue(error);
-			// emit
-			emit this->lastErrorChanged(error);
+			this->setLastError(error);
 			// update block value
 			QVector<quint16> vectValues = m_replyRead->result().values();
 			this->data()->setValue(QVariant::fromValue(vectValues));
@@ -350,7 +339,6 @@ void QUaModbusDataBlock::startLoop()
 			for (int i = 0; i < values.count(); i++)
 			{
 				values.at(i)->setValue(vectValues, error);
-				// TODO : create and use C++ API to update block error
 			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();

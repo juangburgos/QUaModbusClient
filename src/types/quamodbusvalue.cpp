@@ -156,17 +156,26 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 	// check if is connected
 	if (blockError == QModbusError::ConnectionError)
 	{
-		this->value()->setValue(QVariant());
-		lastError()->setValue(blockError);
+		this->value()->setWriteAccess(false);
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
+		this->setLastError(blockError);
 		return;
 	}
 	// check if fits in block
 	int addressOffset = this->addressOffset()->value().value<int>();
+	if (addressOffset < 0)
+	{
+		this->value()->setWriteAccess(false);
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
+		this->setLastError(QModbusError::ConfigurationError);
+		return;
+	}
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > blockData.count())
 	{
-		this->value()->setValue(QVariant());
-		lastError()->setValue(QModbusError::ConfigurationError);
+		this->value()->setWriteAccess(false);
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
+		this->setLastError(QModbusError::ConfigurationError);
 		return;
 	}
 	// replace part
