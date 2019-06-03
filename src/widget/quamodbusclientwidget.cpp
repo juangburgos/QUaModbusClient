@@ -16,12 +16,23 @@
 #include <QUaModbusDataBlockList>
 #include <QUaModbusValueList>
 
+int QUaModbusClientWidget::SelectTypeRole = Qt::UserRole + 1;
+int QUaModbusClientWidget::PointerRole    = Qt::UserRole + 2;
+
 QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusClientWidget)
 {
     ui->setupUi(this);
 	m_listClients = nullptr;
+	if (QMetaType::type("QModbusSelectType") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusSelectType>("QModbusSelectType");
+	}
+	if (QMetaType::type("QUaNode*") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QUaNode*>("QUaNode*");
+	}
 	// setup params tree model
 	m_modelClients.setColumnCount((int)Headers::Invalid);
 	QStringList paramHeaders;
@@ -36,7 +47,62 @@ QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
 	ui->treeViewModbus->setModel(&m_proxyClients);
 	ui->treeViewModbus->setAlternatingRowColors(true);
 	ui->treeViewModbus->setSortingEnabled(true);
+	ui->treeViewModbus->sortByColumn((int)Headers::Objects, Qt::SortOrder::AscendingOrder);
 	ui->treeViewModbus->setSelectionBehavior(QAbstractItemView::SelectRows);
+	// setup tree interactions
+	QObject::connect(ui->treeViewModbus->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
+	[this](const QModelIndex &current, const QModelIndex &previous) {
+		auto itemPrev = m_modelClients.itemFromIndex(m_proxyClients.mapToSource(previous));
+		auto itemCurr = m_modelClients.itemFromIndex(m_proxyClients.mapToSource(current ));
+		// previous
+		QModbusSelectType typePrev = QModbusSelectType::Invalid;
+		QUaNode * nodePrev = nullptr;
+		if (itemPrev)
+		{
+			nodePrev = itemPrev->data(QUaModbusClientWidget::PointerRole).value<QUaNode*>();
+			typePrev = itemPrev->data(QUaModbusClientWidget::SelectTypeRole).value<QModbusSelectType>();
+			switch (typePrev)
+			{
+			case QModbusSelectType::QUaModbusClient:
+				nodePrev = dynamic_cast<QUaModbusClient*>(nodePrev);
+				break;
+			case QModbusSelectType::QUaModbusDataBlock:
+				nodePrev = dynamic_cast<QUaModbusDataBlock*>(nodePrev);
+				break;
+			case QModbusSelectType::QUaModbusValue:
+				nodePrev = dynamic_cast<QUaModbusValue*>(nodePrev);
+				break;
+			default:
+				nodePrev = nullptr;
+				break;
+			}
+		}
+		// current
+		QModbusSelectType typeCurr = QModbusSelectType::Invalid;
+		QUaNode * nodeCurr = nullptr;
+		if (itemCurr)
+		{
+			nodeCurr = itemCurr->data(QUaModbusClientWidget::PointerRole).value<QUaNode*>();
+			typeCurr = itemCurr->data(QUaModbusClientWidget::SelectTypeRole).value<QModbusSelectType>();
+			switch (typeCurr)
+			{
+			case QModbusSelectType::QUaModbusClient:
+				nodeCurr = dynamic_cast<QUaModbusClient*>(nodeCurr);
+				break;
+			case QModbusSelectType::QUaModbusDataBlock:
+				nodeCurr = dynamic_cast<QUaModbusDataBlock*>(nodeCurr);
+				break;
+			case QModbusSelectType::QUaModbusValue:
+				nodeCurr = dynamic_cast<QUaModbusValue*>(nodeCurr);
+				break;
+			default:
+				nodeCurr = nullptr;
+				break;
+			}
+		}
+		// emit
+		emit this->nodeSelectionChanged(nodePrev, typePrev, nodeCurr, typeCurr);
+	});
 }
 
 QUaModbusClientWidget::~QUaModbusClientWidget()
@@ -60,8 +126,6 @@ void QUaModbusClientWidget::setClientList(QUaModbusClientList * listClients)
 	// set
 	m_listClients = listClients;
 
-	// TODO : load initial (use handleClientAdded)
-
 	// subscribe to client added
 	// NOTE : needs to be a queued connection because we want to wait until browseName is set
 	QObject::connect(listClients, &QUaNode::childAdded, this,
@@ -69,8 +133,20 @@ void QUaModbusClientWidget::setClientList(QUaModbusClientList * listClients)
 		auto client = dynamic_cast<QUaModbusClient*>(node);
 		Q_CHECK_PTR(client);
 		// add to gui
-		this->handleClientAdded(client);
+		auto item = this->handleClientAdded(client);
+		// select newly created
+		auto index = m_proxyClients.mapFromSource(item->index());
+		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
+
+	// add already existing clients
+	for (int i = 0; i < listClients->clients().count(); i++)
+	{
+		auto client = listClients->clients().at(i);
+		Q_CHECK_PTR(client);
+		// add to gui
+		this->handleClientAdded(client);
+	}
 }
 
 void QUaModbusClientWidget::on_pushButtonAddClient_clicked()
@@ -151,9 +227,7 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 	// NOTE : new client is added to GUI using OPC UA events 
 }
 
-// TODO : do something with lastError, maybe somewhere else?
-
-void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
+QStandardItem *  QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 {
 	Q_ASSERT_X(client, "QUaModbusClientWidget", "Client instance must already exist in OPC UA");
 	// get client id
@@ -165,6 +239,9 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 	auto row  = parent->rowCount();
 	auto iObj = new QStandardItem(strClientId);
 	parent->setChild(row, (int)Headers::Objects, iObj);
+	// set data
+	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientWidget::SelectTypeRole);
+	iObj->setData(QVariant::fromValue(client), QUaModbusClientWidget::PointerRole);
 
 	// status column
 	auto enumState = QMetaEnum::fromType<QModbusState>();
@@ -177,6 +254,10 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 	auto strError  = QString(enumError.valueToKey(modError));
 	auto iStat     = new QStandardItem(strState + " | " + strError);
 	parent->setChild(row, (int)Headers::Status, iStat);
+	// set data
+	iStat->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientWidget::SelectTypeRole);
+	iStat->setData(QVariant::fromValue(client), QUaModbusClientWidget::PointerRole);
+	// changes
 	QObject::connect(client, &QUaModbusClient::stateChanged, this,
 	[iStat, client, enumState, enumError](QModbusState state) {
 		Q_CHECK_PTR(iStat);
@@ -194,9 +275,13 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 		iStat->setText(strState + " | " + strError);
 	});
 
-	// options
+	// actions
 	auto iActs = new QStandardItem();
 	parent->setChild(row, (int)Headers::Actions, iActs);
+	// set data
+	iActs->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientWidget::SelectTypeRole);
+	iActs->setData(QVariant::fromValue(client), QUaModbusClientWidget::PointerRole);
+	// widgets
 	QWidget     *pWidget = new QWidget;
 	QHBoxLayout *pLayout = new QHBoxLayout;
 	QSpacerItem *pSpacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -274,6 +359,12 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 	[this, iObj]() {
 		Q_CHECK_PTR(iObj);
 		m_modelClients.removeRows(iObj->index().row(), 1);
+		// if last client was deleted emit no selection
+		if (m_modelClients.rowCount() <= 0)
+		{
+			// emit
+			emit this->nodeSelectionChanged(nullptr, QModbusSelectType::Invalid, nullptr, QModbusSelectType::Invalid);
+		}
 	});
 
 	// subscribe to block addition
@@ -286,7 +377,10 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 		// add to gui
 		QString strBlockId = block->browseName();
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
-		this->handleBlockAdded(client, iObj, strBlockId);
+		auto item = this->handleBlockAdded(client, iObj, strBlockId);
+		// select newly created
+		auto index = m_proxyClients.mapFromSource(item->index());
+		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
 
 	// add already existing blocks
@@ -298,6 +392,8 @@ void QUaModbusClientWidget::handleClientAdded(QUaModbusClient * client)
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		this->handleBlockAdded(client, iObj, strBlockId);
 	}
+
+	return iObj;
 }
 
 void QUaModbusClientWidget::showNewBlockDialog(QUaModbusClient * client, QUaModbusClientDialog &dialog)
@@ -332,7 +428,7 @@ void QUaModbusClientWidget::showNewBlockDialog(QUaModbusClient * client, QUaModb
 	// NOTE : new block is added to GUI using OPC UA events 
 }
 
-void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandardItem * parent, const QString & strBlockId)
+QStandardItem *  QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandardItem * parent, const QString & strBlockId)
 {
 	// get block
 	auto listBlocks = client->dataBlocks();
@@ -343,6 +439,9 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 	auto row  = parent->rowCount();
 	auto iObj = new QStandardItem(strBlockId);
 	parent->setChild(row, (int)Headers::Objects, iObj);
+	// set data
+	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientWidget::SelectTypeRole);
+	iObj->setData(QVariant::fromValue(block), QUaModbusClientWidget::PointerRole);
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -351,6 +450,10 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 	auto strError  = QString(enumError.valueToKey(modError));
 	auto iErr      = new QStandardItem(strError);
 	parent->setChild(row, (int)Headers::Status, iErr);
+	// set data
+	iErr->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientWidget::SelectTypeRole);
+	iErr->setData(QVariant::fromValue(block), QUaModbusClientWidget::PointerRole);
+	// changes
 	QObject::connect(block, &QUaModbusDataBlock::lastErrorChanged, this,
 	[iErr, enumError](const QModbusError &error) {
 		Q_CHECK_PTR(iErr);
@@ -361,6 +464,10 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 	// options
 	auto iActs = new QStandardItem();
 	parent->setChild(row, (int)Headers::Actions, iActs);
+	// set data
+	iActs->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientWidget::SelectTypeRole);
+	iActs->setData(QVariant::fromValue(block), QUaModbusClientWidget::PointerRole);
+	// widgets
 	QWidget     *pWidget = new QWidget;
 	QHBoxLayout *pLayout = new QHBoxLayout;
 	QSpacerItem *pSpacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -422,7 +529,10 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 		// add to gui
 		QString strValueId = value->browseName();
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
-		this->handleValueAdded(block, iObj, strValueId);
+		auto item = this->handleValueAdded(block, iObj, strValueId);
+		// select newly created
+		auto index = m_proxyClients.mapFromSource(item->index());
+		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
 
 	// add already existing values
@@ -434,6 +544,8 @@ void QUaModbusClientWidget::handleBlockAdded(QUaModbusClient * client, QStandard
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		this->handleValueAdded(block, iObj, strValueId);
 	}
+
+	return iObj;
 }
 
 void QUaModbusClientWidget::showNewValueDialog(QUaModbusDataBlock * block, QUaModbusClientDialog & dialog)
@@ -466,7 +578,7 @@ void QUaModbusClientWidget::showNewValueDialog(QUaModbusDataBlock * block, QUaMo
 	// NOTE : new value is added to GUI using OPC UA events 
 }
 
-void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStandardItem * parent, const QString & strValueId)
+QStandardItem *  QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStandardItem * parent, const QString & strValueId)
 {
 	// get block
 	auto listValues = block->values();
@@ -477,6 +589,9 @@ void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStanda
 	auto row  = parent->rowCount();
 	auto iObj = new QStandardItem(strValueId);
 	parent->setChild(row, (int)Headers::Objects, iObj);
+	// set data
+	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientWidget::SelectTypeRole);
+	iObj->setData(QVariant::fromValue(value), QUaModbusClientWidget::PointerRole);
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -485,6 +600,10 @@ void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStanda
 	auto strError  = QString(enumError.valueToKey(modError));
 	auto iErr      = new QStandardItem(strError);
 	parent->setChild(row, (int)Headers::Status, iErr);
+	// set data
+	iErr->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientWidget::SelectTypeRole);
+	iErr->setData(QVariant::fromValue(value), QUaModbusClientWidget::PointerRole);
+	// changes
 	QObject::connect(value, &QUaModbusValue::lastErrorChanged, this,
 	[iErr, enumError](const QModbusError &error) {
 		Q_CHECK_PTR(iErr);
@@ -495,11 +614,14 @@ void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStanda
 	// options
 	auto iActs = new QStandardItem();
 	parent->setChild(row, (int)Headers::Actions, iActs);
+	// set data
+	iActs->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientWidget::SelectTypeRole);
+	iActs->setData(QVariant::fromValue(value), QUaModbusClientWidget::PointerRole);
+	// widgets
 	QWidget     *pWidget = new QWidget;
 	QHBoxLayout *pLayout = new QHBoxLayout;
 	QSpacerItem *pSpacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
 	QPushButton *pButDel = new QPushButton;
-	
 	// delete button
 	pButDel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	pButDel->setText(tr("Delete"));
@@ -527,4 +649,6 @@ void QUaModbusClientWidget::handleValueAdded(QUaModbusDataBlock * block, QStanda
 		Q_CHECK_PTR(iObj);
 		parent->removeRows(iObj->index().row(), 1);
 	});
+
+	return iObj;
 }

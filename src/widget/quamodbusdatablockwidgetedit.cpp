@@ -7,7 +7,7 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 {
     ui->setupUi(this);
 	// setup parity combo
-	auto metaBlockType = QMetaEnum::fromType<QUaModbusDataBlockType>();
+	auto metaBlockType = QMetaEnum::fromType<QModbusDataBlockType>();
 	for (int i = 0; i < metaBlockType.keyCount(); i++)
 	{
 		auto enumBlock = metaBlockType.value(i);
@@ -15,7 +15,7 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 		ui->comboBoxType->addItem(strBlock, enumBlock);
 	}
 	// setup initial values
-	this->setType(QUaModbusDataBlockType::HoldingRegisters);
+	this->setType(QModbusDataBlockType::HoldingRegisters);
 	this->setAddress(0);
 	this->setSize(10);
 	this->setSamplingTime(1000);
@@ -24,6 +24,16 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 QUaModbusDataBlockWidgetEdit::~QUaModbusDataBlockWidgetEdit()
 {
     delete ui;
+}
+
+bool QUaModbusDataBlockWidgetEdit::isIdEditable() const
+{
+	return ui->lineEditId->isEnabled();
+}
+
+void QUaModbusDataBlockWidgetEdit::setIdEditable(const bool & idEditable)
+{
+	ui->lineEditId->setEnabled(idEditable);
 }
 
 QString QUaModbusDataBlockWidgetEdit::id() const
@@ -36,14 +46,14 @@ void QUaModbusDataBlockWidgetEdit::strId(const QString & strId)
 	ui->lineEditId->setText(strId);
 }
 
-QUaModbusDataBlockType QUaModbusDataBlockWidgetEdit::type() const
+QModbusDataBlockType QUaModbusDataBlockWidgetEdit::type() const
 {
-	return ui->comboBoxType->currentData().value<QUaModbusDataBlockType>();
+	return ui->comboBoxType->currentData().value<QModbusDataBlockType>();
 }
 
-void QUaModbusDataBlockWidgetEdit::setType(const QUaModbusDataBlockType & type)
+void QUaModbusDataBlockWidgetEdit::setType(const QModbusDataBlockType & type)
 {
-	auto strType = QString(QMetaEnum::fromType<QUaModbusDataBlockType>().valueToKey(type));
+	auto strType = QString(QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(type));
 	Q_ASSERT(ui->comboBoxType->findText(strType) >= 0);
 	ui->comboBoxType->setCurrentText(strType);
 }

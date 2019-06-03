@@ -5,6 +5,12 @@
 
 #include <QUaServer>
 
+#include <QUaModbusClientWidget>
+
+class QUaModbusClient;
+class QUaModbusDataBlock;
+class QUaModbusValue;
+
 namespace Ui {
 class QUaModbusClientWidgetTest;
 }
@@ -22,8 +28,14 @@ private slots:
 
 private:
     Ui::QUaModbusClientWidgetTest *ui;
+	QWidget         * m_pWidgetEdit;
+	QModbusSelectType m_typeModbusCurr;
+	QUaServer         m_server;
 
-	QUaServer m_server;
+	void bindClientWidgetEdit(QUaModbusClient    * client);
+	void bindBlockWidgetEdit (QUaModbusDataBlock * block );
+	void bindValueWidgetEdit (QUaModbusValue     * value );
+
 };
 
 #endif // QUAMODBUSCLIENTWIDGETTEST_H

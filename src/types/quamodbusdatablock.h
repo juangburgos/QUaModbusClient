@@ -51,7 +51,7 @@ public:
 		HoldingRegisters = QModbusDataUnit::RegisterType::HoldingRegisters
 	};
 	Q_ENUM(RegisterType)
-	typedef QUaModbusDataBlock::RegisterType QUaModbusDataBlockType;
+	typedef QUaModbusDataBlock::RegisterType QModbusDataBlockType;
 
 	// UA properties
 
@@ -75,8 +75,8 @@ public:
 
 	// C++ API (all is read/write)
 
-	QUaModbusDataBlockType getType() const;
-	void                   setType(const QUaModbusDataBlockType &type);
+	QModbusDataBlockType getType() const;
+	void                 setType(const QModbusDataBlockType &type);
 
 	int  getAddress() const;
 	void setAddress(const int &address);
@@ -95,12 +95,12 @@ public:
 
 signals:
 	// C++ API
-	void typeChanged        (const QUaModbusDataBlockType &type        );
-	void addressChanged     (const int                    &address     );
-	void sizeChanged        (const quint32                &size        );
-	void samplingTimeChanged(const quint32                &samplingTime);
-	void dataChanged        (const QVector<quint16>       &data        );
-	void lastErrorChanged   (const QModbusError           &error       );
+	void typeChanged        (const QModbusDataBlockType &type        );
+	void addressChanged     (const int                  &address     );
+	void sizeChanged        (const quint32              &size        );
+	void samplingTimeChanged(const quint32              &samplingTime);
+	void dataChanged        (const QVector<quint16>     &data        );
+	void lastErrorChanged   (const QModbusError         &error       );
 
 	// (internal) to safely update error in ua server thread
 	void updateLastError(const QModbusError &error);
@@ -130,6 +130,6 @@ private:
 	static QVector<quint16> variantToInt16Vect(const QVariant &value);
 };
 
-typedef QUaModbusDataBlock::RegisterType QUaModbusDataBlockType;
+typedef QUaModbusDataBlock::RegisterType QModbusDataBlockType;
 
 #endif // QUAMODBUSDATABLOCK_H

@@ -8,6 +8,8 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 
+class QUaModbusClient;
+
 class QUaModbusClientList : public QUaFolderObject
 {
     Q_OBJECT
@@ -24,6 +26,10 @@ public:
 	Q_INVOKABLE QString xmlConfig();
 
 	Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
+
+	// C++ API
+
+	QList<QUaModbusClient*> clients();
 
 private:
 	template<typename T>

@@ -17,6 +17,9 @@ public:
     explicit QUaModbusValueWidgetEdit(QWidget *parent = nullptr);
     ~QUaModbusValueWidgetEdit();
 
+	bool             isIdEditable() const;
+	void             setIdEditable(const bool &idEditable);
+
 	QString          id() const;
 	void             strId(const QString &strId);
 

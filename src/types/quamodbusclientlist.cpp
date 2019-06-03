@@ -81,6 +81,11 @@ QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 	return strError;
 }
 
+QList<QUaModbusClient*> QUaModbusClientList::clients()
+{
+	return this->browseChildren<QUaModbusClient>();
+}
+
 QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element

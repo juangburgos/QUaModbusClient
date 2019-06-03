@@ -29,6 +29,12 @@ public:
 	};
 	Q_ENUM(ClientType)
 
+	bool       isIdEditable() const;
+	void       setIdEditable(const bool &idEditable);
+
+	bool       isTypeEditable() const;
+	void       setTypeEditable(const bool &typeEditable);
+
 	QString    id() const;
 	void       setId(const QString &strId);
 

@@ -76,6 +76,26 @@ QUaModbusClientWidgetEdit::~QUaModbusClientWidgetEdit()
     delete ui;
 }
 
+bool QUaModbusClientWidgetEdit::isIdEditable() const
+{
+	return ui->lineEditId->isEnabled();
+}
+
+void QUaModbusClientWidgetEdit::setIdEditable(const bool & idEditable)
+{
+	ui->lineEditId->setEnabled(idEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isTypeEditable() const
+{
+	return ui->comboBoxType->isEnabled();
+}
+
+void QUaModbusClientWidgetEdit::setTypeEditable(const bool & typeEditable)
+{
+	ui->comboBoxType->setEnabled(typeEditable);
+}
+
 QString QUaModbusClientWidgetEdit::id() const
 {
 	return ui->lineEditId->text();

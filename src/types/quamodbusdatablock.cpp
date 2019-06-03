@@ -10,8 +10,8 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	m_loopHandle = -1;
 	m_replyRead  = nullptr;
 	// NOTE : QObject parent might not be yet available in constructor
-	type   ()->setDataTypeEnum(QMetaEnum::fromType<QUaModbusDataBlockType>());
-	type   ()->setValue(QUaModbusDataBlockType::Invalid);
+	type   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDataBlockType>());
+	type   ()->setValue(QModbusDataBlockType::Invalid);
 	address()->setDataType(QMetaType::Int);
 	address()->setValue(-1);
 	size   ()->setDataType(QMetaType::UInt);
@@ -94,14 +94,14 @@ void QUaModbusDataBlock::remove()
 
 void QUaModbusDataBlock::on_typeChanged(const QVariant &value)
 {
-	auto type = value.value<QUaModbusDataBlockType>();
+	auto type = value.value<QModbusDataBlockType>();
 	// set in thread for safety
 	this->client()->m_workerThread.execInThread([this, type]() {
 		m_modbusDataUnit.setRegisterType((QModbusDataUnit::RegisterType)type);
 	});
 	// set data writable according to type
-	if (type == QUaModbusDataBlockType::Coils ||
-		type == QUaModbusDataBlockType::HoldingRegisters)
+	if (type == QModbusDataBlockType::Coils ||
+		type == QModbusDataBlockType::HoldingRegisters)
 	{
 		data()->setWriteAccess(true);
 	}
@@ -163,9 +163,9 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 {
 	// should not happen but just in case
-	auto type = this->type()->value().value<QUaModbusDataBlockType>();
-	if (type != QUaModbusDataBlockType::Coils &&
-		type != QUaModbusDataBlockType::HoldingRegisters)
+	auto type = this->type()->value().value<QModbusDataBlockType>();
+	if (type != QModbusDataBlockType::Coils &&
+		type != QModbusDataBlockType::HoldingRegisters)
 	{
 		return;
 	}
@@ -175,8 +175,8 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 	this->client()->m_workerThread.execInThread([this, data]() {
 		auto client = this->client();
 		// check if request is valid
-		if (m_modbusDataUnit.registerType() != QUaModbusDataBlockType::Coils &&
-			m_modbusDataUnit.registerType() != QUaModbusDataBlockType::HoldingRegisters)
+		if (m_modbusDataUnit.registerType() != QModbusDataBlockType::Coils &&
+			m_modbusDataUnit.registerType() != QModbusDataBlockType::HoldingRegisters)
 		{
 			return;
 		}
@@ -275,7 +275,7 @@ void QUaModbusDataBlock::startLoop()
 			return;
 		}
 		// check if request is valid
-		if (m_modbusDataUnit.registerType() == QUaModbusDataBlockType::Invalid)
+		if (m_modbusDataUnit.registerType() == QModbusDataBlockType::Invalid)
 		{
 			emit this->updateLastError(QModbusError::ConfigurationError);
 			return;
@@ -359,7 +359,7 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::staticMetaObject.className());
 	// set block attributes
 	elemBlock.setAttribute("BrowseName"  , this->browseName());
-	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QUaModbusDataBlockType>().valueToKey(type()->value().value<QUaModbusDataBlockType>()));
+	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(type()->value().value<QModbusDataBlockType>()));
 	elemBlock.setAttribute("Address"     , address()->value().toInt());
 	elemBlock.setAttribute("Size"        , size()->value().toUInt());
 	elemBlock.setAttribute("SamplingTime", samplingTime()->value().toUInt());
@@ -377,7 +377,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
 	bool bOK;
 	// Type
-	auto type = QMetaEnum::fromType<QUaModbusDataBlockType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
+	auto type = QMetaEnum::fromType<QModbusDataBlockType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->type()->setValue(type);
@@ -455,12 +455,12 @@ QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)
 	return data;
 }
 
-QUaModbusDataBlockType QUaModbusDataBlock::getType() const
+QModbusDataBlockType QUaModbusDataBlock::getType() const
 {
-	return this->type()->value().value<QUaModbusDataBlockType>();
+	return this->type()->value().value<QModbusDataBlockType>();
 }
 
-void QUaModbusDataBlock::setType(const QUaModbusDataBlockType & type)
+void QUaModbusDataBlock::setType(const QModbusDataBlockType & type)
 {
 	this->type()->setValue(type);
 	this->on_typeChanged(type);

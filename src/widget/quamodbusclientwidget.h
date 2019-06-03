@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
+#include <QUaNode>
 
 namespace Ui {
 class QUaModbusClientWidget;
@@ -35,6 +36,20 @@ public:
 	};
 	Q_ENUM(Headers)
 
+	enum class SelectType
+	{
+		QUaModbusClient    = 0,
+		QUaModbusDataBlock = 1,
+		QUaModbusValue     = 2,
+		Invalid = 3
+	};
+	Q_ENUM(SelectType)
+	typedef QUaModbusClientWidget::SelectType QModbusSelectType;
+
+signals:
+	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, 
+		                      QUaNode * nodeCurr, QModbusSelectType typeCurr);
+
 private slots:
     void on_pushButtonAddClient_clicked();
 
@@ -45,11 +60,16 @@ private:
 	QSortFilterProxyModel m_proxyClients;
 
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
-	void handleClientAdded  (QUaModbusClient * client);
+	QStandardItem *  handleClientAdded  (QUaModbusClient * client);
 	void showNewBlockDialog (QUaModbusClient * client, QUaModbusClientDialog &dialog);
-	void handleBlockAdded   (QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
+	QStandardItem *  handleBlockAdded   (QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
 	void showNewValueDialog (QUaModbusDataBlock * block, QUaModbusClientDialog &dialog);
-	void handleValueAdded   (QUaModbusDataBlock * block, QStandardItem * parent, const QString &strValueId);
+	QStandardItem *  handleValueAdded   (QUaModbusDataBlock * block, QStandardItem * parent, const QString &strValueId);
+
+	static int SelectTypeRole;
+	static int PointerRole;
 };
+
+typedef QUaModbusClientWidget::SelectType QModbusSelectType;
 
 #endif // QUAMODBUSCLIENTWIDGET_H

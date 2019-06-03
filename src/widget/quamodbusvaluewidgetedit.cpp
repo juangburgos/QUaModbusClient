@@ -24,6 +24,16 @@ QUaModbusValueWidgetEdit::~QUaModbusValueWidgetEdit()
     delete ui;
 }
 
+bool QUaModbusValueWidgetEdit::isIdEditable() const
+{
+	return ui->lineEditId->isEnabled();
+}
+
+void QUaModbusValueWidgetEdit::setIdEditable(const bool & idEditable)
+{
+	ui->lineEditId->setEnabled(idEditable);
+}
+
 QString QUaModbusValueWidgetEdit::id() const
 {
 	return ui->lineEditId->text();

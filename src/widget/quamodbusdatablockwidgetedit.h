@@ -17,20 +17,23 @@ public:
     explicit QUaModbusDataBlockWidgetEdit(QWidget *parent = nullptr);
     ~QUaModbusDataBlockWidgetEdit();
 
-	QString          id() const;
-	void             strId(const QString &strId);
+	bool                 isIdEditable() const;
+	void                 setIdEditable(const bool &idEditable);
+			             
+	QString              id() const;
+	void                 strId(const QString &strId);
 
-	QUaModbusDataBlockType type() const;
-	void                   setType(const QUaModbusDataBlockType &type);
+	QModbusDataBlockType type() const;
+	void                 setType(const QModbusDataBlockType &type);
 
-	int              address() const;
-	void             setAddress(const int &address);
+	int                  address() const;
+	void                 setAddress(const int &address);
 
-	quint32          size() const;
-	void             setSize(const quint32 &size);
+	quint32              size() const;
+	void                 setSize(const quint32 &size);
 
-	quint32          samplingTime() const;
-	void             setSamplingTime(const quint32 &samplingTime);
+	quint32              samplingTime() const;
+	void                 setSamplingTime(const quint32 &samplingTime);
 
 private:
     Ui::QUaModbusDataBlockWidgetEdit *ui;

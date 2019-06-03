@@ -9,6 +9,10 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	{
 		qRegisterMetaType<QModbusError>("QModbusError");
 	}
+	if (QMetaType::type("QModbusState") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusState>("QModbusState");
+	}
 	// set defaults
 	state         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusState>());
 	state         ()->setValue(QModbusState::UnconnectedState);
