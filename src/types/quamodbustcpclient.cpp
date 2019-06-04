@@ -4,7 +4,8 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
 	// set defaults
-	type          ()->setValue("Tcp");
+	type          ()->setValue(QModbusClientType::Tcp);
+	type          ()->setDataTypeEnum(QMetaEnum::fromType<QModbusClientType>());
 	networkAddress()->setValue("127.0.0.1");
 	networkPort   ()->setDataType(QMetaType::UShort);
 	networkPort   ()->setValue(502);

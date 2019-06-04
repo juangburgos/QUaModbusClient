@@ -236,19 +236,18 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	//        only works for changes through network
 	// emit
 	emit this->lastErrorChanged(error);
-	// check if need to check errors in values
-	if (error != QModbusError::ConnectionError)
-	{
-		return;
-	}
 	// update errors in values
 	auto values = this->values()->values();
 	for (int i = 0; i < values.count(); i++)
 	{
 		auto oldValErr = values.at(i)->getLastError();
-		if (oldValErr != QModbusError::ConfigurationError)
+		if (error == QModbusError::ConnectionError && oldValErr != QModbusError::ConfigurationError)
 		{
 			values.at(i)->setLastError(QModbusError::ConnectionError);
+		}
+		else if (error != QModbusError::ConnectionError && oldValErr == QModbusError::NoError)
+		{
+			values.at(i)->setLastError(error);
 		}
 	}
 }

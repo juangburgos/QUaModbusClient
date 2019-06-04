@@ -2,8 +2,7 @@
 #define QUAMODBUSCLIENTWIDGETEDIT_H
 
 #include <QWidget>
-#include <QSerialPort>
-#include <QSerialPortInfo>
+#include <QUaModbusClient>
 
 typedef QSerialPort::Parity   QParity;
 typedef QSerialPort::BaudRate QBaudRate;
@@ -38,8 +37,8 @@ public:
 	QString    id() const;
 	void       setId(const QString &strId);
 
-	ClientType type() const;
-	void       setType(const ClientType &type);
+	QModbusClientType type() const;
+	void              setType(const QModbusClientType &type);
 
 	quint8     deviceAddress() const;
 	void       setDeviceAddress(const quint8 &deviceAddress);
@@ -78,7 +77,7 @@ private slots:
 private:
     Ui::QUaModbusClientWidgetEdit *ui;
 
-	void updateTypeInGui(const ClientType & type);
+	void updateTypeInGui(const QModbusClientType & type);
 };
 
 #endif // QUAMODBUSCLIENTWIDGETEDIT_H

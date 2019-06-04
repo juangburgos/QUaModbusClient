@@ -193,6 +193,11 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			// tcp
 			cliTcp->setNetworkAddress(widgetNewClient->ipAddress());
 			cliTcp->setNetworkPort   (widgetNewClient->networkPort());
+			// start connecting to client if keepConnecting was set to true
+			if (cliTcp->getKeepConnecting())
+			{
+				cliTcp->connectDevice();
+			}
 		}
 		break;
 	case QUaModbusClientWidgetEdit::Serial:
@@ -217,6 +222,11 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			cliSerial->setBaudRate  (widgetNewClient->baudRate()  );
 			cliSerial->setDataBits  (widgetNewClient->dataBits()  );
 			cliSerial->setStopBits  (widgetNewClient->stopBits()  );
+			// start connecting to client if keepConnecting was set to true
+			if (cliSerial->getKeepConnecting())
+			{
+				cliSerial->connectDevice();
+			}
 		}
 		break;
 	case QUaModbusClientWidgetEdit::Invalid:

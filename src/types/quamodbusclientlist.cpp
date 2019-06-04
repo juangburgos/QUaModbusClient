@@ -22,12 +22,13 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerType<QUaModbusValueList      >();
 	server->registerType<QUaModbusValue          >();
 	// register enums (need to register enums that are not part of custom types)
-	server->registerEnum<QModbusDevice::State    >();
-	server->registerEnum<QModbusDevice::Error    >();
-	server->registerEnum<QSerialPort::Parity     >();
-	server->registerEnum<QSerialPort::BaudRate   >();
-	server->registerEnum<QSerialPort::DataBits   >();
-	server->registerEnum<QSerialPort::StopBits   >();
+	server->registerEnum<QModbusClientType>();
+	server->registerEnum<QModbusState     >();
+	server->registerEnum<QModbusError     >();
+	server->registerEnum<QParity          >();
+	server->registerEnum<QBaudRate        >();
+	server->registerEnum<QDataBits        >();
+	server->registerEnum<QStopBits        >();
 	server->registerEnum(QUaModbusRtuSerialClient::ComPorts, QUaModbusRtuSerialClient::EnumComPorts());
 }
 

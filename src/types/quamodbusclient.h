@@ -45,6 +45,14 @@ class QUaModbusClient : public QUaBaseObject
 public:
 	Q_INVOKABLE explicit QUaModbusClient(QUaServer *server);
 
+	enum ClientType {
+		Tcp     = 0,
+		Serial  = 1,
+		Invalid = 2
+	};
+	Q_ENUM(ClientType)
+	typedef QUaModbusClient::ClientType QModbusClientType;
+
 	// UA properties
 
 	QUaProperty * type() const;
@@ -68,7 +76,9 @@ public:
 
 	// C++ API
 
-	QModbusState getState() const;
+	QModbusClientType getType() const;
+
+	QModbusState      getState() const;
 
 	quint8 getServerAddress() const;
 	void   setServerAddress(const quint8 &serverAddress);
@@ -80,6 +90,9 @@ public:
 	void         setLastError(const QModbusError &error);
 
 signals:
+	// C++ API
+	void serverAddressChanged (const quint8 &serverAddress);
+	void keepConnectingChanged(const bool   &keepConnecting);
 	void stateChanged    (const QModbusState &state);
 	void lastErrorChanged(const QModbusError &error);
 
@@ -94,9 +107,13 @@ protected:
 	virtual void        fromDomElement(QDomElement  & domElem, QString &strError);
 
 private slots:
+	void on_serverAddressChanged (const QVariant & value);
+	void on_keepConnectingChanged(const QVariant & value);
 	void on_stateChanged(QModbusState state);
 	void on_errorChanged(QModbusError error);
 };
+
+typedef QUaModbusClient::ClientType QModbusClientType;
 
 #endif // QUAMODBUSCLIENT_H
 

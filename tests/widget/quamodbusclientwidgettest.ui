@@ -150,7 +150,7 @@
           <property name="title">
            <string>Status</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <layout class="QVBoxLayout" name="verticalLayoutStatus">
            <item>
             <spacer name="verticalSpacer">
              <property name="orientation">

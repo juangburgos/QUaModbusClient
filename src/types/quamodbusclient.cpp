@@ -31,6 +31,9 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	state         ()->setDescription(tr("Modbus connection state."));
 	lastError     ()->setDescription(tr("Last error occured at connection level."));
 	dataBlocks    ()->setDescription(tr("List of Modbus data blocks updated through polling."));
+	// handle changes
+	QObject::connect(serverAddress() , &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_serverAddressChanged , Qt::QueuedConnection);
+	QObject::connect(keepConnecting(), &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_keepConnectingChanged, Qt::QueuedConnection);
 }
 
 QUaProperty * QUaModbusClient::type() const
@@ -93,6 +96,7 @@ quint8 QUaModbusClient::getServerAddress() const
 void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
 {
 	this->serverAddress()->setValue(serverAddress);
+	this->on_serverAddressChanged(serverAddress);
 }
 
 bool QUaModbusClient::getKeepConnecting() const
@@ -103,6 +107,7 @@ bool QUaModbusClient::getKeepConnecting() const
 void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
 {
 	this->keepConnecting()->setValue(keepConnecting);
+	this->on_keepConnectingChanged(keepConnecting);
 }
 
 QModbusError QUaModbusClient::getLastError() const
@@ -114,6 +119,11 @@ void QUaModbusClient::setLastError(const QModbusError & error)
 {
 	this->lastError()->setValue(error);
 	this->on_errorChanged(error);
+}
+
+QModbusClientType QUaModbusClient::getType() const
+{
+	return this->type()->value().value<QModbusClientType>();
 }
 
 QModbusState QUaModbusClient::getState() const
@@ -142,6 +152,18 @@ void QUaModbusClient::fromDomElement(QDomElement & domElem, QString & strError)
 	Q_ASSERT(false);
 	Q_UNUSED(domElem);
 	Q_UNUSED(strError);
+}
+
+void QUaModbusClient::on_serverAddressChanged(const QVariant & value)
+{
+	// emit
+	emit this->serverAddressChanged(value.value<quint8>());
+}
+
+void QUaModbusClient::on_keepConnectingChanged(const QVariant & value)
+{
+	// emit
+	emit this->keepConnectingChanged(value.toBool());
 }
 
 void QUaModbusClient::on_stateChanged(QModbusState state)

@@ -6,7 +6,8 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
 	// set defaults
-	type    ()->setValue("Serial");
+	type    ()->setValue(QModbusClientType::Serial);
+	type    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusClientType>());
 	comPort ()->setDataTypeEnum(QUaModbusRtuSerialClient::ComPorts);
 	comPort ()->setValue(0);
 	parity  ()->setDataTypeEnum(QMetaEnum::fromType<QParity>());

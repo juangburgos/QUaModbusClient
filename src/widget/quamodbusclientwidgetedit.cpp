@@ -11,9 +11,9 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 {
     ui->setupUi(this);
 	// setup type combo
-	for (int i = (int)ClientType::Tcp; i < (int)ClientType::Invalid; i++)
+	for (int i = (int)QModbusClientType::Tcp; i < (int)QModbusClientType::Invalid; i++)
 	{
-		auto strType = QString(QMetaEnum::fromType<ClientType>().valueToKey(i));
+		auto strType = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(i));
 		ui->comboBoxType->addItem(strType, i);
 	}
 	// setup com port combo
@@ -56,7 +56,7 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		ui->comboBoxStopBits->addItem(strStopBits, enumStopBits);
 	}
 	// setup initial values
-	this->setType(ClientType::Tcp);
+	this->setType(QModbusClientType::Tcp);
 	this->setDeviceAddress(0);
 	this->setNetworkPort(502);
 	this->setKeepConnecting(false);
@@ -106,15 +106,15 @@ void QUaModbusClientWidgetEdit::setId(const QString & strId)
 	ui->lineEditId->setText(strId);
 }
 
-QUaModbusClientWidgetEdit::ClientType QUaModbusClientWidgetEdit::type() const
+QModbusClientType QUaModbusClientWidgetEdit::type() const
 {
-	ClientType clientType = ui->comboBoxType->currentData().value<ClientType>();
+	QModbusClientType clientType = ui->comboBoxType->currentData().value<QModbusClientType>();
 	return clientType;
 }
 
-void QUaModbusClientWidgetEdit::setType(const ClientType & type)
+void QUaModbusClientWidgetEdit::setType(const QModbusClientType & type)
 {
-	auto strType = QString(QMetaEnum::fromType<ClientType>().valueToKey(type));
+	auto strType = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(type));
 	Q_ASSERT(ui->comboBoxType->findText(strType) >= 0);
 	ui->comboBoxType->setCurrentText(strType);
 	// update ui
@@ -232,18 +232,18 @@ void QUaModbusClientWidgetEdit::setStopBits(const QStopBits & stopBits)
 	ui->comboBoxStopBits->setCurrentText(strStopBits);
 }
 
-void QUaModbusClientWidgetEdit::updateTypeInGui(const ClientType & type)
+void QUaModbusClientWidgetEdit::updateTypeInGui(const QModbusClientType & type)
 {
 	// display only relevant frame
 	switch (type)
 	{
-	case ClientType::Tcp:
+	case QModbusClientType::Tcp:
 		ui->frameSerial->setEnabled(false);
 		ui->frameSerial->setVisible(false);
 		ui->frameTcp->setEnabled(true);
 		ui->frameTcp->setVisible(true);
 		break;
-	case ClientType::Serial:
+	case QModbusClientType::Serial:
 		ui->frameSerial->setEnabled(true);
 		ui->frameSerial->setVisible(true);
 		ui->frameTcp->setEnabled(false);
@@ -258,6 +258,6 @@ void QUaModbusClientWidgetEdit::updateTypeInGui(const ClientType & type)
 void QUaModbusClientWidgetEdit::on_comboBoxType_currentIndexChanged(int index)
 {
 	Q_UNUSED(index);
-	ClientType type = this->type();
+	QModbusClientType type = this->type();
 	this->updateTypeInGui(type);
 }

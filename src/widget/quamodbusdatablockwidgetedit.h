@@ -21,7 +21,7 @@ public:
 	void                 setIdEditable(const bool &idEditable);
 			             
 	QString              id() const;
-	void                 strId(const QString &strId);
+	void                 setId(const QString &strId);
 
 	QModbusDataBlockType type() const;
 	void                 setType(const QModbusDataBlockType &type);

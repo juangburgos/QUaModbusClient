@@ -39,7 +39,7 @@ QString QUaModbusValueWidgetEdit::id() const
 	return ui->lineEditId->text();
 }
 
-void QUaModbusValueWidgetEdit::strId(const QString & strId)
+void QUaModbusValueWidgetEdit::setId(const QString & strId)
 {
 	ui->lineEditId->setText(strId);
 }

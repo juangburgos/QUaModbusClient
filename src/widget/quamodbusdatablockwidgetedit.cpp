@@ -41,7 +41,7 @@ QString QUaModbusDataBlockWidgetEdit::id() const
 	return ui->lineEditId->text();
 }
 
-void QUaModbusDataBlockWidgetEdit::strId(const QString & strId)
+void QUaModbusDataBlockWidgetEdit::setId(const QString & strId)
 {
 	ui->lineEditId->setText(strId);
 }
