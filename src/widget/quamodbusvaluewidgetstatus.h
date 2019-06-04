@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include <QUaModbusValue>
+
 namespace Ui {
 class QUaModbusValueWidgetStatus;
 }
@@ -14,6 +16,28 @@ class QUaModbusValueWidgetStatus : public QWidget
 public:
     explicit QUaModbusValueWidgetStatus(QWidget *parent = nullptr);
     ~QUaModbusValueWidgetStatus();
+
+	void setType(const QModbusValueType &type);
+
+	void setStatus(const QModbusError &status);
+
+	void setRegistersUsed(const quint16 &registersUsed);
+
+	void setData(const QVector<quint16> &data);
+
+	void setValue(const QVariant &value);
+
+	void setWritable(const bool &writable);
+
+signals:
+	void valueUpdated(const QVariant &value);
+
+private slots:
+    void on_checkBoxValue_stateChanged(int arg1);
+
+    void on_spinBoxValue_valueChanged(int arg1);
+
+    void on_doubleSpinBoxValue_valueChanged(double arg1);
 
 private:
     Ui::QUaModbusValueWidgetStatus *ui;

@@ -114,6 +114,7 @@ QVariant QUaModbusValue::getValue() const
 	return this->value()->value();
 }
 
+// programmatic change from C++ API
 void QUaModbusValue::setValue(const QVariant & value)
 {
 	this->value()->setValue(value);
@@ -143,7 +144,7 @@ void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
 	emit this->addressOffsetChanged(value.toInt());
 }
 
-// network change
+// OPC UA network change
 void QUaModbusValue::on_valueChanged(const QVariant & value)
 {
 	// get block representation of value
@@ -159,6 +160,8 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(blockError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	// check if fits in block
@@ -168,6 +171,8 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
@@ -176,6 +181,8 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	// replace part
@@ -183,13 +190,13 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 	{
 		blockData.replace(addressOffset + i, partBlockData.at(i));
 	}
-	// update block
+	// update block (i.e. update OPC UA)
 	this->block()->on_dataChanged(QVariant::fromValue(blockData));
 	// emit
 	emit this->valueChanged(value);
 }
 
-// programmatic change
+// programmatic change from block upstream (modbus response to read request)
 void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError &blockError)
 {
 	// check configuration
@@ -197,16 +204,20 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	if (type == QModbusValueType::Invalid)
 	{
 		this->value()->setWriteAccess(false);
-		this->setValue(QVariant());
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	int addressOffset = this->addressOffset()->value().value<int>();
 	if (addressOffset < 0)
 	{
 		this->value()->setWriteAccess(false);
-		this->setValue(QVariant());
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	// set writable if block type allows it
@@ -224,15 +235,19 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > block.count())
 	{
-		this->setValue(QVariant());
+		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		auto newError = blockError != QModbusError::NoError ? blockError : QModbusError::ConfigurationError;
 		this->setLastError(newError);
+		// emit
+		emit this->valueChanged(QVariant());
 		return;
 	}
 	// convert value and set it, but leave block error code
 	this->setLastError(blockError);
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
-	this->setValue(value);
+	this->value()->setValue(value); // NOTE : avoid recursion
+	// emit
+	emit this->valueChanged(value);
 }
 
 QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
@@ -695,7 +710,7 @@ QVector<quint16> QUaModbusValue::valueToBlock(const QVariant & value, const QMod
 	return block;
 }
 
-QUaModbusDataBlock * QUaModbusValue::block()
+QUaModbusDataBlock * QUaModbusValue::block() const
 {
 	return dynamic_cast<QUaModbusValueList*>(this->parent())->block();
 }

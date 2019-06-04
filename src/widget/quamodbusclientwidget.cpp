@@ -43,7 +43,7 @@ QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
 	m_modelClients.setHorizontalHeaderLabels(paramHeaders);
 	// setup params sort filter
 	m_proxyClients.setSourceModel(&m_modelClients);
-	// setup params table
+	// setup params tree
 	ui->treeViewModbus->setModel(&m_proxyClients);
 	ui->treeViewModbus->setAlternatingRowColors(true);
 	ui->treeViewModbus->setSortingEnabled(true);

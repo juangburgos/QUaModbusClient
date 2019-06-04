@@ -331,19 +331,20 @@ void QUaModbusDataBlock::startLoop()
 			auto error = m_replyRead->error();
 			this->setLastError(error);
 			// update block value
-			QVector<quint16> vectValues = m_replyRead->result().values();
-			this->data()->setValue(QVariant::fromValue(vectValues));
+			QVector<quint16> data = m_replyRead->result().values();
+			this->data()->setValue(QVariant::fromValue(data));
 			// update modbus values and errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
 			{
-				values.at(i)->setValue(vectValues, error);
+				values.at(i)->setValue(data, error);
 			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();
 			m_replyRead = nullptr;
+			// emit
+			emit this->dataChanged(data);
 		}, Qt::QueuedConnection);
-
 	}, samplingTime);
 }
 

@@ -2,6 +2,10 @@
 #define QUAMODBUSDATABLOCKWIDGETSTATUS_H
 
 #include <QWidget>
+#include <QStandardItemModel>
+#include <QSortFilterProxyModel>
+
+#include <QUaModbusDataBlock>
 
 namespace Ui {
 class QUaModbusDataBlockWidgetStatus;
@@ -15,8 +19,13 @@ public:
     explicit QUaModbusDataBlockWidgetStatus(QWidget *parent = nullptr);
     ~QUaModbusDataBlockWidgetStatus();
 
+	void setStatus(const QModbusError &status);
+
+	void setData(const quint32 &startAddress, const QVector<quint16> &data);
+
 private:
     Ui::QUaModbusDataBlockWidgetStatus *ui;
+	QStandardItemModel    m_modelValues;
 };
 
 #endif // QUAMODBUSDATABLOCKWIDGETSTATUS_H

@@ -38,6 +38,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 	QObject::connect(ui->widgetModbus, &QUaModbusClientWidget::nodeSelectionChanged, ui->pushButtonApply,
 		[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
 	{
+		Q_UNUSED(typePrev);
 		// delete old widget if necessary
 		if (m_pWidgetEdit)
 		{
@@ -120,9 +121,6 @@ void QUaModbusClientWidgetTest::bindClientWidgetEdit(QUaModbusClient * client)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
-			// hide apply button
-			ui->pushButtonApply->setEnabled(false);
-			ui->pushButtonApply->setVisible(false);
 		}
 	});
 	// id
@@ -244,9 +242,6 @@ void QUaModbusClientWidgetTest::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
-			// hide apply button
-			ui->pushButtonApply->setEnabled(false);
-			ui->pushButtonApply->setVisible(false);
 		}
 	});
 	// id
@@ -301,9 +296,6 @@ void QUaModbusClientWidgetTest::bindValueWidgetEdit(QUaModbusValue * value)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
-			// hide apply button
-			ui->pushButtonApply->setEnabled(false);
-			ui->pushButtonApply->setVisible(false);
 		}
 	});
 	// id
@@ -346,9 +338,18 @@ void QUaModbusClientWidgetTest::bindBlockWidgetStatus(QUaModbusDataBlock * block
 			m_pWidgetStatus = nullptr;
 		}
 	});
-
-	// TODO
-
+	// status
+	widget->setStatus(block->getLastError());
+	QObject::connect(block, &QUaModbusDataBlock::lastErrorChanged, widget,
+	[widget](const QModbusError & error) {
+		widget->setStatus(error);
+	});
+	// data
+	widget->setData(0, block->getData());
+	QObject::connect(block, &QUaModbusDataBlock::dataChanged, widget,
+	[widget](const QVector<quint16> & data) {
+		widget->setData(0, data);
+	});
 }
 
 void QUaModbusClientWidgetTest::bindValueWidgetStatus(QUaModbusValue * value)
@@ -368,9 +369,51 @@ void QUaModbusClientWidgetTest::bindValueWidgetStatus(QUaModbusValue * value)
 			m_pWidgetStatus = nullptr;
 		}
 	});
-
-	// TODO
-
+	// type
+	widget->setType(value->getType());
+	QObject::connect(value, &QUaModbusValue::typeChanged, widget,
+	[widget, value](const QModbusValueType & type) {
+		widget->setType(type);
+		widget->setValue(value->getValue());
+	});
+	// status
+	widget->setStatus(value->getLastError());
+	QObject::connect(value, &QUaModbusValue::lastErrorChanged, widget,
+	[widget](const QModbusError & error) {
+		widget->setStatus(error);
+	});
+	// registers used
+	widget->setRegistersUsed(value->getRegistersUsed());
+	QObject::connect(value, &QUaModbusValue::registersUsedChanged, widget,
+	[widget](const quint16 & registersUsed) {
+		widget->setRegistersUsed(registersUsed);
+	});
+	// data & value
+	auto data   = value->block()->getData();
+	auto offset = value->getAddressOffset();
+	auto size   = QUaModbusValue::typeBlockSize(value->getType());
+	widget->setData(data.mid(offset, size));
+	widget->setValue(value->getValue());
+	QObject::connect(value, &QUaModbusValue::valueChanged, widget,
+	[widget, value](const QVariant & varVal) {
+		auto block  = value->block()->getData();
+		auto offset = value->getAddressOffset();
+		auto size   = QUaModbusValue::typeBlockSize(value->getType());
+		widget->setData(block.mid(offset, size));
+		widget->setValue(varVal);
+	});
+	// writable
+	auto blkType = value->block()->getType();
+	widget->setWritable(blkType == QModbusDataBlockType::Coils || blkType == QModbusDataBlockType::HoldingRegisters);
+	QObject::connect(value->block(), &QUaModbusDataBlock::typeChanged, widget,
+	[widget](const QModbusDataBlockType &type) {
+		widget->setWritable(type == QModbusDataBlockType::Coils || type == QModbusDataBlockType::HoldingRegisters);
+	});
+	// on value change
+	QObject::connect(widget, &QUaModbusValueWidgetStatus::valueUpdated, value,
+	[value](const QVariant &varVal) {
+		value->setValue(varVal);
+	});
 }
 
 void QUaModbusClientWidgetTest::on_pushButtonStart_clicked()

@@ -95,6 +95,13 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	QUaModbusDataBlock * block() const;
+
+	static int              typeBlockSize(const QModbusValueType &type);
+	static QMetaType::Type  typeToMeta   (const QModbusValueType &type);
+	static QVariant         blockToValue (const QVector<quint16> &block, const QModbusValueType &type);
+	static QVector<quint16> valueToBlock (const QVariant         &value, const QModbusValueType &type);
+
 signals:
 	// C++ API
 	void typeChanged         (const QModbusValueType &type         );
@@ -110,18 +117,11 @@ private slots:
 
 private:
 
-	QUaModbusDataBlock * block();
-
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
 	void        fromDomElement(QDomElement  & domElem, QString &strError);
-
-	static int              typeBlockSize(const QModbusValueType &type);
-	static QMetaType::Type  typeToMeta   (const QModbusValueType &type);
-	static QVariant         blockToValue (const QVector<quint16> &block, const QModbusValueType &type);
-	static QVector<quint16> valueToBlock (const QVariant         &value, const QModbusValueType &type);
 	
 };
 
