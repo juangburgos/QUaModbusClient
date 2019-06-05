@@ -116,7 +116,6 @@ private slots:
 	void on_valueChanged        (const QVariant &value);
 
 private:
-
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
 
 	// XML import / export

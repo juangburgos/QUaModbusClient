@@ -368,13 +368,8 @@ QStandardItem *  QUaModbusClientWidget::handleClientAdded(QUaModbusClient * clie
 	QObject::connect(client, &QObject::destroyed, this,
 	[this, iObj]() {
 		Q_CHECK_PTR(iObj);
+		// remove from tree
 		m_modelClients.removeRows(iObj->index().row(), 1);
-		// if last client was deleted emit no selection
-		if (m_modelClients.rowCount() <= 0)
-		{
-			// emit
-			emit this->nodeSelectionChanged(nullptr, QModbusSelectType::Invalid, nullptr, QModbusSelectType::Invalid);
-		}
 	});
 
 	// subscribe to block addition

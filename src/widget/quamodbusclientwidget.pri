@@ -9,7 +9,8 @@ FORMS += \
     $$PWD/quamodbusdatablockwidgetedit.ui \
     $$PWD/quamodbusvaluewidgetedit.ui \
     $$PWD/quamodbusdatablockwidgetstatus.ui \
-    $$PWD/quamodbusvaluewidgetstatus.ui
+    $$PWD/quamodbusvaluewidgetstatus.ui \
+    $$PWD/quamodbusclientwidgetstatus.ui
 
 HEADERS += \
     $$PWD/quamodbusclientwidget.h \
@@ -18,7 +19,8 @@ HEADERS += \
     $$PWD/quamodbusdatablockwidgetedit.h \
     $$PWD/quamodbusvaluewidgetedit.h \
     $$PWD/quamodbusdatablockwidgetstatus.h \
-    $$PWD/quamodbusvaluewidgetstatus.h
+    $$PWD/quamodbusvaluewidgetstatus.h \
+    $$PWD/quamodbusclientwidgetstatus.h
 
 SOURCES += \
     $$PWD/quamodbusclientwidget.cpp \
@@ -27,5 +29,6 @@ SOURCES += \
     $$PWD/quamodbusdatablockwidgetedit.cpp \
     $$PWD/quamodbusvaluewidgetedit.cpp \
     $$PWD/quamodbusdatablockwidgetstatus.cpp \
-    $$PWD/quamodbusvaluewidgetstatus.cpp
+    $$PWD/quamodbusvaluewidgetstatus.cpp \
+    $$PWD/quamodbusclientwidgetstatus.cpp
 

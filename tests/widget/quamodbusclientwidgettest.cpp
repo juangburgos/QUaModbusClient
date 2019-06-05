@@ -1,6 +1,12 @@
 #include "quamodbusclientwidgettest.h"
 #include "ui_quamodbusclientwidgettest.h"
 
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
+#include <QStandardPaths>
+#include <QMessageBox>
+
 #include <QUaModbusClientList>
 #include <QUaModbusClient>
 #include <QUaModbusTcpClient>
@@ -12,6 +18,7 @@
 #include <QUaModbusDataBlockWidgetEdit>
 #include <QUaModbusValueWidgetEdit>
 
+#include <QUaModbusClientWidgetStatus>
 #include <QUaModbusDataBlockWidgetStatus>
 #include <QUaModbusValueWidgetStatus>
 
@@ -22,7 +29,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
     ui->setupUi(this);
 	m_pWidgetEdit    = nullptr;
 	m_pWidgetStatus  = nullptr;
-	m_typeModbusCurr = QModbusSelectType::Invalid;
+	m_deleting       = false;
 	// hide apply button until some valid object selected
 	ui->pushButtonApply->setEnabled(false);
 	ui->pushButtonApply->setVisible(false);
@@ -35,7 +42,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 	ui->widgetModbus->setClientList(modCliList);
 
 	// change widgets
-	QObject::connect(ui->widgetModbus, &QUaModbusClientWidget::nodeSelectionChanged, ui->pushButtonApply,
+	QObject::connect(ui->widgetModbus, &QUaModbusClientWidget::nodeSelectionChanged, this,
 		[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
 	{
 		Q_UNUSED(typePrev);
@@ -51,20 +58,19 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 			delete m_pWidgetStatus;
 			m_pWidgetStatus = nullptr;
 		}
-		if (!nodePrev && !nodeCurr)
+		// early exit
+		if (!nodeCurr)
 		{
 			return;
 		}
-		// show apply button
-		ui->pushButtonApply->setEnabled(true);
-		ui->pushButtonApply->setVisible(true);
 		// set up widgets for current selection
 		switch (typeCurr)
 		{
 		case QModbusSelectType::QUaModbusClient:
 			{
 				auto client = dynamic_cast<QUaModbusClient*>(nodeCurr);
-				this->bindClientWidgetEdit(client);
+				this->bindClientWidgetEdit  (client);
+				this->bindClientWidgetStatus(client);
 			}
 			break;
 		case QModbusSelectType::QUaModbusDataBlock:
@@ -93,9 +99,6 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 				delete m_pWidgetStatus;
 			}
 			m_pWidgetStatus = nullptr;
-			// hide apply button
-			ui->pushButtonApply->setEnabled(false);
-			ui->pushButtonApply->setVisible(false);
 			break;
 		}
 	});
@@ -103,12 +106,16 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 
 QUaModbusClientWidgetTest::~QUaModbusClientWidgetTest()
 {
+	m_deleting = true;
     delete ui;
 }
 
 void QUaModbusClientWidgetTest::bindClientWidgetEdit(QUaModbusClient * client)
 {
-	// create widget if necessary
+	// show apply button
+	ui->pushButtonApply->setEnabled(true);
+	ui->pushButtonApply->setVisible(true);
+	// create widget
 	Q_ASSERT(!m_pWidgetEdit);
 	auto widget = new QUaModbusClientWidgetEdit(this);
 	m_pWidgetEdit = widget;
@@ -121,6 +128,11 @@ void QUaModbusClientWidgetTest::bindClientWidgetEdit(QUaModbusClient * client)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
+			if (!m_deleting)
+			{
+				ui->pushButtonApply->setEnabled(false);
+				ui->pushButtonApply->setVisible(false);
+			}
 		}
 	});
 	// id
@@ -229,6 +241,9 @@ void QUaModbusClientWidgetTest::bindClientWidgetEdit(QUaModbusClient * client)
 
 void QUaModbusClientWidgetTest::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 {
+	// show apply button
+	ui->pushButtonApply->setEnabled(true);
+	ui->pushButtonApply->setVisible(true);
 	// create widget if necessary
 	Q_ASSERT(!m_pWidgetEdit);
 	auto widget = new QUaModbusDataBlockWidgetEdit(this);
@@ -242,6 +257,11 @@ void QUaModbusClientWidgetTest::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
+			if (!m_deleting)
+			{
+				ui->pushButtonApply->setEnabled(false);
+				ui->pushButtonApply->setVisible(false);
+			}
 		}
 	});
 	// id
@@ -283,6 +303,9 @@ void QUaModbusClientWidgetTest::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 
 void QUaModbusClientWidgetTest::bindValueWidgetEdit(QUaModbusValue * value)
 {
+	// show apply button
+	ui->pushButtonApply->setEnabled(true);
+	ui->pushButtonApply->setVisible(true);
 	// create widget if necessary
 	Q_ASSERT(!m_pWidgetEdit);
 	auto widget = new QUaModbusValueWidgetEdit(this);
@@ -296,6 +319,11 @@ void QUaModbusClientWidgetTest::bindValueWidgetEdit(QUaModbusValue * value)
 		{
 			delete m_pWidgetEdit;
 			m_pWidgetEdit = nullptr;
+			if (!m_deleting)
+			{
+				ui->pushButtonApply->setEnabled(false);
+				ui->pushButtonApply->setVisible(false);
+			}
 		}
 	});
 	// id
@@ -318,6 +346,37 @@ void QUaModbusClientWidgetTest::bindValueWidgetEdit(QUaModbusValue * value)
 	[value, widget]() {
 		value->setType         (widget->type()  );
 		value->setAddressOffset(widget->offset());
+	});
+}
+
+void QUaModbusClientWidgetTest::bindClientWidgetStatus(QUaModbusClient * client)
+{
+	// create widget if necessary
+	Q_ASSERT(!m_pWidgetStatus);
+	auto widget = new QUaModbusClientWidgetStatus(this);
+	m_pWidgetStatus = widget;
+	ui->verticalLayoutStatus->insertWidget(0, widget);
+	Q_CHECK_PTR(widget);
+	// bind
+	QObject::connect(client, &QObject::destroyed, widget,
+		[this]() {
+		if (m_pWidgetStatus)
+		{
+			delete m_pWidgetStatus;
+			m_pWidgetStatus = nullptr;
+		}
+	});
+	// status
+	widget->setStatus(client->getLastError());
+	QObject::connect(client, &QUaModbusClient::lastErrorChanged, widget,
+	[widget](const QModbusError & error) {
+		widget->setStatus(error);
+	});
+	// status
+	widget->setState(client->getState());
+	QObject::connect(client, &QUaModbusClient::stateChanged, widget,
+	[widget](const QModbusState & state) {
+		widget->setState(state);
 	});
 }
 
@@ -424,4 +483,85 @@ void QUaModbusClientWidgetTest::on_pushButtonStart_clicked()
 	m_server.isRunning() ?
 		m_server.stop() :
 		m_server.start();
+}
+
+void QUaModbusClientWidgetTest::on_pushButtonImport_clicked()
+{
+	// setup error dialog just in case
+	QMessageBox msgBox;
+	msgBox.setWindowTitle("Error");
+	msgBox.setIcon(QMessageBox::Critical);
+	// read from file
+	QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"),
+		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+		QObject::trUtf8("XML (*.xml *.txt)"));
+	// validate
+	if (strLoadFile.isEmpty())
+	{
+		return;
+	}
+	QFile fileConfig(strLoadFile);
+	// exists
+	if (!fileConfig.exists())
+	{
+		msgBox.setText(tr("File %1 does not exist.").arg(strLoadFile));
+		msgBox.exec();
+	}
+	else if (fileConfig.open(QIODevice::ReadOnly))
+	{
+		// load config into client list
+		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>();
+		Q_CHECK_PTR(modCliList);
+		auto strError   = modCliList->setXmlConfig(fileConfig.readAll());
+		if (strError.contains("Error"))
+		{
+			msgBox.setText(strError);
+			msgBox.exec();
+		}
+	}
+	else
+	{
+		msgBox.setText(tr("File %1 could not be opened.").arg(strLoadFile));
+		msgBox.exec();
+	}
+}
+
+void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
+{
+	// select file
+	QString strSaveFile = QFileDialog::getSaveFileName(this, QObject::tr("Save File"),
+		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+		QObject::tr("XML (*.xml *.txt)"));
+	// ignore if empty
+	if (strSaveFile.isEmpty() || strSaveFile.isNull())
+	{
+		return;
+	}
+	// save to file
+	QString strSaveError;
+	QFile file(strSaveFile);
+	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
+	{
+		// convert config to xml
+		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>();
+		Q_CHECK_PTR(modCliList);
+		// get config
+		QTextStream stream(&file);
+		stream << modCliList->xmlConfig();
+	}
+	else
+	{
+		strSaveError = QObject::tr("Error opening file ") + strSaveFile + " for write operations.";
+	}
+	// close file
+	file.close();
+	// show error dialog
+	if (!strSaveError.isEmpty())
+	{
+		QMessageBox msgBox;
+		msgBox.setWindowTitle("Error");
+		msgBox.setIcon(QMessageBox::Critical);
+		msgBox.setText(QObject::tr("Could not create file ") + strSaveFile + ". " + strSaveError);
+		msgBox.exec();
+	}
 }

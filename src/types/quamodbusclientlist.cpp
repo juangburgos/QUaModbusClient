@@ -63,14 +63,14 @@ QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 	doc.setContent(strXmlConfig, &strError, &line, &col);
 	if (!strError.isEmpty())
 	{
-		strError = QString("Error : Invalid XML in Line %1 Column %2 Error %3").arg(line).arg(col).arg(strError);
+		strError = tr("%1 : Invalid XML in Line %2 Column %3 Error %4").arg("Error").arg(line).arg(col).arg(strError);
 		return strError;
 	}
 	// get list of clients
 	QDomElement elemClientList = doc.firstChildElement(QUaModbusClientList::staticMetaObject.className());
 	if (elemClientList.isNull())
 	{
-		strError = "Error : No Modbus client list found in XML config.";
+		strError = tr("%1 : No Modbus client list found in XML config.").arg("Error");
 		return strError;
 	}
 	// load config from xml
