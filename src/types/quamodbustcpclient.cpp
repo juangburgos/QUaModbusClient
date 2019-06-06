@@ -70,11 +70,11 @@ QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 	// add client element
 	QDomElement elemTcpClient = domDoc.createElement(QUaModbusTcpClient::staticMetaObject.className());
 	// set client attributes
-	elemTcpClient.setAttribute("BrowseName"    , this->browseName());
-	elemTcpClient.setAttribute("ServerAddress" , serverAddress ()->value().toUInt());
-	elemTcpClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
-	elemTcpClient.setAttribute("NetworkAddress", networkAddress()->value().toString());
-	elemTcpClient.setAttribute("NetworkPort"   , networkPort   ()->value().toUInt());
+	elemTcpClient.setAttribute("BrowseName"    , this->browseName() );
+	elemTcpClient.setAttribute("ServerAddress" , getServerAddress ());
+	elemTcpClient.setAttribute("KeepConnecting", getKeepConnecting());
+	elemTcpClient.setAttribute("NetworkAddress", getNetworkAddress());
+	elemTcpClient.setAttribute("NetworkPort"   , getNetworkPort   ());
 	// add block list element
 	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
 	elemTcpClient.appendChild(elemBlockList);
@@ -92,45 +92,41 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
 	if (bOK)
 	{
-		this->serverAddress()->setValue(serverAddress);
+		this->setServerAddress(serverAddress);
 	}
 	else
 	{
-		strError += QString(tr("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n")).arg(serverAddress).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(serverAddress).arg(strBrowseName);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
 	if (bOK)
 	{
-		this->keepConnecting()->setValue(keepConnecting);
+		this->setKeepConnecting(keepConnecting);
 	}
 	else
 	{
-		strError += QString(tr("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n")).arg(keepConnecting).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(keepConnecting).arg(strBrowseName);
 	}
 	// NetworkAddress
 	auto networkAddress = domElem.attribute("NetworkAddress");
 	if (!networkAddress.isEmpty())
 	{
-		this->networkAddress()->setValue(networkAddress);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_networkAddressChanged(networkAddress);
+		this->setNetworkAddress(networkAddress);
 	}
 	else
 	{
-		strError += QString(tr("Error : Invalid NetworkAddress attribute '%1' in Modbus client %2. Ignoring.\n")).arg(networkAddress).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid NetworkAddress attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(networkAddress).arg(strBrowseName);
 	}
 	// NetworkPort
 	auto networkPort = domElem.attribute("NetworkPort").toUInt(&bOK);
 	if (bOK)
 	{
-		this->networkPort()->setValue(networkPort);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_networkPortChanged(networkPort);
+		this->setNetworkPort(networkPort);
 	}
 	else
 	{
-		strError += QString(tr("Error : Invalid NetworkPort attribute '%1' in Modbus client %2. Ignoring.\n")).arg(networkPort).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid NetworkPort attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(networkPort).arg(strBrowseName);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
@@ -140,7 +136,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n")).arg(strBrowseName);
+		strError += QString(tr("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n")).arg("Warning").arg(strBrowseName);
 	}
 }
 

@@ -39,7 +39,7 @@ signals:
 protected:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;
-	void        fromDomElement(QDomElement  & domElem, QString &strError) override;;
+	void        fromDomElement(QDomElement  & domElem, QString &strError) override;
 
 private slots:
 	void on_stateChanged         (const QModbusDevice::State &state);

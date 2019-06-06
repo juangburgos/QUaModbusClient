@@ -256,8 +256,8 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 	QDomElement elemValue = domDoc.createElement(QUaModbusValue::staticMetaObject.className());
 	// set value attributes
 	elemValue.setAttribute("BrowseName"   , this->browseName());
-	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QModbusValueType>().valueToKey(type()->value().value<QModbusValueType>()));
-	elemValue.setAttribute("AddressOffset", addressOffset()->value().toInt());
+	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QModbusValueType>().valueToKey(this->getType()));
+	elemValue.setAttribute("AddressOffset", this->getAddressOffset());
 	// return value element
 	return elemValue;
 }
@@ -269,28 +269,24 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
 	bool bOK;
 	// Type
-	auto type = QMetaEnum::fromType<QModbusValueType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
+	auto type = (QModbusValueType)QMetaEnum::fromType<QModbusValueType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);
 	if (bOK)
 	{
-		this->type()->setValue(type);
-		// NOTE : force internal update
-		this->on_typeChanged(type);
+		this->setType(type);
 	}
 	else
 	{
-		strError += QString("Error : Invalid Type attribute '%1' in Value %2. Ignoring.\n").arg(type).arg(strBrowseName);
+		strError += tr("%1 : Invalid Type attribute '%2' in Value %3. Ignoring.\n").arg("Warning").arg(type).arg(strBrowseName);
 	}
 	// AddressOffset
 	auto addressOffset = domElem.attribute("AddressOffset").toInt(&bOK);
 	if (bOK)
 	{
-		this->addressOffset()->setValue(addressOffset);
-		// NOTE : force internal update
-		this->on_addressOffsetChanged(addressOffset);
+		this->setAddressOffset(addressOffset);
 	}
 	else
 	{
-		strError += QString("Error : Invalid AddressOffset attribute '%1' in Value %2. Ignoring.\n").arg(addressOffset).arg(strBrowseName);
+		strError += tr("%1 : Invalid AddressOffset attribute '%1' in Value %2. Ignoring.\n").arg("Warning").arg(addressOffset).arg(strBrowseName);
 	}
 }
 

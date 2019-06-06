@@ -359,10 +359,10 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::staticMetaObject.className());
 	// set block attributes
 	elemBlock.setAttribute("BrowseName"  , this->browseName());
-	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(type()->value().value<QModbusDataBlockType>()));
-	elemBlock.setAttribute("Address"     , address()->value().toInt());
-	elemBlock.setAttribute("Size"        , size()->value().toUInt());
-	elemBlock.setAttribute("SamplingTime", samplingTime()->value().toUInt());
+	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(getType()));
+	elemBlock.setAttribute("Address"     , getAddress());
+	elemBlock.setAttribute("Size"        , getSize());
+	elemBlock.setAttribute("SamplingTime", getSamplingTime());
 	// add value list element
 	auto elemValueList = values()->toDomElement(domDoc);
 	elemBlock.appendChild(elemValueList);
@@ -386,44 +386,38 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Type attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(type).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Type attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(type).arg(strBrowseName);
 	}
 	
 	// Address
 	auto address = domElem.attribute("Address").toInt(&bOK);
 	if (bOK)
 	{
-		this->address()->setValue(address);
-		// NOTE : force internal update
-		this->on_addressChanged(address);
+		this->setAddress(address);
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Address attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(address).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Address attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(address).arg(strBrowseName);
 	}
 	// Size
 	auto size = domElem.attribute("Size").toUInt(&bOK);
 	if (bOK)
 	{
-		this->size()->setValue(size);
-		// NOTE : force internal update
-		this->on_sizeChanged(size);
+		this->setSize(size);
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Size attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(size).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid Size attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(size).arg(strBrowseName);
 	}
 	// SamplingTime
 	auto samplingTime = domElem.attribute("SamplingTime").toUInt(&bOK);
 	if (bOK)
 	{
-		this->samplingTime()->setValue(samplingTime);
-		// NOTE : force internal update
-		this->on_samplingTimeChanged(samplingTime);
+		this->setSamplingTime(samplingTime);
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Ignoring.\n")).arg("Error").arg(samplingTime).arg(strBrowseName);
+		strError += QString(tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(samplingTime).arg(strBrowseName);
 	}
 	// get value list
 	QDomElement elemValueList = domElem.firstChildElement(QUaModbusValueList::staticMetaObject.className());
@@ -433,7 +427,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n")).arg("Error").arg(strBrowseName);
+		strError += QString(tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n")).arg("Warning").arg(strBrowseName);
 	}
 }
 

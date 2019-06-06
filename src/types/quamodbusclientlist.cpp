@@ -77,7 +77,7 @@ QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 	this->fromDomElement(elemClientList, strError);
 	if (strError.isEmpty())
 	{
-		strError = "Success";
+		strError = "Success.";
 	}
 	return strError;
 }
@@ -116,20 +116,20 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		Q_ASSERT(!elemClient.isNull());
 		if (!elemClient.hasAttribute("BrowseName"))
 		{
-			strError += "Error : Cannot add TCP client without BrowseName attribute. Skipping.\n";
+			strError += tr("%1 : Cannot add TCP client without BrowseName attribute. Skipping.\n").arg("Error");
 			continue;
 		}
 		QString strBrowseName = elemClient.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += "Error : Cannot add TCP client with empty BrowseName attribute. Skipping.\n";
+			strError += tr("%1 : Cannot add TCP client with empty BrowseName attribute. Skipping.\n").arg("Error");
 			continue;
 		}
 		// check if exists
 		auto client = this->browseChild<QUaModbusClient>(strBrowseName);
 		if (client)
 		{
-			strError += QString("Warning : Modbus client with %1 BrowseName already exists. Merging client configuration.\n").arg(strBrowseName);
+			strError += tr("%1 : Modbus client with %2 BrowseName already exists. Merging client configuration.\n").arg("Warning").arg(strBrowseName);
 			// merge client config
 			client->fromDomElement(elemClient, strError);
 			continue;
@@ -138,7 +138,7 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		client = this->browseChild<QUaModbusTcpClient>(strBrowseName);
 		if (!client)
 		{
-			strError += QString("Error : Failed to create TCP client with %1 BrowseName. Skipping.\n").arg(strBrowseName);
+			strError += tr("%1 : Failed to create TCP client with %2 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
 			continue;
 		}
 		// set client config
@@ -157,27 +157,27 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		Q_ASSERT(!elemClient.isNull());
 		if (!elemClient.hasAttribute("BrowseName"))
 		{
-			strError += "Error : Cannot add Serial client without BrowseName attribute. Skipping.\n";
+			strError += tr("%1 : Cannot add Serial client without BrowseName attribute. Skipping.\n").arg("Error");
 			continue;
 		}
 		QString strBrowseName = elemClient.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += "Error : Cannot add Serial client with empty BrowseName. Skipping.\n";
+			strError += tr("%1 : Cannot add Serial client with empty BrowseName. Skipping.\n").arg("Error");
 			continue;
 		}
 		// check if exists
 		auto client = this->browseChild<QUaModbusClient>(strBrowseName);
 		if (client)
 		{
-			strError += QString("Error : Modbus client with %1 BrowseName already exists. Skipping.\n").arg(strBrowseName);
+			strError += tr("%1 : Modbus client with %1 BrowseName already exists. Skipping.\n").arg("Error").arg(strBrowseName);
 			continue;
 		}
 		this->addClient<QUaModbusRtuSerialClient>(strBrowseName);
 		client = this->browseChild<QUaModbusRtuSerialClient>(strBrowseName);
 		if (!client)
 		{
-			strError += QString("Error : Failed to create Serial client with %1 BrowseName. Skipping.\n").arg(strBrowseName);
+			strError += tr("%1 : Failed to create Serial client with %1 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
 			continue;
 		}
 		// set client config

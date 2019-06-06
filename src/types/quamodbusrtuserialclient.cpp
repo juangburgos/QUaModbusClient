@@ -98,14 +98,14 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 	// add client list element
 	QDomElement elemSerialClient = domDoc.createElement(QUaModbusRtuSerialClient::staticMetaObject.className());
 	// set client attributes
-	elemSerialClient.setAttribute("BrowseName"    , this->browseName());
-	elemSerialClient.setAttribute("ServerAddress" , serverAddress()->value().toUInt());
-	elemSerialClient.setAttribute("KeepConnecting", keepConnecting()->value().toBool());
-	elemSerialClient.setAttribute("ComPort"       , QString(QUaModbusRtuSerialClient::EnumComPorts().value(comPort()->value().toInt())));
-	elemSerialClient.setAttribute("Parity"  , QMetaEnum::fromType<QParity>  ().valueToKey(parity  ()->value().value<QParity>  ()));
-	elemSerialClient.setAttribute("BaudRate", QMetaEnum::fromType<QBaudRate>().valueToKey(baudRate()->value().value<QBaudRate>()));
-	elemSerialClient.setAttribute("DataBits", QMetaEnum::fromType<QDataBits>().valueToKey(dataBits()->value().value<QDataBits>()));
-	elemSerialClient.setAttribute("StopBits", QMetaEnum::fromType<QStopBits>().valueToKey(stopBits()->value().value<QStopBits>()));
+	elemSerialClient.setAttribute("BrowseName"    , this->browseName()  );
+	elemSerialClient.setAttribute("ServerAddress" , getServerAddress()  );
+	elemSerialClient.setAttribute("KeepConnecting", getKeepConnecting() );
+	elemSerialClient.setAttribute("ComPort"       , QString(QUaModbusRtuSerialClient::EnumComPorts().value(getComPortKey())));
+	elemSerialClient.setAttribute("Parity"        , QMetaEnum::fromType<QParity>  ().valueToKey(getParity()   ));
+	elemSerialClient.setAttribute("BaudRate"      , QMetaEnum::fromType<QBaudRate>().valueToKey(getBaudRate() ));
+	elemSerialClient.setAttribute("DataBits"      , QMetaEnum::fromType<QDataBits>().valueToKey(getDataBits() ));
+	elemSerialClient.setAttribute("StopBits"      , QMetaEnum::fromType<QStopBits>().valueToKey(getStopBits() ));
 	// add block list element
 	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
 	elemSerialClient.appendChild(elemBlockList);
@@ -123,81 +123,71 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
 	if (bOK)
 	{
-		this->serverAddress()->setValue(serverAddress);
+		this->setServerAddress(serverAddress);
 	}
 	else
 	{
-		strError += QString("Error : Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.\n").arg(serverAddress).arg(strBrowseName);
+		strError += QString("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(serverAddress).arg(strBrowseName);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
 	if (bOK)
 	{
-		this->keepConnecting()->setValue(keepConnecting);
+		this->setKeepConnecting(keepConnecting);
 	}
 	else
 	{
-		strError += QString("Error : Invalid KeepConnecting attribute '%1' in Modbus client %2. Ignoring.\n").arg(keepConnecting).arg(strBrowseName);
+		strError += QString("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(keepConnecting).arg(strBrowseName);
 	}
 	// ComPort
 	auto comPort = domElem.attribute("ComPort");
 	if (!comPort.isEmpty())
 	{
-		this->comPort()->setValue(QUaModbusRtuSerialClient::EnumComPorts().key(comPort.toUtf8(), 0));
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_comPortChanged(comPort);
+		this->setComPortKey(QUaModbusRtuSerialClient::EnumComPorts().key(comPort.toUtf8(), 0));
 	}
 	else
 	{
-		strError += QString("Error : Invalid ComPort attribute '%1' in Modbus client %2. Ignoring.\n").arg(comPort).arg(strBrowseName);
+		strError += QString("%1 : Invalid ComPort attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(comPort).arg(strBrowseName);
 	}
 	// Parity
-	auto parity = QMetaEnum::fromType<QParity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
+	auto parity = (QParity)QMetaEnum::fromType<QParity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
 	if (bOK)
 	{
-		this->parity()->setValue(parity);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_parityChanged(parity);
+		this->setParity(parity);
 	}
 	else
 	{
-		strError += QString("Error : Invalid Parity attribute '%1' in Modbus client %2. Ignoring.\n").arg(parity).arg(strBrowseName);
+		strError += QString("%1 : Invalid Parity attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(parity).arg(strBrowseName);
 	}
 	// BaudRate
-	auto baudRate = QMetaEnum::fromType<QBaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
+	auto baudRate = (QBaudRate)QMetaEnum::fromType<QBaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
 	if (bOK)
 	{
-		this->baudRate()->setValue(baudRate);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_baudRateChanged(baudRate);
+		this->setBaudRate(baudRate);
 	}
 	else
 	{
-		strError += QString("Error : Invalid BaudRate attribute '%1' in Modbus client %2. Ignoring.\n").arg(baudRate).arg(strBrowseName);
+		strError += QString("%1 : Invalid BaudRate attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(baudRate).arg(strBrowseName);
 	}
 	// DataBits
-	auto dataBits = QMetaEnum::fromType<QDataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
+	auto dataBits = (QDataBits)QMetaEnum::fromType<QDataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
 	if (bOK)
 	{
-		this->dataBits()->setValue(dataBits);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_dataBitsChanged(dataBits);
+		this->setDataBits(dataBits);
 	}
 	else
 	{
-		strError += QString("Error : Invalid DataBits attribute '%1' in Modbus client %2. Ignoring.\n").arg(dataBits).arg(strBrowseName);
+		strError += QString("%1 : Invalid DataBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(dataBits).arg(strBrowseName);
 	}
 	// StopBits
-	auto stopBits = QMetaEnum::fromType<QStopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
+	auto stopBits = (QStopBits)QMetaEnum::fromType<QStopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
 	if (bOK)
 	{
-		this->stopBits()->setValue(stopBits);
-		// NOTE : force internal update (if connected won't apply until reconnect)
-		this->on_stopBitsChanged(stopBits);
+		this->setStopBits(stopBits);
 	}
 	else
 	{
-		strError += QString("Error : Invalid StopBits attribute '%1' in Modbus client %2. Ignoring.\n").arg(stopBits).arg(strBrowseName);
+		strError += QString("%1 : Invalid StopBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(stopBits).arg(strBrowseName);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
@@ -207,7 +197,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	}
 	else
 	{
-		strError += QString("Error : Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg(strBrowseName);
+		strError += QString("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg("Warning").arg(strBrowseName);
 	}
 }
 
