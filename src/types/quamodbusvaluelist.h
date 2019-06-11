@@ -23,6 +23,8 @@ public:
 
 	Q_INVOKABLE QString addValue(QString strValueId);
 
+	Q_INVOKABLE void clear();
+
 	// C++ API
 
 	QList<QUaModbusValue*> values();

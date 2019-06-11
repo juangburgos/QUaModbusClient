@@ -52,6 +52,14 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 	return "Success";
 }
 
+void QUaModbusDataBlockList::clear()
+{
+	for (int i = 0; i < this->blocks().count(); i++)
+	{
+		this->blocks().at(i)->remove();
+	}
+}
+
 QUaModbusClient * QUaModbusDataBlockList::client()
 {
 	return dynamic_cast<QUaModbusClient*>(this->parent());

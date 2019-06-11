@@ -50,6 +50,14 @@ QString QUaModbusValueList::addValue(QString strValueId)
 	return "Success";
 }
 
+void QUaModbusValueList::clear()
+{
+	for (int i = 0; i < this->values().count(); i++)
+	{
+		this->values().at(i)->remove();
+	}
+}
+
 QUaModbusDataBlock * QUaModbusValueList::block()
 {
 	return dynamic_cast<QUaModbusDataBlock*>(this->parent());

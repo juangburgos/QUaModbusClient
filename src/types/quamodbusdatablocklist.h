@@ -27,6 +27,8 @@ public:
 
 	Q_INVOKABLE QString addDataBlock(QString strBlockId);
 
+	Q_INVOKABLE void clear();
+
 	// C++ API
 
 	QList<QUaModbusDataBlock*> blocks();

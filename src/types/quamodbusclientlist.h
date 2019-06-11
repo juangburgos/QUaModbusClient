@@ -23,6 +23,8 @@ public:
 
 	Q_INVOKABLE QString addRtuSerialClient(QString strClientId);
 
+	Q_INVOKABLE void clear();
+
 	Q_INVOKABLE QString xmlConfig();
 
 	Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);

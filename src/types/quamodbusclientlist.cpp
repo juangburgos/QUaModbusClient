@@ -32,17 +32,25 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerEnum(QUaModbusRtuSerialClient::ComPorts, QUaModbusRtuSerialClient::EnumComPorts());
 }
 
-Q_INVOKABLE QString QUaModbusClientList::addTcpClient(QString strClientId)
+QString QUaModbusClientList::addTcpClient(QString strClientId)
 {
 	return this->addClient<QUaModbusTcpClient>(strClientId);
 }
 
-Q_INVOKABLE QString QUaModbusClientList::addRtuSerialClient(QString strClientId)
+QString QUaModbusClientList::addRtuSerialClient(QString strClientId)
 {
 	return this->addClient<QUaModbusRtuSerialClient>(strClientId);
 }
 
-Q_INVOKABLE QString QUaModbusClientList::xmlConfig()
+void QUaModbusClientList::clear()
+{
+	for (int i = 0; i < this->clients().count(); i++)
+	{
+		this->clients().at(i)->remove();
+	}
+}
+
+QString QUaModbusClientList::xmlConfig()
 {
 	QDomDocument doc;
 	// set xml header
