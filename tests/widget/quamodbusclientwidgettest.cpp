@@ -43,7 +43,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 
 	// change widgets
 	QObject::connect(ui->widgetModbus, &QUaModbusClientWidget::nodeSelectionChanged, this,
-		[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
+	[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
 	{
 		Q_UNUSED(typePrev);
 		// delete old widget if necessary
@@ -529,9 +529,9 @@ void QUaModbusClientWidgetTest::on_pushButtonImport_clicked()
 void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 {
 	// select file
-	QString strSaveFile = QFileDialog::getSaveFileName(this, QObject::tr("Save File"),
+	QString strSaveFile = QFileDialog::getSaveFileName(this, tr("Save File"),
 		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-		QObject::tr("XML (*.xml *.txt)"));
+		tr("XML (*.xml *.txt)"));
 	// ignore if empty
 	if (strSaveFile.isEmpty() || strSaveFile.isNull())
 	{
@@ -551,7 +551,7 @@ void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 	}
 	else
 	{
-		strSaveError = QObject::tr("Error opening file ") + strSaveFile + " for write operations.";
+		strSaveError = tr("Error opening file ") + strSaveFile + tr(" for write operations.");
 	}
 	// close file
 	file.close();
@@ -561,7 +561,7 @@ void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 		QMessageBox msgBox;
 		msgBox.setWindowTitle("Error");
 		msgBox.setIcon(QMessageBox::Critical);
-		msgBox.setText(QObject::tr("Could not create file ") + strSaveFile + ". " + strSaveError);
+		msgBox.setText(tr("Could not create file ") + strSaveFile + ". " + strSaveError);
 		msgBox.exec();
 	}
 }

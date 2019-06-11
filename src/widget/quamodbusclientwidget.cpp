@@ -174,7 +174,7 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 	auto strId   = widgetNewClient->id();
 	switch (cliType)
 	{
-	case QUaModbusClientWidgetEdit::Tcp:
+	case QModbusClientType::Tcp:
 		{
 			// add to OPC UA
 			QString strError = m_listClients->addTcpClient(strId);
@@ -200,7 +200,7 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			}
 		}
 		break;
-	case QUaModbusClientWidgetEdit::Serial:
+	case QModbusClientType::Serial:
 		{
 			// add to OPC UA
 			QString strError = m_listClients->addRtuSerialClient(strId);
@@ -229,7 +229,7 @@ void QUaModbusClientWidget::showNewClientDialog(QUaModbusClientDialog & dialog)
 			}
 		}
 		break;
-	case QUaModbusClientWidgetEdit::Invalid:
+	case QModbusClientType::Invalid:
 	default:
 		Q_ASSERT(false);
 		break;

@@ -21,13 +21,6 @@ public:
     explicit QUaModbusClientWidgetEdit(QWidget *parent = nullptr);
     ~QUaModbusClientWidgetEdit();
 
-	enum ClientType {
-		Tcp     = 0,
-		Serial  = 1,
-		Invalid = 2
-	};
-	Q_ENUM(ClientType)
-
 	bool       isIdEditable() const;
 	void       setIdEditable(const bool &idEditable);
 
