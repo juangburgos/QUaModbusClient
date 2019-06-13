@@ -133,6 +133,14 @@ void QUaModbusValue::setLastError(const QModbusError & error)
 	emit this->lastErrorChanged(error);
 }
 
+bool QUaModbusValue::isWritable() const
+{
+	auto block = this->block();
+	auto type  = block->getType();
+	return type == QModbusDataBlockType::Coils || 
+		   type == QModbusDataBlockType::HoldingRegisters;
+}
+
 void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
 {
 	// update value is possible

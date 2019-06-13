@@ -95,6 +95,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	bool isWritable() const;
+
 	QUaModbusDataBlock * block() const;
 
 	static int              typeBlockSize(const QModbusValueType &type);
