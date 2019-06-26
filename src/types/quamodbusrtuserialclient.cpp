@@ -127,7 +127,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	}
 	else
 	{
-		strError += QString("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(serverAddress).arg(strBrowseName);
+		strError += tr("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(serverAddress).arg(strBrowseName);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
@@ -137,7 +137,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	}
 	else
 	{
-		strError += QString("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(keepConnecting).arg(strBrowseName);
+		strError += tr("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(keepConnecting).arg(strBrowseName);
 	}
 	// ComPort
 	auto comPort = domElem.attribute("ComPort");
@@ -147,47 +147,51 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	}
 	else
 	{
-		strError += QString("%1 : Invalid ComPort attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(comPort).arg(strBrowseName);
+		strError += tr("%1 : Invalid ComPort attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(comPort).arg(strBrowseName);
 	}
 	// Parity
-	auto parity = (QParity)QMetaEnum::fromType<QParity>().keysToValue(domElem.attribute("Parity").toUtf8(), &bOK);
+	auto strParity = domElem.attribute("Parity");
+	auto parity = (QParity)QMetaEnum::fromType<QParity>().keysToValue(strParity.toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->setParity(parity);
 	}
 	else
 	{
-		strError += QString("%1 : Invalid Parity attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(parity).arg(strBrowseName);
+		strError += tr("%1 : Invalid Parity attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(strParity).arg(strBrowseName);
 	}
 	// BaudRate
-	auto baudRate = (QBaudRate)QMetaEnum::fromType<QBaudRate>().keysToValue(domElem.attribute("BaudRate").toUtf8(), &bOK);
+	auto strBaudRate = domElem.attribute("BaudRate");
+	auto baudRate = (QBaudRate)QMetaEnum::fromType<QBaudRate>().keysToValue(strBaudRate.toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->setBaudRate(baudRate);
 	}
 	else
 	{
-		strError += QString("%1 : Invalid BaudRate attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(baudRate).arg(strBrowseName);
+		strError += tr("%1 : Invalid BaudRate attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(strBaudRate).arg(strBrowseName);
 	}
 	// DataBits
-	auto dataBits = (QDataBits)QMetaEnum::fromType<QDataBits>().keysToValue(domElem.attribute("DataBits").toUtf8(), &bOK);
+	auto strDataBits = domElem.attribute("DataBits");
+	auto dataBits = (QDataBits)QMetaEnum::fromType<QDataBits>().keysToValue(strDataBits.toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->setDataBits(dataBits);
 	}
 	else
 	{
-		strError += QString("%1 : Invalid DataBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(dataBits).arg(strBrowseName);
+		strError += tr("%1 : Invalid DataBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(strDataBits).arg(strBrowseName);
 	}
 	// StopBits
-	auto stopBits = (QStopBits)QMetaEnum::fromType<QStopBits>().keysToValue(domElem.attribute("StopBits").toUtf8(), &bOK);
+	auto strStopBits = domElem.attribute("StopBits");
+	auto stopBits = (QStopBits)QMetaEnum::fromType<QStopBits>().keysToValue(strStopBits.toUtf8(), &bOK);
 	if (bOK)
 	{
 		this->setStopBits(stopBits);
 	}
 	else
 	{
-		strError += QString("%1 : Invalid StopBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(stopBits).arg(strBrowseName);
+		strError += tr("%1 : Invalid StopBits attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(strStopBits).arg(strBrowseName);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
@@ -197,7 +201,7 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	}
 	else
 	{
-		strError += QString("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg("Warning").arg(strBrowseName);
+		strError += tr("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg("Warning").arg(strBrowseName);
 	}
 }
 

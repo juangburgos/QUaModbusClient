@@ -96,7 +96,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(serverAddress).arg(strBrowseName);
+		strError += tr("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(serverAddress).arg(strBrowseName);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
@@ -106,7 +106,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(keepConnecting).arg(strBrowseName);
+		strError += tr("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(keepConnecting).arg(strBrowseName);
 	}
 	// NetworkAddress
 	auto networkAddress = domElem.attribute("NetworkAddress");
@@ -116,7 +116,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid NetworkAddress attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(networkAddress).arg(strBrowseName);
+		strError += tr("%1 : Invalid NetworkAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(networkAddress).arg(strBrowseName);
 	}
 	// NetworkPort
 	auto networkPort = domElem.attribute("NetworkPort").toUInt(&bOK);
@@ -126,7 +126,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid NetworkPort attribute '%2' in Modbus client %3. Ignoring.\n")).arg("Warning").arg(networkPort).arg(strBrowseName);
+		strError += tr("%1 : Invalid NetworkPort attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(networkPort).arg(strBrowseName);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
@@ -136,7 +136,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n")).arg("Warning").arg(strBrowseName);
+		strError += tr("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg("Warning").arg(strBrowseName);
 	}
 }
 
