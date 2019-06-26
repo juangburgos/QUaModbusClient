@@ -3,6 +3,8 @@
 
 #include "quamodbusclient.h"
 
+#include <QUaServer>
+
 class QUaModbusClientList;
 
 typedef QSerialPort::Parity   QParity;
@@ -35,7 +37,7 @@ public:
 	QUaProperty * stopBits() const;
 
 	static QString ComPorts;
-	static QMap<int, QByteArray> EnumComPorts();
+	static QUaEnumMap EnumComPorts();
 
 	// C++ API (all is read/write)
 

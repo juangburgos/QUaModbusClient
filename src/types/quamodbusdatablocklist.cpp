@@ -21,24 +21,24 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 	// check empty
 	if (strBlockId.isEmpty())
 	{
-		return "Error : Block Id argument cannot be empty.";
+		return tr("%1 : Block Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
 	if (strBlockId.count() > 6)
 	{
-		return "Error : Block Id cannot contain more than 6 characters.";
+		return  tr("%1 : Block Id cannot contain more than 6 characters.").arg("Error");
 	}
 	// check valid characters
 	QRegularExpression rx("^[a-zA-Z0-9_]*$");
 	QRegularExpressionMatch match = rx.match(strBlockId, 0, QRegularExpression::PartialPreferCompleteMatch);
 	if (!match.hasMatch())
 	{
-		return "Error : Block Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.";
+		return  tr("%1 : Block Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
 	if (this->hasChild(strBlockId))
 	{
-		return "Error : Block Id already exists.";
+		return  tr("%1 : Block Id already exists.").arg("Error");
 	}
 	// create instance
 	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
@@ -99,20 +99,20 @@ void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & str
 		Q_ASSERT(!elemBlock.isNull());
 		if (!elemBlock.hasAttribute("BrowseName"))
 		{
-			strError += "Error : Cannot add Block without BrowseName attribute. Skipping.\n";
+			strError += tr("%1 : Cannot add Block without BrowseName attribute. Skipping.\n").arg("Error");
 			continue;
 		}
 		QString strBrowseName = elemBlock.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += "Error : Cannot add Block with empty BrowseName attribute. Skipping.\n";
+			strError += tr("%1 : Cannot add Block with empty BrowseName attribute. Skipping.\n").arg("Error");
 			continue;
 		}
 		// check if exists
 		auto block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (block)
 		{
-			strError += QString("Warning : Block with %1 BrowseName already exists. Overwriting Block configuration.\n").arg(strBrowseName);
+			strError += tr("%1 : Block with %2 BrowseName already exists. Overwriting Block configuration.\n").arg("Warning").arg(strBrowseName);
 			// overwrite block config
 			// NOTE : loop already should have started
 			block->fromDomElement(elemBlock, strError);
@@ -122,7 +122,7 @@ void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & str
 		block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (!block)
 		{
-			strError += QString("Error : Failed to create Block with %1 BrowseName. Skipping.\n").arg(strBrowseName);
+			strError += tr("%1 : Failed to create Block with %2 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
 			continue;
 		}
 		// set block config
