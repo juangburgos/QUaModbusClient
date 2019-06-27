@@ -386,7 +386,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Type attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(type).arg(strBrowseName);
+		strError += tr("%1 : Invalid Type attribute '%2' in Block %3. Ignoring.\n").arg("Warning").arg(type).arg(strBrowseName);
 	}
 	
 	// Address
@@ -397,7 +397,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Address attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(address).arg(strBrowseName);
+		strError += tr("%1 : Invalid Address attribute '%2' in Block %3. Ignoring.\n").arg("Warning").arg(address).arg(strBrowseName);
 	}
 	// Size
 	auto size = domElem.attribute("Size").toUInt(&bOK);
@@ -407,7 +407,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid Size attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(size).arg(strBrowseName);
+		strError += tr("%1 : Invalid Size attribute '%2' in Block %3. Ignoring.\n").arg("Warning").arg(size).arg(strBrowseName);
 	}
 	// SamplingTime
 	auto samplingTime = domElem.attribute("SamplingTime").toUInt(&bOK);
@@ -417,7 +417,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Ignoring.\n")).arg("Warning").arg(samplingTime).arg(strBrowseName);
+		strError += tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Ignoring.\n").arg("Warning").arg(samplingTime).arg(strBrowseName);
 	}
 	// get value list
 	QDomElement elemValueList = domElem.firstChildElement(QUaModbusValueList::staticMetaObject.className());
@@ -427,7 +427,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += QString(tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n")).arg("Warning").arg(strBrowseName);
+		strError += tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n").arg("Warning").arg(strBrowseName);
 	}
 }
 
