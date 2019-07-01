@@ -252,7 +252,7 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	}
 }
 
-QUaModbusClient * QUaModbusDataBlock::client()
+QUaModbusClient * QUaModbusDataBlock::client() const
 {
 	return dynamic_cast<QUaModbusDataBlockList*>(this->parent())->client();
 }

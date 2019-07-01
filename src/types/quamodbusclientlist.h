@@ -33,13 +33,13 @@ public:
 
 	QList<QUaModbusClient*> clients();
 
-private:
-	template<typename T>
-	QString addClient(QString strClientId);
-
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
 	void        fromDomElement(QDomElement  & domElem, QString &strError);
+
+private:
+	template<typename T>
+	QString addClient(QString strClientId);
 
 };
 

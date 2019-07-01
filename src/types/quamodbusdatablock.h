@@ -93,6 +93,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	QUaModbusClient * client() const;
+
 signals:
 	// C++ API
 	void typeChanged        (const QModbusDataBlockType &type        );
@@ -118,7 +120,7 @@ private:
 	int m_loopHandle;
 	QModbusReply  * m_replyRead;
 	QModbusDataUnit m_modbusDataUnit; // NOTE : only modify and access in thread
-	QUaModbusClient * client();
+
 	void startLoop();
 	bool loopRunning();
 

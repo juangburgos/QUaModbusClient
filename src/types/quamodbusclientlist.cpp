@@ -57,7 +57,8 @@ QString QUaModbusClientList::xmlConfig()
 	QDomProcessingInstruction header = doc.createProcessingInstruction("xml", "version='1.0' encoding='UTF-8'");
 	doc.appendChild(header);
 	// convert config to xml
-	this->toDomElement(doc);
+	auto elemClients = this->toDomElement(doc);
+	doc.appendChild(elemClients);
 	// get config
 	return doc.toByteArray();
 }
@@ -99,7 +100,6 @@ QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element
 	QDomElement elemListClients = domDoc.createElement(QUaModbusClientList::staticMetaObject.className());
-	domDoc.appendChild(elemListClients);
 	// set attributes
 	elemListClients.setAttribute("BrowseName", this->browseName());
 	// loop children and add them as children
