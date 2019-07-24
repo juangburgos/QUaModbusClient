@@ -20,7 +20,7 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 	auto mapComPorts = QUaModbusRtuSerialClient::EnumComPorts();
 	for (int i = 0; i < mapComPorts.keys().count(); i++)
 	{
-		auto strComPort = QString(mapComPorts.value(mapComPorts.keys().at(i)));
+		auto strComPort = QString(mapComPorts.value(mapComPorts.keys().at(i)).strDisplayName);
 		ui->comboBoxComPort->addItem(strComPort, mapComPorts.keys().at(i));
 	}
 	// setup parity combo
@@ -63,7 +63,7 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 	this->setIpAddress("127.0.0.1");
 	if (mapComPorts.count() > 0)
 	{
-		this->setComPort(QString(mapComPorts.value(mapComPorts.keys().at(0))));
+		this->setComPort(QString(mapComPorts.value(mapComPorts.keys().at(0)).strDisplayName));
 	}
 	this->setParity(QParity::EvenParity);
 	this->setBaudRate(QBaudRate::Baud19200);
@@ -175,13 +175,13 @@ int QUaModbusClientWidgetEdit::comPortKey() const
 {
 	auto strComPort  = this->comPort();
 	auto mapComPorts = QUaModbusRtuSerialClient::EnumComPorts();
-	return mapComPorts.key(strComPort.toUtf8(), -1);
+	return mapComPorts.key({ strComPort.toUtf8(), "" }, -1);
 }
 
 void QUaModbusClientWidgetEdit::setComPortKey(const int & comPortKey)
 {
 	auto mapComPorts = QUaModbusRtuSerialClient::EnumComPorts();
-	this->setComPort(mapComPorts.value(comPortKey));
+	this->setComPort(mapComPorts.value(comPortKey).strDisplayName);
 }
 
 QParity QUaModbusClientWidgetEdit::parity() const
