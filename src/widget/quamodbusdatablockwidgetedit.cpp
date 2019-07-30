@@ -28,12 +28,12 @@ QUaModbusDataBlockWidgetEdit::~QUaModbusDataBlockWidgetEdit()
 
 bool QUaModbusDataBlockWidgetEdit::isIdEditable() const
 {
-	return ui->lineEditId->isEnabled();
+	return !ui->lineEditId->isReadOnly();
 }
 
 void QUaModbusDataBlockWidgetEdit::setIdEditable(const bool & idEditable)
 {
-	ui->lineEditId->setEnabled(idEditable);
+	ui->lineEditId->setReadOnly(!idEditable);
 }
 
 QString QUaModbusDataBlockWidgetEdit::id() const

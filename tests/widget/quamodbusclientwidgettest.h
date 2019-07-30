@@ -5,7 +5,9 @@
 
 #include <QUaServer>
 
-#include <QUaModbusClientWidget>
+class QUaModbusClientWidget;
+class QUaModbusDataBlockWidget;
+class QUaModbusValueWidget;
 
 class QUaModbusClient;
 class QUaModbusDataBlock;
@@ -23,6 +25,17 @@ public:
     explicit QUaModbusClientWidgetTest(QWidget *parent = 0);
     ~QUaModbusClientWidgetTest();
 
+	// tree headers
+	enum class ModbusWidgets
+	{
+		Client = 0,
+		Block  = 1,
+		Value  = 2,
+		Invalid = 3
+	};
+	Q_ENUM(ModbusWidgets)
+	typedef QUaModbusClientWidgetTest::ModbusWidgets QModbusWidgets;
+
 private slots:
     void on_pushButtonStart_clicked();
 
@@ -32,18 +45,20 @@ private slots:
 
 private:
     Ui::QUaModbusClientWidgetTest *ui;
-	QWidget   * m_pWidgetEdit;
-	QWidget   * m_pWidgetStatus;
 	QUaServer   m_server;
 	bool        m_deleting;
 
-	void bindClientWidgetEdit  (QUaModbusClient    * client);
-	void bindBlockWidgetEdit   (QUaModbusDataBlock * block );
-	void bindValueWidgetEdit   (QUaModbusValue     * value );
-	void bindClientWidgetStatus(QUaModbusClient    * client);
-	void bindBlockWidgetStatus (QUaModbusDataBlock * block );
-	void bindValueWidgetStatus (QUaModbusValue     * value );
+	QUaModbusClientWidget    * m_widgetClient;
+	QUaModbusDataBlockWidget * m_widgetBlock;
+	QUaModbusValueWidget	 * m_widgetValue;
 
+	void setupModbusWidgets();
+
+	void bindClientWidget(QUaModbusClient    * client);
+	void bindBlockWidget (QUaModbusDataBlock * block );
+	void bindValueWidget (QUaModbusValue     * value );
 };
+
+typedef QUaModbusClientWidgetTest::ModbusWidgets QModbusWidgets;
 
 #endif // QUAMODBUSCLIENTWIDGETTEST_H

@@ -78,22 +78,22 @@ QUaModbusClientWidgetEdit::~QUaModbusClientWidgetEdit()
 
 bool QUaModbusClientWidgetEdit::isIdEditable() const
 {
-	return ui->lineEditId->isEnabled();
+	return !ui->lineEditId->isReadOnly();
 }
 
 void QUaModbusClientWidgetEdit::setIdEditable(const bool & idEditable)
 {
-	ui->lineEditId->setEnabled(idEditable);
+	ui->lineEditId->setReadOnly(!idEditable);
 }
 
 bool QUaModbusClientWidgetEdit::isTypeEditable() const
 {
-	return ui->comboBoxType->isEnabled();
+	return !ui->comboBoxType->isReadOnly();
 }
 
 void QUaModbusClientWidgetEdit::setTypeEditable(const bool & typeEditable)
 {
-	ui->comboBoxType->setEnabled(typeEditable);
+	ui->comboBoxType->setReadOnly(!typeEditable);
 }
 
 QString QUaModbusClientWidgetEdit::id() const
