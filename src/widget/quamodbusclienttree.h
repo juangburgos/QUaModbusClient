@@ -67,6 +67,10 @@ private:
 	QStandardItem *  handleBlockAdded (QUaModbusClient    * client, QStandardItem * parent, const QString &strBlockId);
 	QStandardItem *  handleValueAdded (QUaModbusDataBlock * block , QStandardItem * parent, const QString &strValueId);
 
+	void    saveContentsCsvToFile(const QString &strContents) const;
+	QString loadContentsCsvFromFile();
+	void    displayCsvLoadResult(const QString &strError) const;
+
 	static int SelectTypeRole;
 	static int PointerRole;
 };

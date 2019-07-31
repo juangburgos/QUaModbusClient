@@ -26,12 +26,12 @@ QUaModbusValueWidgetEdit::~QUaModbusValueWidgetEdit()
 
 bool QUaModbusValueWidgetEdit::isIdEditable() const
 {
-	return ui->lineEditId->isEnabled();
+	return !ui->lineEditId->isReadOnly();
 }
 
 void QUaModbusValueWidgetEdit::setIdEditable(const bool & idEditable)
 {
-	ui->lineEditId->setEnabled(idEditable);
+	ui->lineEditId->setReadOnly(!idEditable);
 }
 
 QString QUaModbusValueWidgetEdit::id() const

@@ -20,7 +20,8 @@
 
 QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::QUaModbusClientWidgetTest)
+    ui(new Ui::QUaModbusClientWidgetTest),
+	m_server(4840, QByteArray(), this)
 {
     ui->setupUi(this);
 	m_deleting       = false;
@@ -91,7 +92,7 @@ void QUaModbusClientWidgetTest::on_pushButtonStart_clicked()
 void QUaModbusClientWidgetTest::on_pushButtonImport_clicked()
 {
 	// setup error dialog just in case
-	QMessageBox msgBox;
+	QMessageBox msgBox(this);
 	msgBox.setWindowTitle("Error");
 	msgBox.setIcon(QMessageBox::Critical);
 	// read from file
@@ -141,7 +142,6 @@ void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 		return;
 	}
 	// save to file
-	QString strSaveError;
 	QFile file(strSaveFile);
 	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
 	{
@@ -154,19 +154,14 @@ void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 	}
 	else
 	{
-		strSaveError = tr("Error opening file ") + strSaveFile + tr(" for write operations.");
+		QMessageBox::critical(
+			this,
+			tr("Error"),
+			tr("Error opening file %1 for write operations.").arg(strSaveFile)
+		);
 	}
 	// close file
 	file.close();
-	// show error dialog
-	if (!strSaveError.isEmpty())
-	{
-		QMessageBox msgBox;
-		msgBox.setWindowTitle("Error");
-		msgBox.setIcon(QMessageBox::Critical);
-		msgBox.setText(tr("Could not create file ") + strSaveFile + ". " + strSaveError);
-		msgBox.exec();
-	}
 }
 
 void QUaModbusClientWidgetTest::setupModbusWidgets()

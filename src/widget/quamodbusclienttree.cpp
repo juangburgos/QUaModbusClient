@@ -4,6 +4,10 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QAction>
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
+#include <QStandardPaths>
 
 #include <QUaModbusClientDialog>
 #include <QUaModbusClientList>
@@ -168,16 +172,34 @@ void QUaModbusClientTree::setupImportButton()
 	// menu
 	auto importMenu = new QMenu(ui->toolButtonImport);
 	importMenu->addAction(tr("Clients"), this, 
-	[](){
-
+	[this](){
+		QString strContents = loadContentsCsvFromFile();
+		if (strContents.isEmpty())
+		{
+			return;
+		}
+		QString strError = m_listClients->setCsvClients(strContents);
+		this->displayCsvLoadResult(strError);
 	});
 	importMenu->addAction(tr("Blocks"), this, 
-	[](){
-
+	[this](){
+		QString strContents = loadContentsCsvFromFile();
+		if (strContents.isEmpty())
+		{
+			return;
+		}
+		QString strError = m_listClients->setCsvBlocks(strContents);
+		this->displayCsvLoadResult(strError);
 	});
 	importMenu->addAction(tr("Values"), this, 
-	[](){
-
+	[this](){
+		QString strContents = loadContentsCsvFromFile();
+		if (strContents.isEmpty())
+		{
+			return;
+		}
+		QString strError = m_listClients->setCsvValues(strContents);
+		this->displayCsvLoadResult(strError);
 	});
 	// set menu
 	ui->toolButtonImport->setMenu(importMenu);
@@ -196,16 +218,16 @@ void QUaModbusClientTree::setupExportButton()
 	// menu
 	auto exportMenu = new QMenu(ui->toolButtonExport);
 	exportMenu->addAction(tr("Clients"), this, 
-	[](){
-
+	[this](){
+		this->saveContentsCsvToFile(m_listClients->csvClients());
 	});
 	exportMenu->addAction(tr("Blocks"), this, 
-	[](){
-
+	[this](){
+		this->saveContentsCsvToFile(m_listClients->csvBlocks());
 	});
 	exportMenu->addAction(tr("Values"), this, 
-	[](){
-
+	[this](){
+		this->saveContentsCsvToFile(m_listClients->csvValues());
 	});
 	// set menu
 	ui->toolButtonExport->setMenu(exportMenu);
@@ -496,4 +518,98 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	});
 
 	return iObj;
+}
+
+void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) const
+{
+	// select file
+	QString strSaveFile = QFileDialog::getSaveFileName(const_cast<QUaModbusClientTree*>(this), tr("Save File"),
+		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+		tr("CSV (*.csv *.txt)"));
+	// ignore if empty
+	if (strSaveFile.isEmpty() || strSaveFile.isNull())
+	{
+		return;
+	}
+	// save to file
+	QFile file(strSaveFile);
+	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
+	{
+		// write
+		QTextStream stream(&file);
+		stream << strContents;
+	}
+	else
+	{
+		QMessageBox::critical(
+			const_cast<QUaModbusClientTree*>(this),
+			tr("Error"),
+			tr("Error opening file %1 for write operations.").arg(strSaveFile)
+		);
+	}
+	// close file
+	file.close();
+}
+
+QString QUaModbusClientTree::loadContentsCsvFromFile()
+{
+	// setup error dialog just in case
+	QMessageBox msgBox;
+	msgBox.setWindowTitle("Error");
+	msgBox.setIcon(QMessageBox::Critical);
+	// read from file
+	QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"),
+		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+		QObject::trUtf8("CSV (*.csv *.txt)"));
+	// validate
+	if (strLoadFile.isEmpty())
+	{
+		return QString();
+	}
+	QFile fileConfig(strLoadFile);
+	// exists
+	if (!fileConfig.exists())
+	{
+		msgBox.setText(tr("File %1 does not exist.").arg(strLoadFile));
+		msgBox.exec();
+	}
+	else if (fileConfig.open(QIODevice::ReadOnly))
+	{
+		// read
+		return fileConfig.readAll();
+	}
+	else
+	{
+		msgBox.setText(tr("File %1 could not be opened.").arg(strLoadFile));
+		msgBox.exec();
+	}
+	return QString();
+}
+
+void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
+{
+	if (strError.contains("Warning", Qt::CaseInsensitive))
+	{
+		QMessageBox::warning(
+			const_cast<QUaModbusClientTree*>(this),
+			tr("Warning"),
+			strError
+		);
+	}
+	else if (strError.contains("Error", Qt::CaseInsensitive))
+	{
+		QMessageBox::critical(
+			const_cast<QUaModbusClientTree*>(this),
+			tr("Warning"),
+			strError
+		);
+	}
+	else if (strError.contains("Success", Qt::CaseInsensitive))
+	{
+		QMessageBox::information(
+			const_cast<QUaModbusClientTree*>(this),
+			tr("Information"),
+			strError
+		);
+	}
 }
