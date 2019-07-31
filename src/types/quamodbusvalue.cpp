@@ -284,7 +284,7 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	}
 	else
 	{
-		strError += tr("%1 : Invalid Type attribute '%2' in Value %3. Ignoring.\n").arg("Warning").arg(type).arg(strBrowseName);
+		strError += tr("%1 : Invalid Type attribute '%2' in Value %3. Default value set.\n").arg("Warning").arg(type).arg(strBrowseName);
 	}
 	// AddressOffset
 	auto addressOffset = domElem.attribute("AddressOffset").toInt(&bOK);
@@ -294,7 +294,7 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	}
 	else
 	{
-		strError += tr("%1 : Invalid AddressOffset attribute '%1' in Value %2. Ignoring.\n").arg("Warning").arg(addressOffset).arg(strBrowseName);
+		strError += tr("%1 : Invalid AddressOffset attribute '%1' in Value %2. Default value set.\n").arg("Warning").arg(addressOffset).arg(strBrowseName);
 	}
 }
 

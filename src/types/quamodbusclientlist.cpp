@@ -218,7 +218,7 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 		{
 			continue;
 		}
-		if (listCols.count() != 6 && listCols.count() != 9)
+		if (listCols.count() < 6)
 		{
 			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
 				.arg("Warning")
@@ -332,7 +332,7 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 		case QModbusClientType::Serial:
 			{
 				// check length
-				if (listCols.count() != 9)
+				if (listCols.count() < 9)
 				{
 					strError += tr("%1 : Invalid column count in row %2.\n")
 						.arg("Error")
@@ -450,14 +450,230 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 
 QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 {
-	
-	return QString("Success");
+	QString strError;
+	auto listRows = strCsvBlocks.split("\n");
+	for (auto strRow : listRows)
+	{
+		bool bOK = false;
+		auto listCols = strRow.split(",");
+		// check length
+		if (listCols.count() <= 1)
+		{
+			continue;
+		}
+		if (listCols.count() < 6)
+		{
+			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
+				.arg("Warning")
+				.arg(strRow);
+			continue;
+		}
+		// get name
+		auto strBrowseName = listCols.at(0).trimmed();
+		// ignore row if first col is "Name"
+		if (strBrowseName.compare("Name", Qt::CaseSensitive) == 0)
+		{
+			continue;
+		}
+		// get client
+		auto strClientName = listCols.at(1).trimmed();
+		auto client = this->browseChild<QUaModbusClient>(strClientName);
+		if (!client)
+		{
+			strError += tr("%1 : There is no client '%2' defined in row %3.\n")
+				.arg("Error")
+				.arg(strClientName)
+				.arg(strRow);
+			continue;
+		}
+		// get type
+		auto type = (QModbusDataBlockType)QMetaEnum::fromType<QModbusDataBlockType>().keysToValue(listCols.at(2).trimmed().toUtf8(), &bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid Type '%2' in row %3. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(2).trimmed()).
+				arg(strRow);
+		}
+		// get address
+		auto address = listCols.at(3).trimmed().toInt(&bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid Address '%2' in row %3. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(3).trimmed())
+				.arg(strRow);
+		}
+		// get size
+		auto size = listCols.at(4).trimmed().toUInt(&bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid Size '%2' in row %3. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(4).trimmed())
+				.arg(strRow);
+		}
+		// get sampling time
+		auto samplingTime = listCols.at(5).trimmed().toUInt(&bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid SamplingTime '%2' in row %3. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(5).trimmed())
+				.arg(strRow);
+		}
+		// check if block exists
+		auto blocks = client->dataBlocks();
+		auto block  = blocks->browseChild<QUaModbusDataBlock>(strBrowseName);
+		if (block)
+		{
+			strError += tr("%1 : There already exists a block '%2.%3' defined in row %4. Overwriting properties.\n")
+				.arg("Warning")
+				.arg(client->browseName())
+				.arg(strBrowseName)
+				.arg(strRow);
+		}
+		else
+		{
+			// actually add block
+			auto strNewError = blocks->addDataBlock(strBrowseName);
+			if (strNewError.contains("Error", Qt::CaseInsensitive))
+			{
+				strError += strNewError;
+				continue;
+			}
+			block = blocks->browseChild<QUaModbusDataBlock>(strBrowseName);
+			if (!block)
+			{
+				strError += tr("%1 : Failed to find '%2' block in client '%3' list after adding row %4.\n")
+					.arg("Error")
+					.arg(client->browseName())
+					.arg(strBrowseName)
+					.arg(strRow);
+				continue;
+			}
+		}	
+		// set properties
+		block->setType(type);
+		block->setAddress(address);
+		block->setSize(size);
+		block->setSamplingTime(samplingTime);
+	}
+	if (strError.isEmpty())
+	{
+		strError = "Success.";
+	}
+	return strError;
 }
 
 QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 {
-	
-	return QString("Success");
+	QString strError;
+	auto listRows = strCsvValues.split("\n");
+	for (auto strRow : listRows)
+	{
+		bool bOK = false;
+		auto listCols = strRow.split(",");
+		// check length
+		if (listCols.count() <= 1)
+		{
+			continue;
+		}
+		if (listCols.count() < 5)
+		{
+			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
+				.arg("Warning")
+				.arg(strRow);
+			continue;
+		}
+		// get name
+		auto strBrowseName = listCols.at(0).trimmed();
+		// ignore row if first col is "Name"
+		if (strBrowseName.compare("Name", Qt::CaseSensitive) == 0)
+		{
+			continue;
+		}
+		// get client
+		auto strClientName = listCols.at(1).trimmed();
+		auto client = this->browseChild<QUaModbusClient>(strClientName);
+		if (!client)
+		{
+			strError += tr("%1 : There is no client '%2' defined in row %3.\n")
+				.arg("Error")
+				.arg(strClientName)
+				.arg(strRow);
+			continue;
+		}
+		// get block
+		auto strBlockName = listCols.at(2).trimmed();
+		auto block = client->dataBlocks()->browseChild<QUaModbusDataBlock>(strBlockName);
+		if (!block)
+		{
+			strError += tr("%1 : There is no block '%2' defined in row %3.\n")
+				.arg("Error")
+				.arg(strBlockName)
+				.arg(strRow);
+			continue;
+		}
+		// get type
+		auto type = (QModbusValueType)QMetaEnum::fromType<QModbusValueType>().keysToValue(listCols.at(3).trimmed().toUtf8(), &bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid Type '%2' in row %3. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(3).trimmed())
+				.arg(strRow);
+		}
+		// get address offset
+		auto addressOffset = listCols.at(4).trimmed().toInt(&bOK);
+		if (!bOK)
+		{
+			strError += tr("%1 : Invalid AddressOffset '%1' in row %2. Default value set.\n")
+				.arg("Warning")
+				.arg(listCols.at(4).trimmed())
+				.arg(strRow);
+		}
+		auto values = block->values();
+		auto value  = values->browseChild<QUaModbusValue>(strBrowseName);
+		if (value)
+		{
+			strError += tr("%1 : There already exists a value '%2.%3.%4' defined in row %5. Overwriting properties.\n")
+				.arg("Warning")
+				.arg(client->browseName())
+				.arg(block->browseName())
+				.arg(strBrowseName)
+				.arg(strRow);
+		}
+		else
+		{
+			// actually add block
+			auto strNewError = values->addValue(strBrowseName);
+			if (strNewError.contains("Error", Qt::CaseInsensitive))
+			{
+				strError += strNewError;
+				continue;
+			}
+			value = values->browseChild<QUaModbusValue>(strBrowseName);
+			if (!value)
+			{
+				strError += tr("%1 : Failed to find '%2' value in client %3, block '%4' list after adding row %5.\n")
+					.arg("Error")
+					.arg(client->browseName())
+					.arg(block->browseName())
+					.arg(strBrowseName)
+					.arg(strRow);
+				continue;
+			}
+		}
+		// set properties
+		value->setType(type);
+		value->setAddressOffset(addressOffset);
+	}
+	if (strError.isEmpty())
+	{
+		strError = "Success.";
+	}
+	return strError;
 }
 
 QList<QUaModbusClient*> QUaModbusClientList::clients()
