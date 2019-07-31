@@ -2,6 +2,8 @@
 #include "ui_quamodbusclienttree.h"
 
 #include <QMessageBox>
+#include <QMenu>
+#include <QAction>
 
 #include <QUaModbusClientDialog>
 #include <QUaModbusClientList>
@@ -32,6 +34,8 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	{
 		qRegisterMetaType<QUaNode*>("QUaNode*");
 	}
+	this->setupImportButton();
+	this->setupExportButton();
 	// setup params tree model
 	m_modelClients.setColumnCount((int)Headers::Invalid);
 	QStringList paramHeaders;
@@ -156,6 +160,62 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 	dialog.setWidget(widgetNewClient);
 	// NOTE : call in own method to we can recall it if fails
 	this->showNewClientDialog(dialog);
+}
+
+void QUaModbusClientTree::setupImportButton()
+{
+	ui->toolButtonImport->setPopupMode(QToolButton::MenuButtonPopup);
+	// menu
+	auto importMenu = new QMenu(ui->toolButtonImport);
+	importMenu->addAction(tr("Clients"), this, 
+	[](){
+
+	});
+	importMenu->addAction(tr("Blocks"), this, 
+	[](){
+
+	});
+	importMenu->addAction(tr("Values"), this, 
+	[](){
+
+	});
+	// set menu
+	ui->toolButtonImport->setMenu(importMenu);
+	// default action
+	auto defaultAction = new QAction(tr("Import"), ui->toolButtonImport);
+	QObject::connect(defaultAction, &QAction::triggered, ui->toolButtonImport,
+	[this]() {
+		ui->toolButtonImport->showMenu();
+	});
+	ui->toolButtonImport->setDefaultAction(defaultAction);
+}
+
+void QUaModbusClientTree::setupExportButton()
+{
+	ui->toolButtonExport->setPopupMode(QToolButton::MenuButtonPopup);
+	// menu
+	auto exportMenu = new QMenu(ui->toolButtonExport);
+	exportMenu->addAction(tr("Clients"), this, 
+	[](){
+
+	});
+	exportMenu->addAction(tr("Blocks"), this, 
+	[](){
+
+	});
+	exportMenu->addAction(tr("Values"), this, 
+	[](){
+
+	});
+	// set menu
+	ui->toolButtonExport->setMenu(exportMenu);
+	// default action
+	auto defaultAction = new QAction(tr("Export"), ui->toolButtonExport);
+	QObject::connect(defaultAction, &QAction::triggered, ui->toolButtonExport,
+	[this]() {
+		ui->toolButtonExport->showMenu();
+	});
+	ui->toolButtonExport->setDefaultAction(defaultAction);
 }
 
 void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)

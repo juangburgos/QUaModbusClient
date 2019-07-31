@@ -20,6 +20,8 @@ public:
 
 	void bindValue(QUaModbusValue * value);
 
+	// TODO : add import export CSV
+
 private:
     Ui::QUaModbusValueWidget *ui;
 

@@ -29,6 +29,18 @@ public:
 
 	Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
 
+	Q_INVOKABLE QString csvClients();
+
+	Q_INVOKABLE QString csvBlocks();
+
+	Q_INVOKABLE QString csvValues();
+
+	Q_INVOKABLE QString setCsvClients(QString strCsvClients);
+
+	Q_INVOKABLE QString setCsvBlocks(QString strCsvBlocks);
+
+	Q_INVOKABLE QString setCsvValues(QString strCsvValues);
+
 	// C++ API
 
 	QList<QUaModbusClient*> clients();
@@ -57,6 +69,11 @@ inline QString QUaModbusClientList::addClient(QString strClientId)
 	{
 		return tr("%1 : Client Id cannot contain more than 6 characters.").arg("Error");
 	}
+	// check not called Name
+	if (strClientId.compare("Name", Qt::CaseSensitive) == 0)
+	{
+		return tr("%1 : Client Id cannot be 'Name'.").arg("Error");
+	}
 	// check valid characters
 	QRegularExpression rx("^[a-zA-Z0-9_]*$");
 	QRegularExpressionMatch match = rx.match(strClientId, 0, QRegularExpression::PartialPreferCompleteMatch);
@@ -70,9 +87,12 @@ inline QString QUaModbusClientList::addClient(QString strClientId)
 		return tr("%1 : Client Id already exists.").arg("Error");
 	}
 	// create instance
-	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
-	//QString strNodeId = QString("ns=1;s=%1").arg(this->nodeBrowsePath().join(".") + "." + strClientId);
-	auto client = this->addChild<T>(/*strNodeId*/);
+	QString strNodeId = QString("ns=1;s=modbus.%1").arg(strClientId);
+	auto client = this->addChild<T>(strNodeId);
+	if (!client)
+	{
+		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
+	}
 	client->setDisplayName(strClientId);
 	client->setBrowseName (strClientId);
 	return "Success";

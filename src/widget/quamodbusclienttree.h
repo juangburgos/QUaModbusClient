@@ -58,13 +58,14 @@ private:
 	QStandardItemModel    m_modelClients;
 	QSortFilterProxyModel m_proxyClients;
 
+	void setupImportButton();
+	void setupExportButton();
+
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
 
-	QStandardItem *  handleClientAdded(QUaModbusClient * client);
-	//void showNewBlockDialog(QUaModbusClient * client, QUaModbusClientDialog &dialog);
-	QStandardItem *  handleBlockAdded(QUaModbusClient * client, QStandardItem * parent, const QString &strBlockId);
-	//void showNewValueDialog(QUaModbusDataBlock * block, QUaModbusClientDialog &dialog);
-	QStandardItem *  handleValueAdded(QUaModbusDataBlock * block, QStandardItem * parent, const QString &strValueId);
+	QStandardItem *  handleClientAdded(QUaModbusClient    * client);
+	QStandardItem *  handleBlockAdded (QUaModbusClient    * client, QStandardItem * parent, const QString &strBlockId);
+	QStandardItem *  handleValueAdded (QUaModbusDataBlock * block , QStandardItem * parent, const QString &strValueId);
 
 	static int SelectTypeRole;
 	static int PointerRole;

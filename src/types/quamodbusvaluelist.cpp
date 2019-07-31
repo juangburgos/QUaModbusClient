@@ -1,6 +1,7 @@
 #include "quamodbusvaluelist.h"
 #include "quamodbusdatablock.h"
 #include "quamodbusvalue.h"
+#include "quamodbusclient.h"
 
 // NOTE : had to add this header because the actual implementation of QUaBaseObject::addChild is in here
 //        and was getting "lnk2019 unresolved external symbol template function" without it
@@ -21,31 +22,42 @@ QString QUaModbusValueList::addValue(QString strValueId)
 	// check empty
 	if (strValueId.isEmpty())
 	{
-		return "Error : Value Id argument cannot be empty.";
+		return tr("%1 : Value Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
 	if (strValueId.count() > 10)
 	{
-		return "Error : Value Id cannot contain more than 6 characters.";
+		return tr("%1 : Value Id cannot contain more than 6 characters.").arg("Error");
+	}
+	// check not called Name
+	if (strValueId.compare("Name", Qt::CaseSensitive) == 0)
+	{
+		return tr("%1 : Value Id cannot be 'Name'.").arg("Error");
 	}
 	// check valid characters
 	QRegularExpression rx("^[a-zA-Z0-9_]*$");
 	QRegularExpressionMatch match = rx.match(strValueId, 0, QRegularExpression::PartialPreferCompleteMatch);
 	if (!match.hasMatch())
 	{
-		return "Error : Value Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.";
+		return tr("%1 : Value Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
 	if (this->hasChild(strValueId))
 	{
-		return "Error : Value Id already exists.";
+		return tr("%1 : Value Id already exists.").arg("Error");
 	}
 	// create instance
-	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
-	//QString strNodeId = QString("ns=1;s=%1").arg(this->nodeBrowsePath().join(".") + "." + strClientId);
-	auto block = this->addChild<QUaModbusValue>(/*strNodeId*/);
-	block->setDisplayName(strValueId);
-	block->setBrowseName(strValueId);
+	QString strNodeId = QString("ns=1;s=modbus.%1.%2.%3")
+		.arg(this->block()->client()->browseName())
+		.arg(this->block()->browseName())
+		.arg(strValueId);
+	auto value = this->addChild<QUaModbusValue>(strNodeId);
+	if (!value)
+	{
+		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
+	}
+	value->setDisplayName(strValueId);
+	value->setBrowseName(strValueId);
 	// return
 	return "Success";
 }

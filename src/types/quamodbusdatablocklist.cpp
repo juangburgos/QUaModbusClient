@@ -28,6 +28,11 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 	{
 		return  tr("%1 : Block Id cannot contain more than 6 characters.").arg("Error");
 	}
+	// check not called Name
+	if (strBlockId.compare("Name", Qt::CaseSensitive) == 0)
+	{
+		return tr("%1 : Block Id cannot be 'Name'.").arg("Error");
+	}
 	// check valid characters
 	QRegularExpression rx("^[a-zA-Z0-9_]*$");
 	QRegularExpressionMatch match = rx.match(strBlockId, 0, QRegularExpression::PartialPreferCompleteMatch);
@@ -42,8 +47,12 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 	}
 	// create instance
 	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
-	//QString strNodeId = QString("ns=1;s=%1").arg(this->nodeBrowsePath().join(".") + "." + strClientId);
-	auto block = this->addChild<QUaModbusDataBlock>(/*strNodeId*/);
+	QString strNodeId = QString("ns=1;s=modbus.%1.%2").arg(this->client()->browseName()).arg(strBlockId);
+	auto block = this->addChild<QUaModbusDataBlock>(strNodeId);
+	if (!block)
+	{
+		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
+	}
 	block->setDisplayName(strBlockId);
 	block->setBrowseName(strBlockId);
 	// start block loop
