@@ -39,6 +39,7 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 		// use value edit widget
 		QUaModbusValueWidgetEdit * widgetNewValue = new QUaModbusValueWidgetEdit;
 		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("New Modbus Value"));
 		// NOTE : dialog takes ownershit
 		dialog.setWidget(widgetNewValue);
 		// NOTE : call in own method to we can recall it if fails

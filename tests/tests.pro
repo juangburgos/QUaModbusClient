@@ -1,7 +1,17 @@
 TEMPLATE = subdirs
-
 CONFIG += debug_and_release build_all
-
+# names
 SUBDIRS = \
-$$PWD/console/console.pro \
-$$PWD/widget/widget.pro \
+open62541 \
+console \
+widget
+# directories
+open62541.subdir = $$PWD/../libs/QUaServer.git/src/amalgamation/open62541.pro
+console.subdir   = $$PWD/console/console.pro
+widget.subdir    = $$PWD/widget/widget.pro
+# dependencies
+console.depends = open62541
+widget.depends  = open62541
+
+
+

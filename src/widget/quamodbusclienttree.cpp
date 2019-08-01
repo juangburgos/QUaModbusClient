@@ -160,6 +160,7 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 {
 	QUaModbusClientWidgetEdit * widgetNewClient = new QUaModbusClientWidgetEdit;
 	QUaModbusClientDialog dialog(this);
+	dialog.setWindowTitle(tr("New Modbus Client"));
 	// NOTE : dialog takes ownershit
 	dialog.setWidget(widgetNewClient);
 	// NOTE : call in own method to we can recall it if fails
@@ -204,7 +205,7 @@ void QUaModbusClientTree::setupImportButton()
 	// set menu
 	ui->toolButtonImport->setMenu(importMenu);
 	// default action
-	auto defaultAction = new QAction(tr("Import"), ui->toolButtonImport);
+	auto defaultAction = new QAction(tr("Import CSV"), ui->toolButtonImport);
 	QObject::connect(defaultAction, &QAction::triggered, ui->toolButtonImport,
 	[this]() {
 		ui->toolButtonImport->showMenu();
@@ -232,7 +233,7 @@ void QUaModbusClientTree::setupExportButton()
 	// set menu
 	ui->toolButtonExport->setMenu(exportMenu);
 	// default action
-	auto defaultAction = new QAction(tr("Export"), ui->toolButtonExport);
+	auto defaultAction = new QAction(tr("Export CSV"), ui->toolButtonExport);
 	QObject::connect(defaultAction, &QAction::triggered, ui->toolButtonExport,
 	[this]() {
 		ui->toolButtonExport->showMenu();

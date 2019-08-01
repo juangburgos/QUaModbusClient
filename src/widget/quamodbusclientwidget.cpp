@@ -67,6 +67,7 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 		// use block edit widget
 		QUaModbusDataBlockWidgetEdit * widgetNewBlock = new QUaModbusDataBlockWidgetEdit;
 		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("New Modbus Block"));
 		// NOTE : dialog takes ownershit
 		dialog.setWidget(widgetNewBlock);
 		// NOTE : call in own method to we can recall it if fails
