@@ -24,7 +24,12 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 	m_server(4840, QByteArray(), this)
 {
     ui->setupUi(this);
-	m_deleting       = false;
+	m_deleting = false;
+	QObject::connect(this, &QUaModbusClientWidgetTest::expandTree, ui->widgetModbus, 
+	[this]() {
+		ui->widgetModbus->setExpanded();
+	},
+	Qt::QueuedConnection);
 	// instantiate widgets
 	this->setupModbusWidgets();
 	// add list entry point to object's folder
@@ -121,7 +126,10 @@ void QUaModbusClientWidgetTest::on_pushButtonImport_clicked()
 		{
 			msgBox.setText(strError);
 			msgBox.exec();
+			return;
 		}
+		// expand tree
+		emit this->expandTree();
 	}
 	else
 	{

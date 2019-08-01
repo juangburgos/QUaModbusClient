@@ -36,6 +36,9 @@ public:
 	Q_ENUM(ModbusWidgets)
 	typedef QUaModbusClientWidgetTest::ModbusWidgets QModbusWidgets;
 
+signals:
+	void expandTree();
+
 private slots:
     void on_pushButtonStart_clicked();
 

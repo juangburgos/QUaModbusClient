@@ -42,3 +42,27 @@ void QUaModbusReadOnlyComboBox::wheelEvent(QWheelEvent * e)
 	}
 	QComboBox::wheelEvent(e);
 }
+
+/*---------------------------------------------------------------------------------------------
+*/
+
+QUaModbusLambdaFilterProxy::QUaModbusLambdaFilterProxy(QObject *parent/* = 0*/)
+	: QSortFilterProxyModel(parent)
+{
+
+}
+
+void QUaModbusLambdaFilterProxy::resetFilter()
+{
+	this->invalidateFilter();
+}
+
+bool QUaModbusLambdaFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex & sourceParent) const
+{
+	return m_filterAcceptsRow ? m_filterAcceptsRow(sourceRow, sourceParent) : QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);
+}
+
+bool QUaModbusLambdaFilterProxy::lessThan(const QModelIndex & left, const QModelIndex & right) const
+{
+	return m_lessThan ? m_lessThan(left, right) : QSortFilterProxyModel::lessThan(left, right);
+}

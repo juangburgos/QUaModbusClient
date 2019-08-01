@@ -38,20 +38,70 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	{
 		qRegisterMetaType<QUaNode*>("QUaNode*");
 	}
+	this->setupTreeContextMenu();
 	this->setupImportButton();
 	this->setupExportButton();
+	this->setupFilterWidgets();
 	// setup params tree model
-	m_modelClients.setColumnCount((int)Headers::Invalid);
+	m_modelModbus.setColumnCount((int)Headers::Invalid);
 	QStringList paramHeaders;
 	for (int i = (int)Headers::Objects; i < (int)Headers::Invalid; i++)
 	{
 		paramHeaders << QString(QMetaEnum::fromType<Headers>().valueToKey(i));
 	}
-	m_modelClients.setHorizontalHeaderLabels(paramHeaders);
+	m_modelModbus.setHorizontalHeaderLabels(paramHeaders);
 	// setup params sort filter
-	m_proxyClients.setSourceModel(&m_modelClients);
+	m_proxyModbus.setSourceModel(&m_modelModbus);
+	m_proxyModbus.setFilterAcceptsRow(
+	[this](int sourceRow, const QModelIndex & sourceParent) {
+		// get pointer to base class
+		auto sourceChild = m_modelModbus.index(sourceRow, 0, sourceParent);
+		auto item = m_modelModbus.itemFromIndex(sourceChild);
+		if (!item)
+		{
+			return false;
+		}
+		auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		if (!node)
+		{
+			return false;
+		}
+		auto type = item->data(QUaModbusClientTree::SelectTypeRole).value<QModbusSelectType>();
+		// filter type
+		bool show = false;
+		ComboOpts typeFilter = ui->comboBoxFilterType->currentData().value<ComboOpts>();
+		switch (typeFilter)
+		{
+		case QUaModbusClientTree::ComboOpts::Clients:
+			show = true;
+			if (type == QModbusSelectType::QUaModbusClient)
+			{
+				show = item->text().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+			}
+			break;
+		case QUaModbusClientTree::ComboOpts::Blocks:
+			show = true;
+			if (type == QModbusSelectType::QUaModbusDataBlock)
+			{
+				show = item->text().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+			}
+			break;
+		case QUaModbusClientTree::ComboOpts::Values:
+			show = true;
+			if (type == QModbusSelectType::QUaModbusValue)
+			{
+				show = item->text().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+			}
+			break;
+		default:
+			show = false;
+			break;
+		}
+		// return combination
+		return show;
+	});
 	// setup params tree
-	ui->treeViewModbus->setModel(&m_proxyClients);
+	ui->treeViewModbus->setModel(&m_proxyModbus);
 	ui->treeViewModbus->setAlternatingRowColors(true);
 	ui->treeViewModbus->setSortingEnabled(true);
 	ui->treeViewModbus->sortByColumn((int)Headers::Objects, Qt::SortOrder::AscendingOrder);
@@ -59,8 +109,8 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	// setup tree interactions
 	QObject::connect(ui->treeViewModbus->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
 	[this](const QModelIndex &current, const QModelIndex &previous) {
-		auto itemPrev = m_modelClients.itemFromIndex(m_proxyClients.mapToSource(previous));
-		auto itemCurr = m_modelClients.itemFromIndex(m_proxyClients.mapToSource(current));
+		auto itemPrev = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(previous));
+		auto itemCurr = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(current));
 		// previous
 		QModbusSelectType typePrev = QModbusSelectType::Invalid;
 		QUaNode * nodePrev = nullptr;
@@ -142,7 +192,7 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 		// add to gui
 		auto item = this->handleClientAdded(client);
 		// select newly created
-		auto index = m_proxyClients.mapFromSource(item->index());
+		auto index = m_proxyModbus.mapFromSource(item->index());
 		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
 
@@ -156,6 +206,11 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 	}
 }
 
+void QUaModbusClientTree::setExpanded(const bool & expanded)
+{
+	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
+}
+
 void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 {
 	QUaModbusClientWidgetEdit * widgetNewClient = new QUaModbusClientWidgetEdit;
@@ -165,6 +220,28 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 	dialog.setWidget(widgetNewClient);
 	// NOTE : call in own method to we can recall it if fails
 	this->showNewClientDialog(dialog);
+}
+
+void QUaModbusClientTree::setupTreeContextMenu()
+{
+	ui->treeViewModbus->setContextMenuPolicy(Qt::CustomContextMenu);
+	QObject::connect(ui->treeViewModbus, &QTreeView::customContextMenuRequested, this, 
+	[this](const QPoint &point) {
+		QModelIndex index = ui->treeViewModbus->indexAt(point);
+		if (index.isValid()) 
+		{
+			QMenu contextMenu(ui->treeViewModbus);
+			contextMenu.addAction(tr("Expand All"), this, 
+			[this, index]() {
+				this->expandRecursivelly(index, true);
+			});
+			contextMenu.addAction(tr("Collapse All"), this,
+			[this, index]() {
+				this->expandRecursivelly(index, false);
+			});
+			contextMenu.exec(ui->treeViewModbus->viewport()->mapToGlobal(point));
+		}
+	});
 }
 
 void QUaModbusClientTree::setupImportButton()
@@ -239,6 +316,34 @@ void QUaModbusClientTree::setupExportButton()
 		ui->toolButtonExport->showMenu();
 	});
 	ui->toolButtonExport->setDefaultAction(defaultAction);
+}
+
+void QUaModbusClientTree::setupFilterWidgets()
+{
+	// initially hidden
+	this->setFilterVisible(false);
+	// setup combobox options
+	ui->comboBoxFilterType->addItem(tr("Clients"), QVariant::fromValue(ComboOpts::Clients));
+	ui->comboBoxFilterType->addItem(tr("Blocks" ), QVariant::fromValue(ComboOpts::Blocks) );
+	ui->comboBoxFilterType->addItem(tr("Values" ), QVariant::fromValue(ComboOpts::Values) );
+	// set current combo index as values
+	int indexAny = ui->comboBoxFilterType->findData(QVariant::fromValue(ComboOpts::Values));
+	Q_ASSERT(indexAny >= 0);
+	ui->comboBoxFilterType->setCurrentIndex(indexAny);
+}
+
+void QUaModbusClientTree::expandRecursivelly(const QModelIndex & index, const bool & expand)
+{
+	// first children
+	int childRow = 0;
+	auto childIndex = m_proxyModbus.index(childRow, 0, index);
+	while (childIndex.isValid())
+	{
+		this->expandRecursivelly(childIndex, expand);
+		childIndex = m_proxyModbus.index(++childRow, 0, index);
+	}
+	// finally parent
+	ui->treeViewModbus->setExpanded(index, expand);
 }
 
 void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
@@ -325,7 +430,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	// get client id
 	QString strClientId = client->browseName();
 	Q_ASSERT(!strClientId.isEmpty() && !strClientId.isNull());
-	auto parent = m_modelClients.invisibleRootItem();
+	auto parent = m_modelModbus.invisibleRootItem();
 
 	// object column
 	auto row  = parent->rowCount();
@@ -373,7 +478,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	[this, iObj]() {
 		Q_CHECK_PTR(iObj);
 		// remove from tree
-		m_modelClients.removeRows(iObj->index().row(), 1);
+		m_modelModbus.removeRows(iObj->index().row(), 1);
 	});
 
 	// subscribe to block addition
@@ -388,7 +493,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		auto item = this->handleBlockAdded(client, iObj, strBlockId);
 		// select newly created
-		auto index = m_proxyClients.mapFromSource(item->index());
+		auto index = m_proxyModbus.mapFromSource(item->index());
 		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
 
@@ -459,7 +564,7 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		auto item = this->handleValueAdded(block, iObj, strValueId);
 		// select newly created
-		auto index = m_proxyClients.mapFromSource(item->index());
+		auto index = m_proxyModbus.mapFromSource(item->index());
 		ui->treeViewModbus->setCurrentIndex(index);
 	}, Qt::QueuedConnection);
 
@@ -613,4 +718,43 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 			strError
 		);
 	}
+}
+
+bool QUaModbusClientTree::isFilterVisible() const
+{
+	return ui->frameFilter->isEnabled();
+}
+
+void QUaModbusClientTree::setFilterVisible(const bool & isVisible)
+{
+	ui->frameFilter->setEnabled(isVisible);
+	ui->frameFilter->setVisible(isVisible);
+	if (!isVisible)
+	{
+		// set current combo index as values
+		int indexAny = ui->comboBoxFilterType->findData(QVariant::fromValue(ComboOpts::Values));
+		if (indexAny >= 0)
+		{
+			ui->comboBoxFilterType->setCurrentIndex(indexAny);
+		}
+		// clear filter text
+		ui->lineEditFilterText->setText("");
+	}
+}
+
+void QUaModbusClientTree::on_checkBoxFilter_toggled(bool checked)
+{
+	this->setFilterVisible(checked);
+}
+
+void QUaModbusClientTree::on_comboBoxFilterType_currentIndexChanged(int index)
+{
+	Q_UNUSED(index);
+	m_proxyModbus.resetFilter();
+}
+
+void QUaModbusClientTree::on_lineEditFilterText_textChanged(const QString &arg1)
+{
+	Q_UNUSED(arg1);
+	m_proxyModbus.resetFilter();
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>290</width>
-    <height>300</height>
+    <width>362</width>
+    <height>495</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,28 +27,13 @@
     <number>0</number>
    </property>
    <item row="0" column="0">
-    <widget class="QToolButton" name="toolButtonImport">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>60</width>
-       <height>23</height>
-      </size>
-     </property>
-     <property name="toolTip">
-      <string>Import from CSV file</string>
-     </property>
+    <widget class="QCheckBox" name="checkBoxFilter">
      <property name="text">
-      <string>Import</string>
+      <string>Enable Filter</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="2">
+   <item row="0" column="1">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -61,20 +46,29 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="3">
-    <widget class="QPushButton" name="pushButtonAddClient">
+   <item row="0" column="2">
+    <widget class="QToolButton" name="toolButtonImport">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>23</height>
+      </size>
+     </property>
      <property name="toolTip">
-      <string>Add new Modbus client</string>
+      <string>Import from CSV file</string>
      </property>
      <property name="text">
-      <string>Add Client</string>
+      <string>Import</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="4">
-    <widget class="QTreeView" name="treeViewModbus"/>
-   </item>
-   <item row="0" column="1">
+   <item row="0" column="3">
     <widget class="QToolButton" name="toolButtonExport">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -84,7 +78,7 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>60</width>
+       <width>80</width>
        <height>23</height>
       </size>
      </property>
@@ -95,6 +89,56 @@
       <string>Export</string>
      </property>
     </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="pushButtonAddClient">
+     <property name="toolTip">
+      <string>Add new Modbus client</string>
+     </property>
+     <property name="text">
+      <string>Add Client</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="5">
+    <widget class="QFrame" name="frameFilter">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="labelFilter">
+        <property name="text">
+         <string>Filter : </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBoxFilterType"/>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEditFilterText"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="5">
+    <widget class="QTreeView" name="treeViewModbus"/>
    </item>
   </layout>
  </widget>
