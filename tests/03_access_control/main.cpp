@@ -1,12 +1,12 @@
-//#include "quamodbusclientwidgettest.h"
+#include "quamodbusaccesscontrol.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     
-    //QUaModbusClientWidgetTest w;
-    //w.show();
+    QUaModbusAccessControl w;
+    w.show();
 
     return a.exec();
 }

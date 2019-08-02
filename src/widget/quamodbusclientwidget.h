@@ -20,6 +20,8 @@ public:
 
 	void bindClient(QUaModbusClient * client);
 
+	void clear();
+
 private:
     Ui::QUaModbusClientWidget *ui;
 

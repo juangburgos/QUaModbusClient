@@ -96,6 +96,19 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 	// NOTE : apply button bound in bindClientWidgetEdit
 }
 
+void QUaModbusClientWidget::clear()
+{
+	// disable old connections
+	while (m_connections.count() > 0)
+	{
+		QObject::disconnect(m_connections.takeFirst());
+	}
+	// clear edit widget
+	ui->widgetClientEdit->setId("");
+	ui->widgetClientEdit->setIpAddress("");
+	// clear status widget
+}
+
 void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 {
 	// enable edit widget

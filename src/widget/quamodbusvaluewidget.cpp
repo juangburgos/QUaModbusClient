@@ -55,6 +55,18 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 	// NOTE : apply button bound in bindValueWidgetEdit
 }
 
+void QUaModbusValueWidget::clear()
+{
+	// disable old connections
+	while (m_connections.count() > 0)
+	{
+		QObject::disconnect(m_connections.takeFirst());
+	}
+	// clear edit widget
+	ui->widgetValueEdit->setId("");
+	// clear status widgte
+}
+
 void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 {
 	// enable status widget

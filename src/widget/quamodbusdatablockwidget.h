@@ -20,6 +20,8 @@ public:
 
 	void bindBlock(QUaModbusDataBlock * block);
 
+	void clear();
+
 private:
     Ui::QUaModbusDataBlockWidget *ui;
 

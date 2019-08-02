@@ -68,6 +68,18 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 	// NOTE : apply button bound in bindBlockWidgetEdit
 }
 
+void QUaModbusDataBlockWidget::clear()
+{
+	// disable old connections
+	while (m_connections.count() > 0)
+	{
+		QObject::disconnect(m_connections.takeFirst());
+	}
+	// clear edit widget
+	ui->widgetBlockEdit->setId("");
+	// clear status widget
+}
+
 void QUaModbusDataBlockWidget::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 {
 	// enable edit widget
