@@ -1,7 +1,7 @@
 QT += core
 QT -= gui
 
-TARGET  = console
+TARGET  = 01_console
 CONFIG += console
 CONFIG -= app_bundle
 

@@ -28,9 +28,9 @@ public:
 	// tree headers
 	enum class ModbusWidgets
 	{
-		Client = 0,
-		Block  = 1,
-		Value  = 2,
+		Client  = 0,
+		Block   = 1,
+		Value   = 2,
 		Invalid = 3
 	};
 	Q_ENUM(ModbusWidgets)

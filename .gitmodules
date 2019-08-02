@@ -4,3 +4,7 @@
 [submodule "libs/QDeferred.git"]
 	path = libs/QDeferred.git
 	url = https://github.com/juangburgos/QDeferred.git
+[submodule "libs/QUaAccessControl.git"]
+	path = libs/QUaAccessControl.git
+	url = https://github.com/juangburgos/QUaAccessControl.git
+	branch = master
