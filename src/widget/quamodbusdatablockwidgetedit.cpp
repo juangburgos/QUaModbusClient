@@ -36,6 +36,46 @@ void QUaModbusDataBlockWidgetEdit::setIdEditable(const bool & idEditable)
 	ui->lineEditId->setReadOnly(!idEditable);
 }
 
+bool QUaModbusDataBlockWidgetEdit::isTypeEditable() const
+{
+	return !ui->comboBoxType->isReadOnly();
+}
+
+void QUaModbusDataBlockWidgetEdit::setTypeEditable(const bool & typeEditable)
+{
+	ui->comboBoxType->setReadOnly(!typeEditable);
+}
+
+bool QUaModbusDataBlockWidgetEdit::isAddressEditable() const
+{
+	return !ui->spinBoxAddress->isReadOnly();
+}
+
+void QUaModbusDataBlockWidgetEdit::setAddressEditable(const bool & addressEditable)
+{
+	ui->spinBoxAddress->setReadOnly(!addressEditable);
+}
+
+bool QUaModbusDataBlockWidgetEdit::isSizeEditable() const
+{
+	return !ui->spinBoxSize->isReadOnly();
+}
+
+void QUaModbusDataBlockWidgetEdit::setSizeEditable(const bool & sizeEditable)
+{
+	ui->spinBoxSize->setReadOnly(!sizeEditable);
+}
+
+bool QUaModbusDataBlockWidgetEdit::isSamplingTimeEditable() const
+{
+	return !ui->spinBoxSampling->isReadOnly();
+}
+
+void QUaModbusDataBlockWidgetEdit::setSamplingTimeEditable(const bool & samplingTimeEditable)
+{
+	ui->spinBoxSampling->setReadOnly(!samplingTimeEditable);
+}
+
 QString QUaModbusDataBlockWidgetEdit::id() const
 {
 	return ui->lineEditId->text();

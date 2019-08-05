@@ -3,7 +3,11 @@
 #include <QUaModbusDataBlock>
 
 QUaModbusClient::QUaModbusClient(QUaServer *server)
+#ifndef QUA_ACCESS_CONTROL
 	: QUaBaseObject(server)
+#else
+	: QUaBaseObjectProtected(server)
+#endif // !QUA_ACCESS_CONTROL
 {
 	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
 	{

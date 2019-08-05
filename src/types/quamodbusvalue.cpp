@@ -5,8 +5,16 @@
 #include <QUaProperty>
 #include <QUaBaseDataVariable>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusValue::QUaModbusValue(QUaServer *server)
+#ifndef QUA_ACCESS_CONTROL
 	: QUaBaseObject(server)
+#else
+	: QUaBaseObjectProtected(server)
+#endif // !QUA_ACCESS_CONTROL
 {
 	// set defaults
 	type         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusValueType>());
@@ -262,6 +270,13 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 {
 	// add value element
 	QDomElement elemValue = domDoc.createElement(QUaModbusValue::staticMetaObject.className());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemValue.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// set value attributes
 	elemValue.setAttribute("BrowseName"   , this->browseName());
 	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QModbusValueType>().valueToKey(this->getType()));
@@ -275,6 +290,13 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	bool bOK;
 	// Type
 	auto type = (QModbusValueType)QMetaEnum::fromType<QModbusValueType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);

@@ -46,6 +46,10 @@ private:
 	QUaModbusClientWidget    * m_clientWidget;
 	QUaModbusDataBlockWidget * m_blockWidget ;
 	QUaModbusValueWidget	 * m_valueWidget ; 
+	// to be able to update permissions
+	QUaModbusClient    * m_client;
+	QUaModbusDataBlock * m_block ;
+	QUaModbusValue     * m_value ;
 
 	void createModbusWidgetsDocks();
 	void setupModbusTreeWidget();
@@ -53,6 +57,10 @@ private:
 	void bindClientWidget(QUaModbusClient    * client);
 	void bindBlockWidget (QUaModbusDataBlock * block );
 	void bindValueWidget (QUaModbusValue     * value );
+
+	void updateClientWidgetPermissions();
+	void updateBlockWidgetPermissions();
+	void updateValueWidgetPermissions();
 
 	// helpers
 	QUaAcDocking * getDockManager() const;
@@ -72,13 +80,13 @@ template <class T>
 const QString QUaModbusDockWidgets<T>::m_strModbusTree = "Modbus Tree";
 
 template <class T>
-const QString QUaModbusDockWidgets<T>::m_strModbusClients = "Modbus Clients";
+const QString QUaModbusDockWidgets<T>::m_strModbusClients = "Modbus Client Edit";
 
 template <class T>
-const QString QUaModbusDockWidgets<T>::m_strModbusBlocks = "Modbus Data Blocks";
+const QString QUaModbusDockWidgets<T>::m_strModbusBlocks = "Modbus DataBlock Edit";
 
 template <class T>
-const QString QUaModbusDockWidgets<T>::m_strModbusValues = "Modbus Values";
+const QString QUaModbusDockWidgets<T>::m_strModbusValues = "Modbus Value Edit";
 
 // create list to iterate
 template <class T>
@@ -88,7 +96,10 @@ template <class T>
 inline QUaModbusDockWidgets<T>::QUaModbusDockWidgets(T *parent) : QObject(parent)
 {
 	Q_CHECK_PTR(parent);
-	m_thiz = parent;
+	m_thiz   = parent;
+	m_client = nullptr;
+	m_block  = nullptr;
+	m_value  = nullptr;
 	//
 	QUaModbusDockWidgets<T>::m_listWidgetNames = QList<QString>()
 		<< QUaModbusDockWidgets<T>::m_strModbusTree
@@ -104,9 +115,10 @@ inline QUaModbusDockWidgets<T>::QUaModbusDockWidgets(T *parent) : QObject(parent
 template<class T>
 inline void QUaModbusDockWidgets<T>::updateWidgetsPermissions()
 {
-	// TODO : m_thiz->loggedUser()
-	// decide based on underlying modbus info model which actions
-	// can be performed through widgets (create/remove, read/write)
+	m_modbusTreeWidget->on_loggedUserChanged(m_thiz->loggedUser());
+	this->updateClientWidgetPermissions();
+	this->updateBlockWidgetPermissions();
+	this->updateValueWidgetPermissions();
 }
 
 template<class T>
@@ -202,6 +214,8 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 		QAd::RightDockWidgetArea,
 		m_clientWidget
 	);
+	m_clientWidget->setEnabled(false);
+	m_clientWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_blockWidget = new QUaModbusDataBlockWidget(m_thiz);
 	auto blockArea = 
@@ -213,6 +227,8 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 		nullptr,
 		clientArea
 	);
+	m_blockWidget->setEnabled(false);
+	m_blockWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_valueWidget = new QUaModbusValueWidget(m_thiz);
 	this->getDockManager()->addDockWidget(
@@ -223,6 +239,8 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 		nullptr,
 		blockArea
 	);
+	m_valueWidget->setEnabled(false);
+	m_valueWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	// TODO : create default layouts or not?
 	//this->getDockManager()->saveLayout(QUaModbusDockWidgets<T>::m_strDefault);
@@ -291,25 +309,82 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 template<class T>
 inline void QUaModbusDockWidgets<T>::bindClientWidget(QUaModbusClient * client)
 {
+	m_client = client;
 	// bind widget
 	m_clientWidget->setEnabled(true);
 	m_clientWidget->bindClient(client);
+	// permissions
+	this->updateClientWidgetPermissions();
 }
 
 template<class T>
 inline void QUaModbusDockWidgets<T>::bindBlockWidget(QUaModbusDataBlock * block)
 {
+	m_block = block;
 	// bind widget
 	m_blockWidget->setEnabled(true);
 	m_blockWidget->bindBlock(block);
+	// permissions
+	this->updateBlockWidgetPermissions();
 }
 
 template<class T>
 inline void QUaModbusDockWidgets<T>::bindValueWidget(QUaModbusValue * value)
 {
+	m_value = value;
 	// bind widget
 	m_valueWidget->setEnabled(true);
 	m_valueWidget->bindValue(value);
+	// permissions
+	this->updateValueWidgetPermissions();
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::updateClientWidgetPermissions()
+{
+	// if no user or client then cannot write
+	auto user = m_thiz->loggedUser();
+	if (!user || !m_client)
+	{
+		m_clientWidget->setCanWrite(false);
+		return;
+	}
+	auto perms = m_client->permissionsObject();
+	auto canWrite = !perms ? true : perms->canUserWrite(user);
+	m_clientWidget->setCanWrite(canWrite);
+	// NOTE : can read implemented in select tree filter
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::updateBlockWidgetPermissions()
+{
+	// if no user or block then cannot write
+	auto user = m_thiz->loggedUser();
+	if (!user || !m_block)
+	{
+		m_blockWidget->setCanWrite(false);
+		return;
+	}
+	auto perms = m_block->permissionsObject();
+	auto canWrite = !perms ? true : perms->canUserWrite(user);
+	m_blockWidget->setCanWrite(canWrite);
+	// NOTE : can read implemented in select tree filter
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::updateValueWidgetPermissions()
+{
+	// if no user or client then cannot write
+	auto user = m_thiz->loggedUser();
+	if (!user || !m_value)
+	{
+		m_valueWidget->setCanWrite(false);
+		return;
+	}
+	auto perms = m_value->permissionsObject();
+	auto canWrite = !perms ? true : perms->canUserWrite(user);
+	m_valueWidget->setCanWrite(canWrite);
+	// NOTE : can read implemented in select tree filter
 }
 
 template<class T>

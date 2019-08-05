@@ -15,6 +15,10 @@ class QUaModbusClientList;
 class QUaModbusClientDialog;
 class QUaModbusDataBlock;
 
+#ifdef QUA_ACCESS_CONTROL
+class QUaUser;
+#endif // QUA_ACCESS_CONTROL
+
 class QUaModbusClientTree : public QWidget
 {
     Q_OBJECT
@@ -60,6 +64,11 @@ signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev,
 		QUaNode * nodeCurr, QModbusSelectType typeCurr);
 
+public slots:
+#ifdef QUA_ACCESS_CONTROL
+	void on_loggedUserChanged(QUaUser * user);
+#endif // QUA_ACCESS_CONTROL
+
 private slots:
 	void on_pushButtonAddClient_clicked();
 
@@ -71,9 +80,12 @@ private slots:
 
 private:
     Ui::QUaModbusClientTree *ui;
-	QUaModbusClientList * m_listClients;
+	QUaModbusClientList      * m_listClients;
 	QStandardItemModel         m_modelModbus;
 	QUaModbusLambdaFilterProxy m_proxyModbus;
+#ifdef QUA_ACCESS_CONTROL
+	QUaUser * m_loggedUser;
+#endif // QUA_ACCESS_CONTROL
 
 	void setupTreeContextMenu();
 	void setupImportButton();

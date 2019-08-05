@@ -7,7 +7,12 @@
 
 #include <QLambdaThreadWorker>
 
+#ifndef QUA_ACCESS_CONTROL
 #include <QUaBaseObject>
+#else
+#include <QUaBaseObjectProtected>
+#endif // !QUA_ACCESS_CONTROL
+
 #include <QUaBaseDataVariable>
 #include <QUaProperty>
 
@@ -22,7 +27,11 @@ class QUaModbusDataBlock;
 typedef QModbusDevice::State QModbusState;
 typedef QModbusDevice::Error QModbusError;
 
+#ifndef QUA_ACCESS_CONTROL
 class QUaModbusClient : public QUaBaseObject
+#else
+class QUaModbusClient : public QUaBaseObjectProtected
+#endif // !QUA_ACCESS_CONTROL
 {
 	friend class QUaModbusClientList;
 	friend class QUaModbusDataBlockList;

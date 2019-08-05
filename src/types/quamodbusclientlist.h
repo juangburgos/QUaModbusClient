@@ -1,7 +1,11 @@
 #ifndef QUAMODBUSCLIENTLIST_H
 #define QUAMODBUSCLIENTLIST_H
 
+#ifndef QUA_ACCESS_CONTROL
 #include <QUaFolderObject>
+#else
+#include <QUaFolderObjectProtected>
+#endif // !QUA_ACCESS_CONTROL
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -10,7 +14,11 @@
 
 class QUaModbusClient;
 
+#ifndef QUA_ACCESS_CONTROL
 class QUaModbusClientList : public QUaFolderObject
+#else
+class QUaModbusClientList : public QUaFolderObjectProtected
+#endif // !QUA_ACCESS_CONTROL
 {
     Q_OBJECT
 

@@ -10,8 +10,16 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusValueList::QUaModbusValueList(QUaServer *server)
+#ifndef QUA_ACCESS_CONTROL
 	: QUaFolderObject(server)
+#else
+	: QUaFolderObjectProtected(server)
+#endif // !QUA_ACCESS_CONTROL
 {
 	// NOTE : QObject parent might not be yet available in constructor
 }
@@ -85,8 +93,13 @@ QDomElement QUaModbusValueList::toDomElement(QDomDocument & domDoc) const
 	// add value list element
 	QDomElement elemListValues = domDoc.createElement(QUaModbusValueList::staticMetaObject.className());
 	domDoc.appendChild(elemListValues);
-	// set attributes
-	elemListValues.setAttribute("BrowseName", this->browseName());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemListValues.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// loop children and add them as children
 	auto values = this->browseChildren<QUaModbusValue>();
 	for (int i = 0; i < values.count(); i++)
@@ -101,6 +114,13 @@ QDomElement QUaModbusValueList::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusValueList::fromDomElement(QDomElement & domElem, QString & strError)
 {
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	// add values
 	QDomNodeList listValues = domElem.elementsByTagName(QUaModbusValue::staticMetaObject.className());
 	for (int i = 0; i < listValues.count(); i++)

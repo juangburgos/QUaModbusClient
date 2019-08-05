@@ -27,6 +27,33 @@ public:
 	bool       isTypeEditable() const;
 	void       setTypeEditable(const bool &typeEditable);
 
+	bool       isDeviceAddressEditable() const;
+	void       setDeviceAddressEditable(const bool &deviceAddressEditable);
+
+	bool       isKeepConnectingEditable() const;
+	void       setKeepConnectingEditable(const bool &keepConnectingEditable);
+
+	bool       isIpAddressEditable() const;
+	void       setIpAddressEditable(const bool &ipAddressEditable);
+
+	bool       isNetworkPortEditable() const;
+	void       setNetworkPortEditable(const bool &networkPortEditable);
+
+	bool       isComPortEditable() const;
+	void       setComPortEditable(const bool &comPortEditable);
+
+	bool       isParityEditable() const;
+	void       setParityEditable(const bool &parityEditable);
+
+	bool       isBaudRateEditable() const;
+	void       setBaudRateEditable(const bool &baudRateEditable);
+
+	bool       isDataBitsEditable() const;
+	void       setDataBitsEditable(const bool &dataBitsEditable);
+
+	bool       isStopBitsEditable() const;
+	void       setStopBitsEditable(const bool &stopBitsEditable);
+
 	QString    id() const;
 	void       setId(const QString &strId);
 

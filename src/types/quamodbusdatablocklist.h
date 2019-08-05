@@ -1,7 +1,11 @@
 #ifndef QUAMODBUSDATABLOCKLIST_H
 #define QUAMODBUSDATABLOCKLIST_H
 
+#ifndef QUA_ACCESS_CONTROL
 #include <QUaFolderObject>
+#else
+#include <QUaFolderObjectProtected>
+#endif // !QUA_ACCESS_CONTROL
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -11,7 +15,11 @@ class QUaModbusTcpClient;
 class QUaModbusRtuSerialClient;
 class QUaModbusDataBlock;
 
+#ifndef QUA_ACCESS_CONTROL
 class QUaModbusDataBlockList : public QUaFolderObject
+#else
+class QUaModbusDataBlockList : public QUaFolderObjectProtected
+#endif // !QUA_ACCESS_CONTROL
 {
 	friend class QUaModbusClient;
 	friend class QUaModbusTcpClient;

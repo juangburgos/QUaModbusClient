@@ -20,6 +20,12 @@ public:
 	bool             isIdEditable() const;
 	void             setIdEditable(const bool &idEditable);
 
+	bool             isTypeEditable() const;
+	void             setTypeEditable(const bool &typeEditable);
+
+	bool             isOffsetEditable() const;
+	void             setOffsetEditable(const bool &offsetEditable);
+
 	QString          id() const;
 	void             setId(const QString &strId);
 

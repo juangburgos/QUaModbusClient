@@ -11,8 +11,16 @@
 
 #include <QUaServer>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusClientList::QUaModbusClientList(QUaServer *server)
+#ifndef QUA_ACCESS_CONTROL
 	: QUaFolderObject(server)
+#else
+	: QUaFolderObjectProtected(server)
+#endif // !QUA_ACCESS_CONTROL
 {
 	// register custom types (also registers enums of custom types)
 	server->registerType<QUaModbusTcpClient      >();
@@ -685,8 +693,13 @@ QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element
 	QDomElement elemListClients = domDoc.createElement(QUaModbusClientList::staticMetaObject.className());
-	// set attributes
-	elemListClients.setAttribute("BrowseName", this->browseName());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemListClients.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// loop children and add them as children
 	auto clients = this->browseChildren<QUaModbusClient>();
 	for (auto client : clients)
@@ -700,6 +713,13 @@ QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 
 void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strError)
 {
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	// add TCP clients
 	QDomNodeList listTcpClients = domElem.elementsByTagName(QUaModbusTcpClient::staticMetaObject.className());
 	for (int i = 0; i < listTcpClients.count(); i++)

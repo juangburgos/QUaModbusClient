@@ -9,11 +9,18 @@
 #include <QUaModbusClientDialog>
 #include <QUaModbusDataBlockWidgetEdit>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaDockWidgetPerms>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusClientWidget)
 {
     ui->setupUi(this);
+#ifndef QUA_ACCESS_CONTROL
+	ui->pushButtonPerms->setVisible(false);
+#endif // !QUA_ACCESS_CONTROL
 }
 
 QUaModbusClientWidget::~QUaModbusClientWidget()
@@ -33,6 +40,31 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 	// bind status widget
 	this->bindClientWidgetStatus(client);
 	// bind buttons
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, client,
+	[this, client]() {
+		// NOTE : call QUaModbusClientWidget::setupPermissionsModel first to set m_proxyPerms
+		Q_CHECK_PTR(m_proxyPerms);
+		// create permissions widget
+		auto permsWidget = new QUaDockWidgetPerms;
+		// configure perms widget combo
+		permsWidget->setComboModel(m_proxyPerms);
+		permsWidget->setPermissions(client->permissionsObject());
+		// dialog
+		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("Modbus Client Permissions"));
+		dialog.setWidget(permsWidget);
+		// exec dialog
+		int res = dialog.exec();
+		if (res != QDialog::Accepted)
+		{
+			return;
+		}
+		// read permissions and set them for layout list
+		client->setPermissionsObject(permsWidget->permissions());
+	});
+#endif // QUA_ACCESS_CONTROL
 	ui->pushButtonConnect->setText(
 		client->state()->value().value<QModbusState>() == QModbusState::UnconnectedState ? 
 		tr("Connect") : tr("Disconnect")
@@ -108,6 +140,28 @@ void QUaModbusClientWidget::clear()
 	ui->widgetClientEdit->setIpAddress("");
 	// clear status widget
 }
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientWidget::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
+{
+	m_proxyPerms = proxyPerms;
+	Q_CHECK_PTR(m_proxyPerms);
+}
+
+void QUaModbusClientWidget::setCanWrite(const bool & canWrite)
+{
+	ui->widgetClientEdit->setDeviceAddressEditable(canWrite);
+	ui->widgetClientEdit->setKeepConnectingEditable(canWrite);
+	ui->widgetClientEdit->setIpAddressEditable(canWrite);
+	ui->widgetClientEdit->setNetworkPortEditable(canWrite);
+	ui->widgetClientEdit->setComPortEditable(canWrite);
+	ui->widgetClientEdit->setParityEditable(canWrite);
+	ui->widgetClientEdit->setBaudRateEditable(canWrite);
+	ui->widgetClientEdit->setDataBitsEditable(canWrite);
+	ui->widgetClientEdit->setStopBitsEditable(canWrite);
+	ui->pushButtonApply->setEnabled(canWrite);
+}
+#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 {

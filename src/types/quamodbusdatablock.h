@@ -4,7 +4,11 @@
 #include <QModbusDataUnit>
 #include <QModbusReply>
 
+#ifndef QUA_ACCESS_CONTROL
 #include <QUaBaseObject>
+#else
+#include <QUaBaseObjectProtected>
+#endif // !QUA_ACCESS_CONTROL
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -18,7 +22,11 @@ class QUaModbusValue;
 typedef QModbusDevice::State QModbusState;
 typedef QModbusDevice::Error QModbusError;
 
+#ifndef QUA_ACCESS_CONTROL
 class QUaModbusDataBlock : public QUaBaseObject
+#else
+class QUaModbusDataBlock : public QUaBaseObjectProtected
+#endif // !QUA_ACCESS_CONTROL
 {
 	friend class QUaModbusDataBlockList;
 	friend class QUaModbusValue;

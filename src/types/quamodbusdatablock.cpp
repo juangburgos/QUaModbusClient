@@ -2,10 +2,18 @@
 #include "quamodbusclient.h"
 #include "quamodbusvalue.h"
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 quint32 QUaModbusDataBlock::m_minSamplingTime = 50;
 
 QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
+#ifndef QUA_ACCESS_CONTROL
 	: QUaBaseObject(server)
+#else
+	: QUaBaseObjectProtected(server)
+#endif // !QUA_ACCESS_CONTROL
 {
 	m_loopHandle = -1;
 	m_replyRead  = nullptr;
@@ -357,6 +365,13 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 {
 	// add block element
 	QDomElement elemBlock = domDoc.createElement(QUaModbusDataBlock::staticMetaObject.className());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemBlock.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// set block attributes
 	elemBlock.setAttribute("BrowseName"  , this->browseName());
 	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(getType()));
@@ -375,6 +390,13 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	bool bOK;
 	// Type
 	auto type = QMetaEnum::fromType<QModbusDataBlockType>().keysToValue(domElem.attribute("Type").toUtf8(), &bOK);

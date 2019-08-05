@@ -73,6 +73,9 @@ private:
 	void showCreateRootUserDialog(QUaAcCommonDialog &dialog);
 	void showUserCredentialsDialog(QUaAcCommonDialog &dialog);
 
+	QList<QMetaObject::Connection> m_connsModPerms;
+	void setRootPermissionsToLists(QUaUser * root);
+
 	// permissions model for combobox
 	QStandardItemModel    m_modelPerms;
 	QSortFilterProxyModel m_proxyPerms;

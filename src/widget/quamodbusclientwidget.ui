@@ -26,10 +26,10 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QPushButton" name="pushButtonConnect">
-     <property name="text">
-      <string>Connect</string>
+   <item row="3" column="0" colspan="4">
+    <widget class="Line" name="line2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
@@ -46,37 +46,20 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="2">
-    <widget class="QPushButton" name="pushButtonAddBlock">
-     <property name="text">
-      <string>Add Block</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="3">
-    <widget class="Line" name="line1">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QUaModbusClientWidgetEdit" name="widgetClientEdit" native="true"/>
-   </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="Line" name="line2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="3">
+   <item row="4" column="0" colspan="4">
     <widget class="QUaModbusClientWidgetStatus" name="widgetClientStatus" native="true"/>
    </item>
-   <item row="5" column="0" colspan="3">
+   <item row="5" column="0" colspan="4">
     <widget class="Line" name="line3">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QPushButton" name="pushButtonConnect">
+     <property name="text">
+      <string>Connect</string>
      </property>
     </widget>
    </item>
@@ -100,10 +83,34 @@
      </property>
     </spacer>
    </item>
-   <item row="6" column="2">
+   <item row="6" column="3">
     <widget class="QPushButton" name="pushButtonApply">
      <property name="text">
       <string>Apply</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="QPushButton" name="pushButtonAddBlock">
+     <property name="text">
+      <string>Add Block</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="Line" name="line1">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="4">
+    <widget class="QUaModbusClientWidgetEdit" name="widgetClientEdit" native="true"/>
+   </item>
+   <item row="0" column="2">
+    <widget class="QPushButton" name="pushButtonPerms">
+     <property name="text">
+      <string>Permissions</string>
      </property>
     </widget>
    </item>

@@ -8,11 +8,18 @@
 
 #include <QUaModbusClientDialog>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaDockWidgetPerms>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusValueWidget::QUaModbusValueWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusValueWidget)
 {
     ui->setupUi(this);
+#ifndef QUA_ACCESS_CONTROL
+	ui->pushButtonPerms->setVisible(false);
+#endif // !QUA_ACCESS_CONTROL
 }
 
 QUaModbusValueWidget::~QUaModbusValueWidget()
@@ -32,6 +39,31 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 	// bind status widget
 	this->bindValueWidgetStatus(value);
 	// bind buttons
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, value,
+	[this, value]() {
+		// NOTE : call QUaModbusClientWidget::setupPermissionsModel first to set m_proxyPerms
+		Q_CHECK_PTR(m_proxyPerms);
+		// create permissions widget
+		auto permsWidget = new QUaDockWidgetPerms;
+		// configure perms widget combo
+		permsWidget->setComboModel(m_proxyPerms);
+		permsWidget->setPermissions(value->permissionsObject());
+		// dialog
+		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("Modbus Value Permissions"));
+		dialog.setWidget(permsWidget);
+		// exec dialog
+		int res = dialog.exec();
+		if (res != QDialog::Accepted)
+		{
+			return;
+		}
+		// read permissions and set them for layout list
+		value->setPermissionsObject(permsWidget->permissions());
+	});
+#endif // QUA_ACCESS_CONTROL
 	m_connections <<
 	QObject::connect(ui->pushButtonDelete, &QPushButton::clicked, value,
 	[this, value]() {
@@ -64,8 +96,23 @@ void QUaModbusValueWidget::clear()
 	}
 	// clear edit widget
 	ui->widgetValueEdit->setId("");
-	// clear status widgte
+	// clear status widget
 }
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusValueWidget::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
+{
+	m_proxyPerms = proxyPerms;
+	Q_CHECK_PTR(m_proxyPerms);
+}
+
+void QUaModbusValueWidget::setCanWrite(const bool & canWrite)
+{
+	ui->widgetValueEdit->setTypeEditable(canWrite);
+	ui->widgetValueEdit->setOffsetEditable(canWrite);
+	ui->pushButtonApply->setEnabled(canWrite);
+}
+#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 {

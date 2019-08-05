@@ -2,6 +2,10 @@
 
 #include <QSerialPortInfo>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
@@ -97,6 +101,13 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client list element
 	QDomElement elemSerialClient = domDoc.createElement(QUaModbusRtuSerialClient::staticMetaObject.className());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemSerialClient.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// set client attributes
 	elemSerialClient.setAttribute("BrowseName"    , this->browseName()  );
 	elemSerialClient.setAttribute("ServerAddress" , getServerAddress()  );
@@ -121,6 +132,13 @@ void QUaModbusRtuSerialClient::fromDomElement(QDomElement & domElem, QString & s
 	bool bOK;
 	// ServerAddress
 	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	if (bOK)
 	{
 		this->setServerAddress(serverAddress);

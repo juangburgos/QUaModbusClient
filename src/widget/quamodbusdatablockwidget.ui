@@ -26,6 +26,13 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
+   <item row="5" column="0" colspan="4">
+    <widget class="Line" name="line3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0" colspan="2">
     <spacer name="horizontalSpacer_1">
      <property name="orientation">
@@ -38,40 +45,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item row="0" column="2">
-    <widget class="QPushButton" name="pushButtonAddValue">
-     <property name="text">
-      <string>Add Value</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="3">
-    <widget class="Line" name="line1">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QUaModbusDataBlockWidgetEdit" name="widgetBlockEdit" native="true"/>
-   </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="Line" name="line2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="3">
-    <widget class="QUaModbusDataBlockWidgetStatus" name="widgetBlockStatus" native="true"/>
-   </item>
-   <item row="5" column="0" colspan="3">
-    <widget class="Line" name="line3">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
    </item>
    <item row="6" column="0">
     <widget class="QPushButton" name="pushButtonDelete">
@@ -93,10 +66,44 @@
      </property>
     </spacer>
    </item>
-   <item row="6" column="2">
+   <item row="0" column="3">
+    <widget class="QPushButton" name="pushButtonAddValue">
+     <property name="text">
+      <string>Add Value</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="Line" name="line1">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="4">
+    <widget class="Line" name="line2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="3">
     <widget class="QPushButton" name="pushButtonApply">
      <property name="text">
       <string>Apply</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="4">
+    <widget class="QUaModbusDataBlockWidgetStatus" name="widgetBlockStatus" native="true"/>
+   </item>
+   <item row="2" column="0" colspan="4">
+    <widget class="QUaModbusDataBlockWidgetEdit" name="widgetBlockEdit" native="true"/>
+   </item>
+   <item row="0" column="2">
+    <widget class="QPushButton" name="pushButtonPerms">
+     <property name="text">
+      <string>Permissions</string>
      </property>
     </widget>
    </item>

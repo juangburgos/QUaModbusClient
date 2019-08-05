@@ -290,6 +290,11 @@ bool QUaModbusAccessControl::on_closeConfig()
 		m_dockManager->setLayoutPermissions(layoutName, nullptr);
 		m_dockManager->removeLayout(layoutName);
 	}
+	// cleanup connections
+	while (m_connsModPerms.count() > 0)
+	{
+		QObject::disconnect(m_connsModPerms.takeFirst());
+	}
 	// update title
 	this->setWindowTitle(m_strTitle.arg(QUaModbusAccessControl::m_strUntitiled).arg(QUaModbusAccessControl::m_strAppName));
 	// success
@@ -620,22 +625,14 @@ void QUaModbusAccessControl::showCreateRootUserDialog(QUaAcCommonDialog & dialog
 	auto rootPermissions = root->permissionsObject();
 	if (rootPermissions)
 	{
-		// NOTE : only root can add/remove users, roles and permissions
-		ac->setPermissionsObject(rootPermissions);
-		ac->users()->setPermissionsObject(rootPermissions);
-		ac->roles()->setPermissionsObject(rootPermissions);
-		ac->permissions()->setPermissionsObject(rootPermissions);
-		// TODO : modbus client list permissions
+		this->setRootPermissionsToLists(root);
 	}
 	else
 	{
 		QObject::connect(root, &QUaUser::permissionsObjectChanged, this,
-		[ac](QUaPermissions * rootPermissions) {
-			ac->setPermissionsObject(rootPermissions);
-			ac->users()->setPermissionsObject(rootPermissions);
-			ac->roles()->setPermissionsObject(rootPermissions);
-			ac->permissions()->setPermissionsObject(rootPermissions);
-			// TODO : modbus client list permissions
+		[this, root](QUaPermissions * rootPermissions) {
+			Q_UNUSED(rootPermissions);
+			this->setRootPermissionsToLists(root);
 		});
 	}
 	// login root user
@@ -679,6 +676,73 @@ void QUaModbusAccessControl::showUserCredentialsDialog(QUaAcCommonDialog & dialo
 	}
 	// login
 	this->setLoggedUser(user);
+}
+
+void QUaModbusAccessControl::setRootPermissionsToLists(QUaUser * root)
+{
+	// cleanup last call
+	while (m_connsModPerms.count() > 0)
+	{
+		QObject::disconnect(m_connsModPerms.takeFirst());
+	}
+	// get root permissions
+	auto rootPermissions = root->permissionsObject();
+	// get access control
+	QUaAccessControl * ac = this->accessControl();
+	// get modbus client list
+	auto mod = this->modbusClientList();
+	// NOTE : only root can add/remove users, roles and permissions
+	ac->setPermissionsObject(rootPermissions);
+	ac->users()->setPermissionsObject(rootPermissions);
+	ac->roles()->setPermissionsObject(rootPermissions);
+	ac->permissions()->setPermissionsObject(rootPermissions);
+	// NOTE : only root can add/remove clients, blocks and values
+	mod->setPermissionsObject(rootPermissions);
+	// helper lambdas
+	auto handleBlockAdded = 
+	[this, root](QUaModbusDataBlock * block) {
+		auto rootPermissions = root->permissionsObject();
+		// set permissions to block list in cliet
+		auto listValues = block->values();
+		listValues->setPermissionsObject(rootPermissions);
+	};
+	auto handleClientAdded = 
+	[this, root, handleBlockAdded](QUaModbusClient * client) {
+		auto rootPermissions = root->permissionsObject();
+		// set permissions to block list in cliet
+		auto listBlocks = client->dataBlocks();
+		listBlocks->setPermissionsObject(rootPermissions);
+		// handle existing blocks
+		for (auto block : listBlocks->blocks())
+		{
+			Q_CHECK_PTR(block);
+			handleBlockAdded(block);
+		}
+		// subscribe to block added
+		// NOTE : needs to be a queued connection because we want to wait until browseName is set
+		m_connsModPerms <<
+		QObject::connect(listBlocks, &QUaNode::childAdded, this,
+		[this, client, handleBlockAdded](QUaNode * node) {
+			auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+			Q_CHECK_PTR(block);
+			handleBlockAdded(block);
+		}, Qt::QueuedConnection);
+	};
+	// handle existing clients
+	for (auto client : mod->clients())
+	{
+		Q_CHECK_PTR(client);
+		handleClientAdded(client);
+	}
+	// subscribe to client added
+	// NOTE : needs to be a queued connection because we want to wait until browseName is set
+	m_connsModPerms << 
+	QObject::connect(mod, &QUaNode::childAdded, this,
+	[handleClientAdded](QUaNode * node) {
+		auto client = dynamic_cast<QUaModbusClient*>(node);
+		Q_CHECK_PTR(client);
+		handleClientAdded(client);
+	}, Qt::QueuedConnection);
 }
 
 void QUaModbusAccessControl::setupPermsModel()

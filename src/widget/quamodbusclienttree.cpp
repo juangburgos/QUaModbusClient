@@ -21,6 +21,11 @@
 
 #include <QUaModbusClientWidgetEdit>
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaUser>
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 1;
 int QUaModbusClientTree::PointerRole = Qt::UserRole + 2;
 
@@ -30,6 +35,9 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 {
 	ui->setupUi(this);
 	m_listClients = nullptr;
+#ifdef QUA_ACCESS_CONTROL
+	m_loggedUser  = nullptr;
+#endif // QUA_ACCESS_CONTROL
 	if (QMetaType::type("QModbusSelectType") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusSelectType>("QModbusSelectType");
@@ -97,6 +105,40 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			show = false;
 			break;
 		}
+#ifdef QUA_ACCESS_CONTROL
+		// filter permissions
+		QUaPermissions * perms = nullptr;
+		switch (type)
+		{
+		case QModbusSelectType::QUaModbusClient:
+			{
+				auto client = dynamic_cast<QUaModbusClient*>(node);
+				Q_CHECK_PTR(client);
+				perms = client->permissionsObject();
+			}
+			break;
+		case QModbusSelectType::QUaModbusDataBlock:
+			{
+				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				Q_CHECK_PTR(block);
+				perms = block->permissionsObject();
+			}
+			break;
+		case QModbusSelectType::QUaModbusValue:
+			{
+				auto value = dynamic_cast<QUaModbusValue*>(node);
+				Q_CHECK_PTR(value);
+				perms = value->permissionsObject();
+			}
+			break;
+		default:
+			Q_ASSERT(false);
+			break;
+		}
+		bool canRead = !m_loggedUser ? false : !perms ? true : perms->canUserRead(m_loggedUser);
+		show = show && canRead;
+#endif // QUA_ACCESS_CONTROL
+
 		// return combination
 		return show;
 	});
@@ -197,9 +239,8 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 	}, Qt::QueuedConnection);
 
 	// add already existing clients
-	for (int i = 0; i < listClients->clients().count(); i++)
+	for (auto client : listClients->clients())
 	{
-		auto client = listClients->clients().at(i);
 		Q_CHECK_PTR(client);
 		// add to gui
 		this->handleClientAdded(client);
@@ -210,6 +251,14 @@ void QUaModbusClientTree::setExpanded(const bool & expanded)
 {
 	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
 }
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
+{
+	m_loggedUser = user;
+	m_proxyModbus.resetFilter();
+}
+#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 {
@@ -481,7 +530,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 		m_modelModbus.removeRows(iObj->index().row(), 1);
 	});
 
-	// subscribe to block addition
+	// subscribe to block added
 	// NOTE : needs to be a queued connection because we want to wait until browseName is set
 	auto listBlocks = client->dataBlocks();
 	QObject::connect(listBlocks, &QUaNode::childAdded, this,

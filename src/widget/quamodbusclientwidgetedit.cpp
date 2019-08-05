@@ -96,6 +96,97 @@ void QUaModbusClientWidgetEdit::setTypeEditable(const bool & typeEditable)
 	ui->comboBoxType->setReadOnly(!typeEditable);
 }
 
+bool QUaModbusClientWidgetEdit::isDeviceAddressEditable() const
+{
+	return !ui->spinBoxDeviceAddress->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setDeviceAddressEditable(const bool & deviceAddressEditable)
+{
+	ui->spinBoxDeviceAddress->setReadOnly(!deviceAddressEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isKeepConnectingEditable() const
+{
+	return ui->checkBoxKeepConnect->focusPolicy() != Qt::NoFocus;
+}
+
+void QUaModbusClientWidgetEdit::setKeepConnectingEditable(const bool & keepConnectingEditable)
+{
+	ui->checkBoxKeepConnect->setAttribute(Qt::WA_TransparentForMouseEvents, !keepConnectingEditable);
+	ui->checkBoxKeepConnect->setFocusPolicy(!keepConnectingEditable ? Qt::NoFocus : Qt::StrongFocus);
+}
+
+bool QUaModbusClientWidgetEdit::isIpAddressEditable() const
+{
+	return !ui->lineEditAddress->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setIpAddressEditable(const bool & ipAddressEditable)
+{
+	ui->lineEditAddress->setReadOnly(!ipAddressEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isNetworkPortEditable() const
+{
+	return !ui->spinBoxPort->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setNetworkPortEditable(const bool & networkPortEditable)
+{
+	ui->spinBoxPort->setReadOnly(!networkPortEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isComPortEditable() const
+{
+	return !ui->comboBoxComPort->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setComPortEditable(const bool & comPortEditable)
+{
+	ui->comboBoxComPort->setReadOnly(!comPortEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isParityEditable() const
+{
+	return !ui->comboBoxParity->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setParityEditable(const bool & parityEditable)
+{
+	ui->comboBoxParity->setReadOnly(!parityEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isBaudRateEditable() const
+{
+	return !ui->comboBoxBaudRate->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setBaudRateEditable(const bool & baudRateEditable)
+{
+	ui->comboBoxBaudRate->setReadOnly(!baudRateEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isDataBitsEditable() const
+{
+	return !ui->comboBoxDataBits->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setDataBitsEditable(const bool & dataBitsEditable)
+{
+	ui->comboBoxDataBits->setReadOnly(!dataBitsEditable);
+}
+
+bool QUaModbusClientWidgetEdit::isStopBitsEditable() const
+{
+	return !ui->comboBoxStopBits->isReadOnly();
+}
+
+void QUaModbusClientWidgetEdit::setStopBitsEditable(const bool & stopBitsEditable)
+{
+	ui->comboBoxStopBits->setReadOnly(!stopBitsEditable);
+}
+
 QString QUaModbusClientWidgetEdit::id() const
 {
 	return ui->lineEditId->text();

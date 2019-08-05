@@ -19,6 +19,18 @@ public:
 
 	bool                 isIdEditable() const;
 	void                 setIdEditable(const bool &idEditable);
+
+	bool                 isTypeEditable() const;
+	void                 setTypeEditable(const bool &typeEditable);
+
+	bool                 isAddressEditable() const;
+	void                 setAddressEditable(const bool &addressEditable);
+
+	bool                 isSizeEditable() const;
+	void                 setSizeEditable(const bool &sizeEditable);
+
+	bool                 isSamplingTimeEditable() const;
+	void                 setSamplingTimeEditable(const bool &samplingTimeEditable);
 			             
 	QString              id() const;
 	void                 setId(const QString &strId);

@@ -1,5 +1,9 @@
 #include "quamodbustcpclient.h"
 
+#ifdef QUA_ACCESS_CONTROL
+#include <QUaPermissions>
+#endif // QUA_ACCESS_CONTROL
+
 QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
@@ -69,6 +73,13 @@ QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 {
 	// add client element
 	QDomElement elemTcpClient = domDoc.createElement(QUaModbusTcpClient::staticMetaObject.className());
+#ifdef QUA_ACCESS_CONTROL
+	// set parmissions if any
+	if (this->hasPermissionsObject())
+	{
+		elemTcpClient.setAttribute("Permissions", this->permissionsObject()->nodeId());
+	}
+#endif // QUA_ACCESS_CONTROL
 	// set client attributes
 	elemTcpClient.setAttribute("BrowseName"    , this->browseName() );
 	elemTcpClient.setAttribute("ServerAddress" , getServerAddress ());
@@ -87,6 +98,13 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName");
 	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+#ifdef QUA_ACCESS_CONTROL
+	// load permissions if any
+	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
+	{
+		strError += this->setPermissions(domElem.attribute("Permissions"));
+	}
+#endif // QUA_ACCESS_CONTROL
 	bool bOK;
 	// ServerAddress
 	auto serverAddress = domElem.attribute("ServerAddress").toUInt(&bOK);
