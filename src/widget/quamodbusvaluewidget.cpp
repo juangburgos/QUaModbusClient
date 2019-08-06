@@ -111,6 +111,12 @@ void QUaModbusValueWidget::setCanWrite(const bool & canWrite)
 	ui->widgetValueEdit->setTypeEditable(canWrite);
 	ui->widgetValueEdit->setOffsetEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
+	ui->pushButtonDelete->setVisible(canWrite);
+}
+
+void QUaModbusValueWidget::setCanWriteValueList(const bool & canWrite)
+{
+	ui->pushButtonPerms->setVisible(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 

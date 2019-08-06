@@ -160,6 +160,19 @@ void QUaModbusClientWidget::setCanWrite(const bool & canWrite)
 	ui->widgetClientEdit->setDataBitsEditable(canWrite);
 	ui->widgetClientEdit->setStopBitsEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
+	ui->pushButtonDelete->setVisible(canWrite);
+	// TODO : permission to connect/disconnect belongs here?
+	ui->pushButtonConnect->setEnabled(canWrite);
+}
+
+void QUaModbusClientWidget::setCanWriteClientList(const bool & canWrite)
+{
+	ui->pushButtonPerms->setVisible(canWrite);
+}
+
+void QUaModbusClientWidget::setCanWriteBlockList(const bool & canWrite)
+{
+	ui->pushButtonAddBlock->setVisible(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 

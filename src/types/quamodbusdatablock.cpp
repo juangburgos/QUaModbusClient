@@ -260,9 +260,14 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	}
 }
 
+QUaModbusDataBlockList * QUaModbusDataBlock::list() const
+{
+	return dynamic_cast<QUaModbusDataBlockList*>(this->parent());
+}
+
 QUaModbusClient * QUaModbusDataBlock::client() const
 {
-	return dynamic_cast<QUaModbusDataBlockList*>(this->parent())->client();
+	return this->list()->client();
 }
 
 void QUaModbusDataBlock::startLoop()
@@ -537,3 +542,4 @@ void QUaModbusDataBlock::setLastError(const QModbusError & error)
 	this->lastError()->setValue(error);
 	this->on_updateLastError(error);
 }
+

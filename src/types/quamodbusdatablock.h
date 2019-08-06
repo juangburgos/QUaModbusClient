@@ -101,6 +101,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	QUaModbusDataBlockList * list() const;
+
 	QUaModbusClient * client() const;
 
 signals:

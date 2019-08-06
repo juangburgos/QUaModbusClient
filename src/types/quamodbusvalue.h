@@ -105,6 +105,8 @@ public:
 
 	bool isWritable() const;
 
+	QUaModbusValueList * list() const;
+
 	QUaModbusDataBlock * block() const;
 
 	static int              typeBlockSize(const QModbusValueType &type);

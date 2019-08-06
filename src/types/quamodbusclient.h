@@ -98,6 +98,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	QUaModbusClientList * list() const;
+
 signals:
 	// C++ API
 	void serverAddressChanged (const quint8 &serverAddress);

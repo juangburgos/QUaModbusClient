@@ -1,6 +1,7 @@
 #include "quamodbusclient.h"
 
 #include <QUaModbusDataBlock>
+#include <QUaModbusClientList>
 
 QUaModbusClient::QUaModbusClient(QUaServer *server)
 #ifndef QUA_ACCESS_CONTROL
@@ -123,6 +124,11 @@ void QUaModbusClient::setLastError(const QModbusError & error)
 {
 	this->lastError()->setValue(error);
 	this->on_errorChanged(error);
+}
+
+QUaModbusClientList * QUaModbusClient::list() const
+{
+	return dynamic_cast<QUaModbusClientList*>(this->parent());
 }
 
 QModbusClientType QUaModbusClient::getType() const

@@ -126,6 +126,17 @@ void QUaModbusDataBlockWidget::setCanWrite(const bool & canWrite)
 	ui->widgetBlockEdit->setSizeEditable(canWrite);
 	ui->widgetBlockEdit->setSamplingTimeEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
+	ui->pushButtonDelete->setVisible(canWrite);
+}
+
+void QUaModbusDataBlockWidget::setCanWriteBlockList(const bool & canWrite)
+{
+	ui->pushButtonPerms->setVisible(canWrite);
+}
+
+void QUaModbusDataBlockWidget::setCanWriteValueList(const bool & canWrite)
+{
+	ui->pushButtonAddValue->setVisible(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 
