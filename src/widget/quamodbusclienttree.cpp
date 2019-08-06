@@ -263,6 +263,7 @@ void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 	auto canWriteList = !permsList ? true : permsList->canUserWrite(m_loggedUser);
 	ui->pushButtonAddClient->setVisible(canWriteList);
 	ui->toolButtonImport->setVisible(canWriteList);
+	ui->pushButtonClear->setVisible(canWriteList);
 }
 #endif // QUA_ACCESS_CONTROL
 
@@ -275,6 +276,24 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 	dialog.setWidget(widgetNewClient);
 	// NOTE : call in own method to we can recall it if fails
 	this->showNewClientDialog(dialog);
+}
+
+void QUaModbusClientTree::on_pushButtonClear_clicked()
+{
+	// ask user if create new config
+	auto res = QMessageBox::question(
+		this,
+		tr("Delete All Clients Confirmation"),
+		tr("Are you sure you want to delete all clients?\nAll their blocks and values will also be deleted."),
+		QMessageBox::StandardButton::Ok,
+		QMessageBox::StandardButton::Cancel
+	);
+	if (res != QMessageBox::StandardButton::Ok)
+	{
+		return;
+	}
+	// clear
+	m_listClients->clear();
 }
 
 void QUaModbusClientTree::setupTreeContextMenu()

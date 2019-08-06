@@ -46,12 +46,12 @@ void QUaModbusValueWidgetEdit::setTypeEditable(const bool & typeEditable)
 
 bool QUaModbusValueWidgetEdit::isOffsetEditable() const
 {
-	return !ui->comboBoxType->isReadOnly();
+	return !ui->spinBoxOffset->isReadOnly();
 }
 
 void QUaModbusValueWidgetEdit::setOffsetEditable(const bool & offsetEditable)
 {
-	ui->comboBoxType->setReadOnly(!offsetEditable);
+	ui->spinBoxOffset->setReadOnly(!offsetEditable);
 }
 
 QString QUaModbusValueWidgetEdit::id() const

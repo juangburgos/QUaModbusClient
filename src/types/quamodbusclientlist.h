@@ -5,6 +5,7 @@
 #include <QUaFolderObject>
 #else
 #include <QUaFolderObjectProtected>
+class QUaPermissionsList;
 #endif // !QUA_ACCESS_CONTROL
 
 #include <QDomDocument>
@@ -52,6 +53,10 @@ public:
 	// C++ API
 
 	QList<QUaModbusClient*> clients();
+
+#ifdef QUA_ACCESS_CONTROL
+	QUaPermissionsList * getPermissionsList();
+#endif // QUA_ACCESS_CONTROL
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

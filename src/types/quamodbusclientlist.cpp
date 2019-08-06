@@ -13,6 +13,7 @@
 
 #ifdef QUA_ACCESS_CONTROL
 #include <QUaPermissions>
+#include <QUaPermissionsList>
 #endif // QUA_ACCESS_CONTROL
 
 QUaModbusClientList::QUaModbusClientList(QUaServer *server)
@@ -102,53 +103,91 @@ QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 QString QUaModbusClientList::csvClients()
 {
 	QString strCsv;
+#ifndef QUA_ACCESS_CONTROL
 	strCsv += QString("%1, %2, %3, %4, %5, %6\n")
-		.arg(tr("Name"))
-		.arg(tr("Type"))
-		.arg(tr("ServerAddress"))
+#else
+	strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
+#endif // !QUA_ACCESS_CONTROL
+		.arg(tr("Name"          ))
+		.arg(tr("Type"          ))
+		.arg(tr("ServerAddress" ))
 		.arg(tr("KeepConnecting"))
 		.arg(tr("NetworkAddress"))
-		.arg(tr("NetworkPort"));
+		.arg(tr("NetworkPort"   ))
+#ifndef QUA_ACCESS_CONTROL
+		;
+#else
+		.arg(tr("Permissions"));
+#endif // !QUA_ACCESS_CONTROL
+		
 	auto clientsTcp = this->browseChildren<QUaModbusTcpClient>();
 	for (auto clientTcp : clientsTcp)
 	{
 		auto strType = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(clientTcp->getType()));
+#ifndef QUA_ACCESS_CONTROL
 		strCsv += QString("%1, %2, %3, %4, %5, %6\n")
+#else
+		strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
+#endif // !QUA_ACCESS_CONTROL
 			.arg(clientTcp->browseName())
 			.arg(strType)
-			.arg(clientTcp->getServerAddress())
+			.arg(clientTcp->getServerAddress ())
 			.arg(clientTcp->getKeepConnecting())
 			.arg(clientTcp->getNetworkAddress())
-			.arg(clientTcp->getNetworkPort());
+			.arg(clientTcp->getNetworkPort   ())
+#ifndef QUA_ACCESS_CONTROL
+			;
+#else
+			.arg(clientTcp->permissionsObject() ? clientTcp->permissionsObject()->browseName() : "");
+#endif // !QUA_ACCESS_CONTROL	
 	}
+#ifndef QUA_ACCESS_CONTROL
 	strCsv += QString("%1, %2, %3, %4, %5, %6, %7, %8, %9\n")
-		.arg(tr("Name"))
-		.arg(tr("Type"))
-		.arg(tr("ServerAddress"))
+#else
+	strCsv += QString("%1, %2, %3, %4, %5, %6, %7, %8, %9, %10\n")
+#endif // !QUA_ACCESS_CONTROL
+	
+		.arg(tr("Name"          ))
+		.arg(tr("Type"          ))
+		.arg(tr("ServerAddress" ))
 		.arg(tr("KeepConnecting"))
-		.arg(tr("ComPort"))
-		.arg(tr("Parity"))
-		.arg(tr("BaudRate"))
-		.arg(tr("DataBits"))
-		.arg(tr("StopBits"));
+		.arg(tr("ComPort"       ))
+		.arg(tr("Parity"        ))
+		.arg(tr("BaudRate"      ))
+		.arg(tr("DataBits"      ))
+		.arg(tr("StopBits"      ))
+#ifndef QUA_ACCESS_CONTROL
+		;
+#else
+		.arg(tr("Permissions"));
+#endif // !QUA_ACCESS_CONTROL
 	auto clientsSerial = this->browseChildren<QUaModbusRtuSerialClient>();
 	for (auto clientSerial : clientsSerial)
 	{
-		auto strType = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(clientSerial->getType()));
-		auto strParity = QString(QMetaEnum::fromType<QParity>().valueToKey(clientSerial->getParity()));
+		auto strType     = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(clientSerial->getType()));
+		auto strParity   = QString(QMetaEnum::fromType<QParity  >().valueToKey(clientSerial->getParity  ()));
 		auto strBaudRate = QString(QMetaEnum::fromType<QBaudRate>().valueToKey(clientSerial->getBaudRate()));
 		auto strDataBits = QString(QMetaEnum::fromType<QDataBits>().valueToKey(clientSerial->getDataBits()));
 		auto strStopBits = QString(QMetaEnum::fromType<QStopBits>().valueToKey(clientSerial->getStopBits()));
+#ifndef QUA_ACCESS_CONTROL
 		strCsv += QString("%1, %2, %3, %4, %5, %6, %7, %8, %9\n")
+#else
+		strCsv += QString("%1, %2, %3, %4, %5, %6, %7, %8, %9, %10\n")
+#endif // !QUA_ACCESS_CONTROL	
 			.arg(clientSerial->browseName())
 			.arg(strType)
-			.arg(clientSerial->getServerAddress())
+			.arg(clientSerial->getServerAddress ())
 			.arg(clientSerial->getKeepConnecting())
-			.arg(clientSerial->getComPort())
+			.arg(clientSerial->getComPort       ())
 			.arg(strParity)
 			.arg(strBaudRate)
 			.arg(strDataBits)
-			.arg(strStopBits);
+			.arg(strStopBits)
+#ifndef QUA_ACCESS_CONTROL
+			;
+#else
+			.arg(clientSerial->permissionsObject() ? clientSerial->permissionsObject()->browseName() : "");
+#endif // !QUA_ACCESS_CONTROL	
 	}
 	return strCsv;
 }
@@ -156,13 +195,22 @@ QString QUaModbusClientList::csvClients()
 QString QUaModbusClientList::csvBlocks()
 {
 	QString strCsv;
+#ifndef QUA_ACCESS_CONTROL
 	strCsv += QString("%1, %2, %3, %4, %5, %6\n")
-		.arg(tr("Name"))
-		.arg(tr("Client"))
-		.arg(tr("Type"))
-		.arg(tr("Address"))
-		.arg(tr("Size"))
-		.arg(tr("SamplingTime"));
+#else
+	strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
+#endif // !QUA_ACCESS_CONTROL
+		.arg(tr("Name"        ))
+		.arg(tr("Client"      ))
+		.arg(tr("Type"        ))
+		.arg(tr("Address"     ))
+		.arg(tr("Size"        ))
+		.arg(tr("SamplingTime"))
+#ifndef QUA_ACCESS_CONTROL
+		;
+#else
+		.arg(tr("Permissions"));
+#endif // !QUA_ACCESS_CONTROL
 	auto clients = this->browseChildren<QUaModbusClient>();
 	for (auto client : clients)
 	{
@@ -170,13 +218,22 @@ QString QUaModbusClientList::csvBlocks()
 		for (auto block : blocks)
 		{
 			auto strType = QString(QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(block->getType()));
+#ifndef QUA_ACCESS_CONTROL
 			strCsv += QString("%1, %2, %3, %4, %5, %6\n")
+#else
+			strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
+#endif // !QUA_ACCESS_CONTROL
 				.arg(block->browseName())
 				.arg(client->browseName())
 				.arg(strType)
 				.arg(block->getAddress())
 				.arg(block->getSize())
-				.arg(block->getSamplingTime());
+				.arg(block->getSamplingTime())
+#ifndef QUA_ACCESS_CONTROL
+				;
+#else
+				.arg(block->permissionsObject() ? block->permissionsObject()->browseName() : "");
+#endif // !QUA_ACCESS_CONTROL
 		}
 	}
 	return strCsv;
@@ -185,12 +242,21 @@ QString QUaModbusClientList::csvBlocks()
 QString QUaModbusClientList::csvValues()
 {
 	QString strCsv;
+#ifndef QUA_ACCESS_CONTROL
 	strCsv += QString("%1, %2, %3, %4, %5\n")
+#else
+	strCsv += QString("%1, %2, %3, %4, %5, %6\n")
+#endif // !QUA_ACCESS_CONTROL
 		.arg(tr("Name"))
 		.arg(tr("Client"))
 		.arg(tr("Block"))
 		.arg(tr("Type"))
-		.arg(tr("AddressOffset"));
+		.arg(tr("AddressOffset"))
+#ifndef QUA_ACCESS_CONTROL
+		;
+#else
+		.arg(tr("Permissions"));
+#endif // !QUA_ACCESS_CONTROL
 	auto clients = this->browseChildren<QUaModbusClient>();
 	for (auto client : clients)
 	{
@@ -201,12 +267,21 @@ QString QUaModbusClientList::csvValues()
 			for (auto value : values)
 			{
 				auto strType = QString(QMetaEnum::fromType<QModbusValueType>().valueToKey(value->getType()));
+#ifndef QUA_ACCESS_CONTROL
 				strCsv += QString("%1, %2, %3, %4, %5\n")
+#else
+				strCsv += QString("%1, %2, %3, %4, %5, %6\n")
+#endif // !QUA_ACCESS_CONTROL
 					.arg(value->browseName())
 					.arg(client->browseName())
 					.arg(block->browseName())
 					.arg(strType)
-					.arg(value->getAddressOffset());
+					.arg(value->getAddressOffset())
+#ifndef QUA_ACCESS_CONTROL
+					;
+#else
+					.arg(value->permissionsObject() ? value->permissionsObject()->browseName() : "");
+#endif // !QUA_ACCESS_CONTROL
 			}
 		}
 	}
@@ -226,7 +301,11 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 		{
 			continue;
 		}
+#ifndef QUA_ACCESS_CONTROL
 		if (listCols.count() < 6)
+#else
+		if (listCols.count() < 7)
+#endif // !QUA_ACCESS_CONTROL
 		{
 			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
 				.arg("Warning")
@@ -331,16 +410,41 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 					}
 				}
 				// set props
-				clientTcp->setServerAddress(serverAddress);
+				clientTcp->setServerAddress (serverAddress );
 				clientTcp->setKeepConnecting(keepConnecting);
 				clientTcp->setNetworkAddress(networkAddress);
-				clientTcp->setNetworkPort(networkPort);
+				clientTcp->setNetworkPort   (networkPort   );
+#ifdef QUA_ACCESS_CONTROL
+				// permissions are optional (can be empty)
+				auto permsBrowseName = listCols.at(6).trimmed();
+				if (!permsBrowseName.isEmpty())
+				{
+					auto permsList = this->getPermissionsList();
+					if (!permsList) { continue; }
+					auto perms = permsList->permission(permsBrowseName);
+					if (perms)
+					{
+						clientTcp->setPermissionsObject(perms);
+					}
+					else
+					{
+						strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
+							.arg("Error")
+							.arg(permsBrowseName)
+							.arg(strRow);
+					}
+				}
+#endif // QUA_ACCESS_CONTROL
 			}
 			break;
 		case QModbusClientType::Serial:
 			{
 				// check length
+#ifndef QUA_ACCESS_CONTROL
 				if (listCols.count() < 9)
+#else
+				if (listCols.count() < 10)
+#endif // !QUA_ACCESS_CONTROL
 				{
 					strError += tr("%1 : Invalid column count in row %2.\n")
 						.arg("Error")
@@ -442,6 +546,27 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 				clientSerial->setBaudRate(baudRate);
 				clientSerial->setDataBits(dataBits);
 				clientSerial->setStopBits(stopBits);
+#ifdef QUA_ACCESS_CONTROL
+				// permissions are optional (can be empty)
+				auto permsBrowseName = listCols.at(9).trimmed();
+				if (!permsBrowseName.isEmpty())
+				{
+					auto permsList = this->getPermissionsList();
+					if (!permsList) { continue; }
+					auto perms = permsList->permission(permsBrowseName);
+					if (perms)
+					{
+						clientSerial->setPermissionsObject(perms);
+					}
+					else
+					{
+						strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
+							.arg("Error")
+							.arg(permsBrowseName)
+							.arg(strRow);
+					}
+				}
+#endif // QUA_ACCESS_CONTROL
 			}
 			break;
 		default:
@@ -469,7 +594,11 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 		{
 			continue;
 		}
+#ifndef QUA_ACCESS_CONTROL
 		if (listCols.count() < 6)
+#else
+		if (listCols.count() < 7)
+#endif // !QUA_ACCESS_CONTROL
 		{
 			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
 				.arg("Warning")
@@ -566,6 +695,27 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 		block->setAddress(address);
 		block->setSize(size);
 		block->setSamplingTime(samplingTime);
+#ifdef QUA_ACCESS_CONTROL
+		// permissions are optional (can be empty)
+		auto permsBrowseName = listCols.at(6).trimmed();
+		if (!permsBrowseName.isEmpty())
+		{
+			auto permsList = this->getPermissionsList();
+			if (!permsList) { continue; }
+			auto perms = permsList->permission(permsBrowseName);
+			if (perms)
+			{
+				block->setPermissionsObject(perms);
+			}
+			else
+			{
+				strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
+					.arg("Error")
+					.arg(permsBrowseName)
+					.arg(strRow);
+			}
+		}
+#endif // QUA_ACCESS_CONTROL
 	}
 	if (strError.isEmpty())
 	{
@@ -587,7 +737,11 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		{
 			continue;
 		}
+#ifndef QUA_ACCESS_CONTROL
 		if (listCols.count() < 5)
+#else
+		if (listCols.count() < 6)
+#endif // !QUA_ACCESS_CONTROL
 		{
 			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
 				.arg("Warning")
@@ -676,6 +830,27 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		// set properties
 		value->setType(type);
 		value->setAddressOffset(addressOffset);
+#ifdef QUA_ACCESS_CONTROL
+		// permissions are optional (can be empty)
+		auto permsBrowseName = listCols.at(5).trimmed();
+		if (!permsBrowseName.isEmpty())
+		{
+			auto permsList = this->getPermissionsList();
+			if (!permsList) { continue; }
+			auto perms = permsList->permission(permsBrowseName);
+			if (perms)
+			{
+				value->setPermissionsObject(perms);
+			}
+			else
+			{
+				strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
+					.arg("Error")
+					.arg(permsBrowseName)
+					.arg(strRow);
+			}
+		}
+#endif // QUA_ACCESS_CONTROL
 	}
 	if (strError.isEmpty())
 	{
@@ -688,6 +863,22 @@ QList<QUaModbusClient*> QUaModbusClientList::clients()
 {
 	return this->browseChildren<QUaModbusClient>();
 }
+
+#ifdef QUA_ACCESS_CONTROL
+QUaPermissionsList * QUaModbusClientList::getPermissionsList()
+{
+	auto permsClientList = this->permissionsObject();
+	Q_ASSERT_X(permsClientList, "QUaModbusClientList::getPermissionsList",
+		"QUaModbusClientList must have a permissions object assigned in order to assign permissions to children.");
+	if (!permsClientList)
+	{
+		return nullptr;
+	}
+	auto permsList = permsClientList->list();
+	Q_CHECK_PTR(permsList);
+	return permsList;
+}
+#endif // QUA_ACCESS_CONTROL
 
 QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 {

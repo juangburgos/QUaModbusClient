@@ -10,6 +10,8 @@ QUaModbusValueWidgetStatus::QUaModbusValueWidgetStatus(QWidget *parent) :
     ui(new Ui::QUaModbusValueWidgetStatus)
 {
     ui->setupUi(this);
+	m_valueOld  = 0;
+	m_valueCurr = 0;
 	// limits
 	ui->spinBoxValue->setMinimum(std::numeric_limits<int>::min());
 	ui->spinBoxValue->setMaximum(std::numeric_limits<int>::max());
@@ -30,6 +32,16 @@ QUaModbusValueWidgetStatus::QUaModbusValueWidgetStatus(QWidget *parent) :
 QUaModbusValueWidgetStatus::~QUaModbusValueWidgetStatus()
 {
     delete ui;
+}
+
+bool QUaModbusValueWidgetStatus::isFrozen() const
+{
+	return ui->checkBoxFreeze->isChecked();
+}
+
+void QUaModbusValueWidgetStatus::setIsFrozen(const bool & frozen)
+{
+	ui->checkBoxFreeze->setChecked(frozen);
 }
 
 void QUaModbusValueWidgetStatus::setType(const QModbusValueType & type)
@@ -70,6 +82,7 @@ void QUaModbusValueWidgetStatus::setType(const QModbusValueType & type)
 	case QModbusValueType::IntSwapped:
 	case QModbusValueType::Int64:
 	case QModbusValueType::Int64Swapped:
+	case QModbusValueType::Invalid: // NOTE : invalid
 		{
 			ui->spinBoxValue->setEnabled(true);
 			ui->spinBoxValue->setVisible(true);
@@ -84,8 +97,9 @@ void QUaModbusValueWidgetStatus::setType(const QModbusValueType & type)
 			ui->doubleSpinBoxValue->setVisible(true);
 			break;
 		}
-	default /*Invalid*/:
+	default:
 		{
+			Q_ASSERT(false);
 			break;
 		}
 	}
@@ -113,41 +127,41 @@ void QUaModbusValueWidgetStatus::setData(const QVector<quint16>& data)
 	ui->lineEditData->setText(strData);
 }
 
+QVariant QUaModbusValueWidgetStatus::value() const
+{
+	return m_valueCurr;
+}
+
 void QUaModbusValueWidgetStatus::setValue(const QVariant & value)
 {
+	if (this->isFrozen() || value == m_valueOld)
+	{
+		return;
+	}
 	// NOTE : only update if necessary, so user can input a new value
 	if (ui->checkBoxValue->isEnabled())
 	{
-		auto oldVal = ui->checkBoxValue->isChecked();
 		auto newVal = value.toBool();
-		if (newVal != oldVal)
-		{
-			ui->checkBoxValue->setChecked(newVal);
-			ui->checkBoxValue->setText(newVal ? tr("True") : tr("False"));
-		}
+		ui->checkBoxValue->setChecked(newVal);
+		ui->checkBoxValue->setText(newVal ? tr("True") : tr("False"));
 	}
 	else if (ui->spinBoxValue->isEnabled())
 	{
-		auto oldVal = ui->spinBoxValue->value();
 		auto newVal = value.toLongLong();
-		if (newVal != oldVal)
-		{
-			ui->spinBoxValue->setValue(newVal);
-		}
+		ui->spinBoxValue->setValue(newVal);
 	}
 	else if (ui->doubleSpinBoxValue->isEnabled())
 	{
-		auto oldVal = ui->doubleSpinBoxValue->value();
 		auto newVal = value.toDouble();
-		if (newVal != oldVal)
-		{
-			ui->doubleSpinBoxValue->setValue(newVal);
-		}
+		ui->doubleSpinBoxValue->setValue(newVal);
 	}
 	else
 	{
 		Q_ASSERT(false);
 	}
+	// update internal values
+	m_valueOld  = value;
+	m_valueCurr = value;
 }
 
 void QUaModbusValueWidgetStatus::setWritable(const bool & writable)
@@ -160,15 +174,18 @@ void QUaModbusValueWidgetStatus::setWritable(const bool & writable)
 void QUaModbusValueWidgetStatus::on_checkBoxValue_stateChanged(int arg1)
 {
 	Q_UNUSED(arg1);
-	emit this->valueUpdated(ui->checkBoxValue->isChecked());
+	m_valueCurr = ui->checkBoxValue->isChecked();
+	emit this->valueUpdated(m_valueCurr);
 }
 
 void QUaModbusValueWidgetStatus::on_spinBoxValue_valueChanged(int arg1)
 {
-	emit this->valueUpdated(arg1);
+	m_valueCurr = arg1;
+	emit this->valueUpdated(m_valueCurr);
 }
 
 void QUaModbusValueWidgetStatus::on_doubleSpinBoxValue_valueChanged(double arg1)
 {
-	emit this->valueUpdated(arg1);
+	m_valueCurr = arg1;
+	emit this->valueUpdated(m_valueCurr);
 }

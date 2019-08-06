@@ -34,6 +34,20 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 	{
 		QObject::disconnect(m_connections.takeFirst());
 	}
+	// check if valid
+	if (!block)
+	{
+		this->setEnabled(false);
+		return;
+	}
+	// bind common
+	m_connections <<
+	QObject::connect(block, &QObject::destroyed, this,
+	[this]() {
+		this->bindBlock(nullptr);
+	});
+	// enable
+	this->setEnabled(true);
 	// bind edit widget
 	this->bindBlockWidgetEdit(block);
 	// bind status widget
@@ -97,6 +111,25 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 		block->remove();
 		// NOTE : removed from tree on &QObject::destroyed callback
 	});
+	m_connections <<
+	QObject::connect(ui->pushButtonClear, &QPushButton::clicked, block,
+	[this, block]() {
+		Q_CHECK_PTR(block);
+		// are you sure?
+		auto res = QMessageBox::question(
+			this,
+			tr("Delete All Values Confirmation"),
+			tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName()),
+			QMessageBox::StandardButton::Ok,
+			QMessageBox::StandardButton::Cancel
+		);
+		if (res != QMessageBox::StandardButton::Ok)
+		{
+			return;
+		}
+		// clear
+		block->values()->clear();
+	});
 	// NOTE : apply button bound in bindBlockWidgetEdit
 }
 
@@ -127,6 +160,7 @@ void QUaModbusDataBlockWidget::setCanWrite(const bool & canWrite)
 	ui->widgetBlockEdit->setSamplingTimeEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
 	ui->pushButtonDelete->setVisible(canWrite);
+	ui->pushButtonClear->setVisible(canWrite);
 }
 
 void QUaModbusDataBlockWidget::setCanWriteBlockList(const bool & canWrite)
@@ -142,14 +176,6 @@ void QUaModbusDataBlockWidget::setCanWriteValueList(const bool & canWrite)
 
 void QUaModbusDataBlockWidget::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 {
-	// enable edit widget
-	ui->widgetBlockEdit->setEnabled(true);
-	// bind
-	m_connections <<
-	QObject::connect(block, &QObject::destroyed, ui->widgetBlockEdit,
-	[this]() {
-		ui->widgetBlockEdit->setEnabled(false);
-	});
 	// id
 	ui->widgetBlockEdit->setIdEditable(false);
 	ui->widgetBlockEdit->setId(block->browseName());
@@ -194,14 +220,6 @@ void QUaModbusDataBlockWidget::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 
 void QUaModbusDataBlockWidget::bindBlockWidgetStatus(QUaModbusDataBlock * block)
 {
-	// enable status widget
-	ui->widgetBlockStatus->setEnabled(true);
-	// bind
-	m_connections <<
-	QObject::connect(block, &QObject::destroyed, ui->widgetBlockStatus,
-	[this]() {
-		ui->widgetBlockStatus->setEnabled(false);
-	});
 	// status
 	ui->widgetBlockStatus->setStatus(block->getLastError());
 	m_connections <<

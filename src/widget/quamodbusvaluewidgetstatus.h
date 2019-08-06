@@ -17,6 +17,9 @@ public:
     explicit QUaModbusValueWidgetStatus(QWidget *parent = nullptr);
     ~QUaModbusValueWidgetStatus();
 
+	bool isFrozen() const;
+	void setIsFrozen(const bool &frozen);
+
 	void setType(const QModbusValueType &type);
 
 	void setStatus(const QModbusError &status);
@@ -25,7 +28,8 @@ public:
 
 	void setData(const QVector<quint16> &data);
 
-	void setValue(const QVariant &value);
+	QVariant value() const;
+	void     setValue(const QVariant &value);
 
 	void setWritable(const bool &writable);
 
@@ -41,6 +45,8 @@ private slots:
 
 private:
     Ui::QUaModbusValueWidgetStatus *ui;
+	QVariant m_valueOld;
+	QVariant m_valueCurr;
 };
 
 #endif // QUAMODBUSVALUEWIDGETSTATUS_H

@@ -34,6 +34,20 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 	{
 		QObject::disconnect(m_connections.takeFirst());
 	}
+	// check if valid
+	if (!value)
+	{
+		this->setEnabled(false);
+		return;
+	}
+	// bind common
+	m_connections <<
+	QObject::connect(value, &QObject::destroyed, this,
+	[this]() {
+		this->bindValue(nullptr);
+	});
+	// enable
+	this->setEnabled(true);
 	// bind edit widget
 	this->bindValueWidgetEdit(value);
 	// bind status widget
@@ -122,14 +136,6 @@ void QUaModbusValueWidget::setCanWriteValueList(const bool & canWrite)
 
 void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 {
-	// enable status widget
-	ui->widgetValueEdit->setEnabled(true);
-	// bind
-	m_connections <<
-	QObject::connect(value, &QObject::destroyed, ui->widgetValueEdit,
-	[this]() {
-		ui->widgetValueEdit->setEnabled(false);
-	});
 	// id
 	ui->widgetValueEdit->setIdEditable(false);
 	ui->widgetValueEdit->setId(value->browseName());
@@ -153,19 +159,15 @@ void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 	[value, this]() {
 		value->setType(ui->widgetValueEdit->type());
 		value->setAddressOffset(ui->widgetValueEdit->offset());
+		// NOTE : do not change value on the fly, but only when user click apply
+		value->setValue(ui->widgetValueStatus->value());
 	});
 }
 
 void QUaModbusValueWidget::bindValueWidgetStatus(QUaModbusValue * value)
 {
-	// enable status widget
-	ui->widgetValueStatus->setEnabled(true);
-	// bind
-	m_connections <<
-	QObject::connect(value, &QObject::destroyed, ui->widgetValueStatus,
-	[this]() {
-		ui->widgetValueStatus->setEnabled(false);
-	});
+	// unfreeze status widget
+	ui->widgetValueStatus->setIsFrozen(false);
 	// type
 	ui->widgetValueStatus->setType(value->getType());
 	m_connections <<
@@ -211,10 +213,13 @@ void QUaModbusValueWidget::bindValueWidgetStatus(QUaModbusValue * value)
 	[this](const QModbusDataBlockType &type) {
 		ui->widgetValueStatus->setWritable(type == QModbusDataBlockType::Coils || type == QModbusDataBlockType::HoldingRegisters);
 	});
-	// on value change
+	/*
+	// NOTE : changed to change only when apply clicked
+	// on value change (on the fly, as user types it)
 	m_connections <<
 	QObject::connect(ui->widgetValueStatus, &QUaModbusValueWidgetStatus::valueUpdated, value,
 	[value](const QVariant &varVal) {
 		value->setValue(varVal);
 	});
+	*/
 }

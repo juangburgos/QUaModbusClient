@@ -72,6 +72,8 @@ public slots:
 private slots:
 	void on_pushButtonAddClient_clicked();
 
+    void on_pushButtonClear_clicked();
+
     void on_checkBoxFilter_toggled(bool checked);
 
     void on_comboBoxFilterType_currentIndexChanged(int index);

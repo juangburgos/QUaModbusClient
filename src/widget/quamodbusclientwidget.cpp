@@ -35,6 +35,20 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 	{
 		QObject::disconnect(m_connections.takeFirst());
 	}
+	// check if valid
+	if (!client)
+	{
+		this->setEnabled(false);
+		return;
+	}
+	// bind common
+	m_connections <<
+	QObject::connect(client, &QObject::destroyed, this,
+	[this]() {
+		this->bindClient(nullptr);
+	});
+	// enable
+	this->setEnabled(true);
 	// bind edit widget
 	this->bindClientWidgetEdit(client);
 	// bind status widget
@@ -125,6 +139,25 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 		client->remove();
 		// NOTE : removed from tree on &QObject::destroyed callback
 	});
+	m_connections <<
+	QObject::connect(ui->pushButtonClear, &QPushButton::clicked, client,
+	[this, client]() {
+		Q_CHECK_PTR(client);
+		// are you sure?
+		auto res = QMessageBox::question(
+			this,
+			tr("Delete All Blocks Confirmation"),
+			tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName()),
+			QMessageBox::StandardButton::Ok,
+			QMessageBox::StandardButton::Cancel
+		);
+		if (res != QMessageBox::StandardButton::Ok)
+		{
+			return;
+		}
+		// clear
+		client->dataBlocks()->clear();
+	});
 	// NOTE : apply button bound in bindClientWidgetEdit
 }
 
@@ -161,6 +194,7 @@ void QUaModbusClientWidget::setCanWrite(const bool & canWrite)
 	ui->widgetClientEdit->setStopBitsEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
 	ui->pushButtonDelete->setVisible(canWrite);
+	ui->pushButtonClear->setVisible(canWrite);
 	// TODO : permission to connect/disconnect belongs here?
 	ui->pushButtonConnect->setEnabled(canWrite);
 }
@@ -178,17 +212,9 @@ void QUaModbusClientWidget::setCanWriteBlockList(const bool & canWrite)
 
 void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 {
-	// enable edit widget
-	ui->widgetClientEdit->setEnabled(true);
 	// show apply button
 	ui->pushButtonApply->setEnabled(true);
 	ui->pushButtonApply->setVisible(true);
-	// bind common
-	m_connections <<
-	QObject::connect(client, &QObject::destroyed, ui->widgetClientEdit,
-	[this]() {
-		ui->widgetClientEdit->setEnabled(false);
-	});
 	// id
 	ui->widgetClientEdit->setIdEditable(false);
 	ui->widgetClientEdit->setId(client->browseName());
@@ -306,14 +332,6 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 
 void QUaModbusClientWidget::bindClientWidgetStatus(QUaModbusClient * client)
 {
-	// enable status widget
-	ui->widgetClientStatus->setEnabled(true);
-	// bind
-	m_connections <<
-	QObject::connect(client, &QObject::destroyed, ui->widgetClientStatus,
-	[this]() {
-		ui->widgetClientStatus->setEnabled(false);
-	});
 	// status
 	ui->widgetClientStatus->setStatus(client->getLastError());
 	m_connections <<

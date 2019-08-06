@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>362</width>
+    <width>454</width>
     <height>495</height>
    </rect>
   </property>
@@ -26,48 +26,6 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QCheckBox" name="checkBoxFilter">
-     <property name="text">
-      <string>Enable Filter</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>206</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="0" column="2">
-    <widget class="QToolButton" name="toolButtonImport">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>80</width>
-       <height>23</height>
-      </size>
-     </property>
-     <property name="toolTip">
-      <string>Import from CSV file</string>
-     </property>
-     <property name="text">
-      <string>Import</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="3">
     <widget class="QToolButton" name="toolButtonExport">
      <property name="sizePolicy">
@@ -90,17 +48,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="4">
-    <widget class="QPushButton" name="pushButtonAddClient">
-     <property name="toolTip">
-      <string>Add new Modbus client</string>
-     </property>
-     <property name="text">
-      <string>Add Client</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="5">
+   <item row="1" column="0" colspan="6">
     <widget class="QFrame" name="frameFilter">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -137,8 +85,67 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0" colspan="5">
+   <item row="0" column="5">
+    <widget class="QPushButton" name="pushButtonAddClient">
+     <property name="toolTip">
+      <string>Add new Modbus client</string>
+     </property>
+     <property name="text">
+      <string>Add Client</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QCheckBox" name="checkBoxFilter">
+     <property name="text">
+      <string>Enable Filter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QToolButton" name="toolButtonImport">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>23</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Import from CSV file</string>
+     </property>
+     <property name="text">
+      <string>Import</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>206</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="0" colspan="6">
     <widget class="QTreeView" name="treeViewModbus"/>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="pushButtonClear">
+     <property name="text">
+      <string>Clear Clients</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
