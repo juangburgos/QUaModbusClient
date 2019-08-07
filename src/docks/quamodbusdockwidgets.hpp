@@ -315,7 +315,6 @@ inline void QUaModbusDockWidgets<T>::bindClientWidget(QUaModbusClient * client)
 {
 	m_client = client;
 	// bind widget
-	m_clientWidget->setEnabled(true);
 	m_clientWidget->bindClient(client);
 	// permissions
 	this->updateClientWidgetPermissions();
@@ -326,7 +325,6 @@ inline void QUaModbusDockWidgets<T>::bindBlockWidget(QUaModbusDataBlock * block)
 {
 	m_block = block;
 	// bind widget
-	m_blockWidget->setEnabled(true);
 	m_blockWidget->bindBlock(block);
 	// permissions
 	this->updateBlockWidgetPermissions();
@@ -337,7 +335,6 @@ inline void QUaModbusDockWidgets<T>::bindValueWidget(QUaModbusValue * value)
 {
 	m_valueCurr = value;
 	// bind widget
-	m_valueWidget->setEnabled(true);
 	m_valueWidget->bindValue(value);
 	// permissions
 	this->updateValueWidgetPermissions();
