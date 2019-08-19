@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QStandardItemModel>
+#include <QItemSelectionModel>
 #include <QUaModbusCommonWidgets>
 #include <QUaNode>
 
@@ -59,6 +60,9 @@ public:
 		Values  = 2
 	};
 	Q_ENUM(ComboOpts)
+
+	// get selection model to block it if necessary
+	QItemSelectionModel * selectionModel() const;
 
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev,

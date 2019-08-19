@@ -8,6 +8,7 @@
 #include <QTextStream>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QSignalBlocker>
 
 #include <QUaModbusClientDialog>
 #include <QUaModbusClientList>
@@ -278,6 +279,11 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 	this->showNewClientDialog(dialog);
 }
 
+QItemSelectionModel * QUaModbusClientTree::selectionModel() const
+{
+	return ui->treeViewModbus->selectionModel();
+}
+
 void QUaModbusClientTree::on_pushButtonClear_clicked()
 {
 	// ask user if create new config
@@ -330,6 +336,9 @@ void QUaModbusClientTree::setupImportButton()
 		{
 			return;
 		}
+		// NOTE : block signals to avoid calling currentRowChanged repetitively
+		//        it works with queued because it seems showing a dialog forces event processing
+		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
 		QString strError = m_listClients->setCsvClients(strContents);
 		this->displayCsvLoadResult(strError);
 	});
@@ -340,6 +349,9 @@ void QUaModbusClientTree::setupImportButton()
 		{
 			return;
 		}
+		// NOTE : block signals to avoid calling currentRowChanged repetitively
+		//        it works with queued because it seems showing a dialog forces event processing
+		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
 		QString strError = m_listClients->setCsvBlocks(strContents);
 		this->displayCsvLoadResult(strError);
 	});
@@ -350,6 +362,9 @@ void QUaModbusClientTree::setupImportButton()
 		{
 			return;
 		}
+		// NOTE : block signals to avoid calling currentRowChanged repetitively
+		//        it works with queued because it seems showing a dialog forces event processing
+		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
 		QString strError = m_listClients->setCsvValues(strContents);
 		this->displayCsvLoadResult(strError);
 	});
@@ -505,11 +520,21 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	QString strClientId = client->browseName();
 	Q_ASSERT(!strClientId.isEmpty() && !strClientId.isNull());
 	auto parent = m_modelModbus.invisibleRootItem();
+	auto row    = parent->rowCount();
+	// NOTE : it is much more performant to pre-allocate the entire row in advance,
+	//        and calling parent->appendRow (calling parent->setChild is expensive)
+	QList<QStandardItem*> listCols;
+	std::generate_n(std::back_inserter(listCols), (int)Headers::Invalid,
+		[]() {
+		return new QStandardItem;
+	});
+	parent->appendRow(listCols);
 
 	// object column
-	auto row  = parent->rowCount();
-	auto iObj = new QStandardItem(strClientId);
-	parent->setChild(row, (int)Headers::Objects, iObj);
+	//auto iObj = new QStandardItem(strClientId);
+	//parent->setChild(row, (int)Headers::Objects, iObj);
+	auto iObj = parent->child(row, (int)Headers::Objects);
+	iObj->setText(strClientId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(client), QUaModbusClientTree::PointerRole);
@@ -523,8 +548,10 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	auto error     = client->lastError();
 	auto modError  = error->value().value<QModbusError>();
 	auto strError  = QString(enumError.valueToKey(modError));
-	auto iStat     = new QStandardItem(strState + " | " + strError);
-	parent->setChild(row, (int)Headers::Status, iStat);
+	//auto iStat     = new QStandardItem(strState + " | " + strError);
+	//parent->setChild(row, (int)Headers::Status, iStat);
+	auto iStat = parent->child(row, (int)Headers::Status);
+	iStat->setText(strState + " | " + strError);
 	// set data
 	iStat->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientTree::SelectTypeRole);
 	iStat->setData(QVariant::fromValue(client), QUaModbusClientTree::PointerRole);
@@ -591,10 +618,21 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	auto block      = listBlocks->browseChild<QUaModbusDataBlock>(strBlockId);
 	Q_ASSERT_X(block, "QUaModbusClientWidget", "Block instance must already exist in OPC UA");
 
-	// object column
 	auto row  = parent->rowCount();
-	auto iObj = new QStandardItem(strBlockId);
-	parent->setChild(row, (int)Headers::Objects, iObj);
+	// NOTE : it is much more performant to pre-allocate the entire row in advance,
+	//        and calling parent->appendRow (calling parent->setChild is expensive)
+	QList<QStandardItem*> listCols;
+	std::generate_n(std::back_inserter(listCols), (int)Headers::Invalid,
+		[]() {
+		return new QStandardItem;
+	});
+	parent->appendRow(listCols);
+
+	// object column
+	//auto iObj = new QStandardItem(strBlockId);
+	//parent->setChild(row, (int)Headers::Objects, iObj);
+	auto iObj = parent->child(row, (int)Headers::Objects);
+	iObj->setText(strBlockId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(block), QUaModbusClientTree::PointerRole);
@@ -604,8 +642,10 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	auto error     = block->lastError();
 	auto modError  = error->value().value<QModbusError>();
 	auto strError  = QString(enumError.valueToKey(modError));
-	auto iErr      = new QStandardItem(strError);
-	parent->setChild(row, (int)Headers::Status, iErr);
+	//auto iErr      = new QStandardItem(strError);
+	//parent->setChild(row, (int)Headers::Status, iErr);
+	auto iErr = parent->child(row, (int)Headers::Status);
+	iErr->setText(strError);
 	// set data
 	iErr->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientTree::SelectTypeRole);
 	iErr->setData(QVariant::fromValue(block), QUaModbusClientTree::PointerRole);
@@ -662,10 +702,20 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	auto value      = listValues->browseChild<QUaModbusValue>(strValueId);
 	Q_ASSERT_X(value, "QUaModbusClientWidget", "Value instance must already exist in OPC UA");
 
-	// object column
 	auto row  = parent->rowCount();
-	auto iObj = new QStandardItem(strValueId);
-	parent->setChild(row, (int)Headers::Objects, iObj);
+	// NOTE : it is much more performant to pre-allocate the entire row in advance,
+	//        and calling parent->appendRow (calling parent->setChild is expensive)
+	QList<QStandardItem*> listCols;
+	std::generate_n(std::back_inserter(listCols), (int)Headers::Invalid,
+		[]() {
+		return new QStandardItem;
+	});
+	parent->appendRow(listCols);
+	// object column
+	//auto iObj = new QStandardItem(strValueId);
+	//parent->setChild(row, (int)Headers::Objects, iObj);
+	auto iObj = parent->child(row, (int)Headers::Objects);
+	iObj->setText(strValueId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(value), QUaModbusClientTree::PointerRole);
@@ -675,8 +725,10 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	auto error     = value->lastError();
 	auto modError  = error->value().value<QModbusError>();
 	auto strError  = QString(enumError.valueToKey(modError));
-	auto iErr      = new QStandardItem(strError);
-	parent->setChild(row, (int)Headers::Status, iErr);
+	//auto iErr      = new QStandardItem(strError);
+	//parent->setChild(row, (int)Headers::Status, iErr);
+	auto iErr = parent->child(row, (int)Headers::Status);
+	iErr->setText(strError);
 	// set data
 	iErr->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientTree::SelectTypeRole);
 	iErr->setData(QVariant::fromValue(value), QUaModbusClientTree::PointerRole);
@@ -773,7 +825,7 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 		QMessageBox::warning(
 			const_cast<QUaModbusClientTree*>(this),
 			tr("Warning"),
-			strError
+			strError.left(600) + "..."
 		);
 	}
 	else if (strError.contains("Error", Qt::CaseInsensitive))
@@ -781,15 +833,15 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 		QMessageBox::critical(
 			const_cast<QUaModbusClientTree*>(this),
 			tr("Warning"),
-			strError
+			strError.left(600) + "..."
 		);
 	}
-	else if (strError.contains("Success", Qt::CaseInsensitive))
+	else
 	{
 		QMessageBox::information(
 			const_cast<QUaModbusClientTree*>(this),
-			tr("Information"),
-			strError
+			tr("Finished"),
+			tr("Successfully import CSV data.")
 		);
 	}
 }
