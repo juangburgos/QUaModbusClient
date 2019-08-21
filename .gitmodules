@@ -8,3 +8,7 @@
 	path = libs/QUaAccessControl.git
 	url = https://github.com/juangburgos/QUaAccessControl.git
 	branch = master
+[submodule "libs/QAdvancedDocking.git"]
+	path = libs/QAdvancedDocking.git
+	url = https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
+	branch = master
