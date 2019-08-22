@@ -41,6 +41,12 @@
    </item>
    <item row="6" column="4">
     <widget class="QPushButton" name="pushButtonApply">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Apply</string>
      </property>
@@ -67,6 +73,12 @@
    </item>
    <item row="6" column="0">
     <widget class="QPushButton" name="pushButtonDelete">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Delete</string>
      </property>

@@ -326,6 +326,8 @@ void QUaModbusClientTree::setupTreeContextMenu()
 
 void QUaModbusClientTree::setupImportButton()
 {
+	ui->toolButtonImport->setMaximumHeight(ui->pushButtonClear->sizeHint().height());
+	ui->toolButtonImport->setMinimumHeight(ui->pushButtonClear->sizeHint().height());
 	ui->toolButtonImport->setPopupMode(QToolButton::MenuButtonPopup);
 	// menu
 	auto importMenu = new QMenu(ui->toolButtonImport);
@@ -381,6 +383,8 @@ void QUaModbusClientTree::setupImportButton()
 
 void QUaModbusClientTree::setupExportButton()
 {
+	ui->toolButtonExport->setMaximumHeight(ui->pushButtonClear->sizeHint().height());
+	ui->toolButtonExport->setMinimumHeight(ui->pushButtonClear->sizeHint().height());
 	ui->toolButtonExport->setPopupMode(QToolButton::MenuButtonPopup);
 	// menu
 	auto exportMenu = new QMenu(ui->toolButtonExport);

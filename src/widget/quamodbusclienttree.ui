@@ -29,15 +29,15 @@
    <item row="0" column="3">
     <widget class="QToolButton" name="toolButtonExport">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>80</width>
-       <height>23</height>
+       <width>0</width>
+       <height>0</height>
       </size>
      </property>
      <property name="toolTip">
@@ -105,15 +105,15 @@
    <item row="0" column="2">
     <widget class="QToolButton" name="toolButtonImport">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>80</width>
-       <height>23</height>
+       <width>0</width>
+       <height>0</height>
       </size>
      </property>
      <property name="toolTip">
