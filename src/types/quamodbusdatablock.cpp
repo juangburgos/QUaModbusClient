@@ -170,71 +170,12 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 
 void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 {
-	// should not happen but just in case
-	auto type = this->type()->value().value<QModbusDataBlockType>();
-	if (type != QModbusDataBlockType::Coils &&
-		type != QModbusDataBlockType::HoldingRegisters)
-	{
-		return;
-	}
 	// convert data
 	QVector<quint16> data = QUaModbusDataBlock::variantToInt16Vect(value);
-	// exec write request in client thread
-	this->client()->m_workerThread.execInThread([this, data]() {
-		auto client = this->client();
-		// check if request is valid
-		if (m_modbusDataUnit.registerType() != QModbusDataBlockType::Coils &&
-			m_modbusDataUnit.registerType() != QModbusDataBlockType::HoldingRegisters)
-		{
-			return;
-		}
-		if (m_modbusDataUnit.startAddress() < 0)
-		{
-			emit this->updateLastError(QModbusError::ConfigurationError);
-			return;
-		}
-		if (m_modbusDataUnit.valueCount() == 0)
-		{
-			emit this->updateLastError(QModbusError::ConfigurationError);
-			return;
-		}
-		// check if connected
-		auto state = client->state()->value().value<QModbusState>();
-		if (state != QModbusState::ConnectedState)
-		{
-			emit this->updateLastError(QModbusError::ConnectionError);
-			return;
-		}
-		// create data target 
-		QModbusDataUnit dataToWrite(m_modbusDataUnit.registerType(), m_modbusDataUnit.startAddress(), data);
-		// create and send request
-		auto serverAddress = client->serverAddress()->value().value<quint8>();
-		QModbusReply * p_reply = client->m_modbusClient->sendWriteRequest(dataToWrite, serverAddress);
-		if (!p_reply)
-		{
-			emit this->updateLastError(QModbusError::ReplyAbortedError);
-			return;
-		}
-		// subscribe to finished
-		QObject::connect(p_reply, &QModbusReply::finished, this, [this, p_reply]() mutable {
-			// NOTE : exec'd in ua server thread (not in worker thread)
-			// check if reply still valid
-			if (!p_reply)
-			{
-				auto error = QModbusError::ReplyAbortedError;
-				this->setLastError(error);
-				return;
-			}
-			// handle error
-			auto error = p_reply->error();
-			this->setLastError(error);
-			// delete reply on next event loop exec
-			p_reply->deleteLater();
-			p_reply = nullptr;
-		}, Qt::QueuedConnection);
-	});
 	// emit
 	emit this->dataChanged(data);
+	// write to modbus
+	this->setModbusData(data);
 }
 
 void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
@@ -303,14 +244,14 @@ void QUaModbusDataBlock::startLoop()
 			return;
 		}
 		// check if connected
-		auto state = client->state()->value().value<QModbusState>();
+		auto state = client->getState();
 		if (state != QModbusState::ConnectedState)
 		{
 			emit this->updateLastError(QModbusError::ConnectionError);
 			return;
 		}
 		// create and send request		
-		auto serverAddress = client->serverAddress()->value().value<quint8>();
+		auto serverAddress = client->getServerAddress();
 		// NOTE : need to pass in a fresh QModbusDataUnit instance or reply for coils returns empty
 		//        wierdly, registers work fine when passing m_modbusDataUnit
 		m_replyRead = client->m_modbusClient->sendReadRequest(
@@ -331,13 +272,13 @@ void QUaModbusDataBlock::startLoop()
 			return;
 		}
 		// subscribe to finished
-		QObject::connect(m_replyRead, &QModbusReply::finished, this, [this]() {
+		QObject::connect(m_replyRead, &QModbusReply::finished, this, 
+		[this]() {
 			// NOTE : exec'd in ua server thread (not in worker thread)
 			// check if reply still valid
 			if (!m_replyRead)
 			{
-				auto error = QModbusError::ReplyAbortedError;
-				this->setLastError(error);
+				this->setLastError(QModbusError::ReplyAbortedError);
 				return;
 			}
 			// handle error
@@ -345,7 +286,7 @@ void QUaModbusDataBlock::startLoop()
 			this->setLastError(error);
 			// update block value
 			QVector<quint16> data = m_replyRead->result().values();
-			this->data()->setValue(QVariant::fromValue(data));
+			this->setData(data, false);
 			// update modbus values and errors
 			auto values = this->values()->values();
 			for (int i = 0; i < values.count(); i++)
@@ -355,8 +296,6 @@ void QUaModbusDataBlock::startLoop()
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();
 			m_replyRead = nullptr;
-			// emit
-			emit this->dataChanged(data);
 		}, Qt::QueuedConnection);
 	}, samplingTime);
 }
@@ -364,6 +303,66 @@ void QUaModbusDataBlock::startLoop()
 bool QUaModbusDataBlock::loopRunning()
 {
 	return m_loopHandle >= 0;
+}
+
+void QUaModbusDataBlock::setModbusData(const QVector<quint16>& data)
+{
+	// exec write request in client thread
+	this->client()->m_workerThread.execInThread(
+	[this, data]() {
+		auto client = this->client();
+		// check if request is valid
+		if (m_modbusDataUnit.registerType() != QModbusDataBlockType::Coils &&
+			m_modbusDataUnit.registerType() != QModbusDataBlockType::HoldingRegisters)
+		{
+			return;
+		}
+		if (m_modbusDataUnit.startAddress() < 0)
+		{
+			emit this->updateLastError(QModbusError::ConfigurationError);
+			return;
+		}
+		if (m_modbusDataUnit.valueCount() == 0)
+		{
+			emit this->updateLastError(QModbusError::ConfigurationError);
+			return;
+		}
+		// check if connected
+		auto state = client->getState();
+		if (state != QModbusState::ConnectedState)
+		{
+			emit this->updateLastError(QModbusError::ConnectionError);
+			return;
+		}
+		// create data target 
+		QModbusDataUnit dataToWrite(m_modbusDataUnit.registerType(), m_modbusDataUnit.startAddress(), data);
+		// create and send request
+		auto serverAddress = client->getServerAddress();
+		QModbusReply * p_reply = client->m_modbusClient->sendWriteRequest(dataToWrite, serverAddress);
+		if (!p_reply)
+		{
+			emit this->updateLastError(QModbusError::ReplyAbortedError);
+			return;
+		}
+		// subscribe to finished
+		QObject::connect(p_reply, &QModbusReply::finished, this, 
+		[this, p_reply]() mutable {
+			// NOTE : exec'd in ua server thread (not in worker thread)
+			// check if reply still valid
+			if (!p_reply)
+			{
+				auto error = QModbusError::ReplyAbortedError;
+				this->setLastError(error);
+				return;
+			}
+			// handle error
+			auto error = p_reply->error();
+			this->setLastError(error);
+			// delete reply on next event loop exec
+			p_reply->deleteLater();
+			p_reply = nullptr;
+		}, Qt::QueuedConnection);
+	});
 }
 
 QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
@@ -525,11 +524,19 @@ QVector<quint16> QUaModbusDataBlock::getData() const
 	return QUaModbusDataBlock::variantToInt16Vect(this->data()->value());
 }
 
-void QUaModbusDataBlock::setData(const QVector<quint16>& data)
+void QUaModbusDataBlock::setData(const QVector<quint16>& data, const bool &writeModbus/* = true*/)
 {
 	auto varData = QVariant::fromValue(data);
+	// set on OPC
 	this->data()->setValue(varData);
-	this->on_dataChanged(varData);
+	// emit change c++
+	emit this->dataChanged(data);
+	// check if write to modbus
+	if (!writeModbus)
+	{
+		return;
+	}
+	this->setModbusData(data);
 }
 
 QModbusError QUaModbusDataBlock::getLastError() const
@@ -539,7 +546,7 @@ QModbusError QUaModbusDataBlock::getLastError() const
 
 void QUaModbusDataBlock::setLastError(const QModbusError & error)
 {
-	this->lastError()->setValue(error);
-	this->on_updateLastError(error);
+	// call internal slot on_updateLastError
+	emit this->updateLastError(error);
 }
 

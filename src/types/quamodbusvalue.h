@@ -122,10 +122,14 @@ signals:
 	void valueChanged        (const QVariant         &value        );
 	void lastErrorChanged    (const QModbusError     &error        );
 
+	// (internal) to safely update error in ua server thread
+	void updateLastError(const QModbusError &error);
+
 private slots:
-	void on_typeChanged         (const QVariant &value);
-	void on_addressOffsetChanged(const QVariant &value);
-	void on_valueChanged        (const QVariant &value);
+	void on_typeChanged         (const QVariant     &value);
+	void on_addressOffsetChanged(const QVariant     &value);
+	void on_valueChanged        (const QVariant     &value);
+	void on_updateLastError     (const QModbusError &error);
 
 private:
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);

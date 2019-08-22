@@ -5,6 +5,9 @@
 
 #include <limits>
 
+#undef min
+#undef max
+
 QUaModbusValueWidgetStatus::QUaModbusValueWidgetStatus(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusValueWidgetStatus)

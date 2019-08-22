@@ -54,6 +54,12 @@
    </item>
    <item row="0" column="4">
     <widget class="QPushButton" name="pushButtonAddValue">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Add Value</string>
      </property>
@@ -89,6 +95,12 @@
    </item>
    <item row="0" column="2">
     <widget class="QPushButton" name="pushButtonPerms">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Permissions</string>
      </property>
@@ -96,6 +108,12 @@
    </item>
    <item row="0" column="3">
     <widget class="QPushButton" name="pushButtonClear">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>Clear Values</string>
      </property>

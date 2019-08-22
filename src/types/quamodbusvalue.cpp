@@ -33,6 +33,8 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	QObject::connect(type()         , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_typeChanged         , Qt::QueuedConnection);
 	QObject::connect(addressOffset(), &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_addressOffsetChanged, Qt::QueuedConnection);
 	QObject::connect(value()        , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_valueChanged        , Qt::QueuedConnection);
+	// to safely update error in ua server thread
+	QObject::connect(this, &QUaModbusValue::updateLastError, this, &QUaModbusValue::on_updateLastError);
 	// set descriptions
 	type()         ->setDescription(tr("Data type used to convert the registers to the value."));
 	registersUsed()->setDescription(tr("Number of registeres used by the selected data type"));
@@ -136,9 +138,8 @@ QModbusError QUaModbusValue::getLastError() const
 
 void QUaModbusValue::setLastError(const QModbusError & error)
 {
-	this->lastError()->setValue(error);
-	// emit
-	emit this->lastErrorChanged(error);
+	// call internal slot on_updateLastError
+	emit this->updateLastError(error);
 }
 
 bool QUaModbusValue::isWritable() const
@@ -210,6 +211,13 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 	this->block()->on_dataChanged(QVariant::fromValue(blockData));
 	// emit
 	emit this->valueChanged(value);
+}
+
+void QUaModbusValue::on_updateLastError(const QModbusError & error)
+{
+	this->lastError()->setValue(error);
+	// emit
+	emit this->lastErrorChanged(error);
 }
 
 // programmatic change from block upstream (modbus response to read request)

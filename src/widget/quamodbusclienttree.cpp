@@ -531,8 +531,6 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	parent->appendRow(listCols);
 
 	// object column
-	//auto iObj = new QStandardItem(strClientId);
-	//parent->setChild(row, (int)Headers::Objects, iObj);
 	auto iObj = parent->child(row, (int)Headers::Objects);
 	iObj->setText(strClientId);
 	// set data
@@ -548,8 +546,6 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	auto error     = client->lastError();
 	auto modError  = error->value().value<QModbusError>();
 	auto strError  = QString(enumError.valueToKey(modError));
-	//auto iStat     = new QStandardItem(strState + " | " + strError);
-	//parent->setChild(row, (int)Headers::Status, iStat);
 	auto iStat = parent->child(row, (int)Headers::Status);
 	iStat->setText(strState + " | " + strError);
 	// set data

@@ -96,7 +96,7 @@ public:
 	void    setSamplingTime(const quint32 &samplingTime);
 
 	QVector<quint16> getData() const;
-	void             setData(const QVector<quint16> &data);
+	void             setData(const QVector<quint16> &data, const bool &writeModbus = true);
 
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
@@ -133,6 +133,7 @@ private:
 
 	void startLoop();
 	bool loopRunning();
+	void setModbusData(const QVector<quint16>& data);
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

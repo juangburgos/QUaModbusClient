@@ -4,6 +4,7 @@
 #include <QModbusTcpClient>
 #include <QModbusRtuSerialMaster>
 #include <QSerialPort>
+#include <QMutex>
 
 #include <QLambdaThreadWorker>
 
@@ -87,7 +88,8 @@ public:
 
 	QModbusClientType getType() const;
 
-	QModbusState      getState() const;
+	QModbusState getState() const;
+	void         setState(const QModbusState &state);
 
 	quint8 getServerAddress() const;
 	void   setServerAddress(const quint8 &serverAddress);
@@ -122,6 +124,9 @@ private slots:
 	void on_keepConnectingChanged(const QVariant & value);
 	void on_stateChanged(QModbusState state);
 	void on_errorChanged(QModbusError error);
+
+private:
+	QMutex m_mutex;
 };
 
 typedef QUaModbusClient::ClientType QModbusClientType;

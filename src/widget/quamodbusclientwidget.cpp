@@ -339,7 +339,7 @@ void QUaModbusClientWidget::bindClientWidgetStatus(QUaModbusClient * client)
 	[this](const QModbusError & error) {
 		ui->widgetClientStatus->setStatus(error);
 	});
-	// status
+	// state
 	ui->widgetClientStatus->setState(client->getState());
 	m_connections <<
 	QObject::connect(client, &QUaModbusClient::stateChanged, ui->widgetClientStatus,

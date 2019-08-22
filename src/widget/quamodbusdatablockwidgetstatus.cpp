@@ -6,6 +6,7 @@ QUaModbusDataBlockWidgetStatus::QUaModbusDataBlockWidgetStatus(QWidget *parent) 
     ui(new Ui::QUaModbusDataBlockWidgetStatus)
 {
     ui->setupUi(this);
+	m_lastStartAddress = 999999;
 	// setup params table
 	ui->tableViewData->setModel(&m_modelValues);
 	ui->tableViewData->setAlternatingRowColors(true);
@@ -38,17 +39,39 @@ void QUaModbusDataBlockWidgetStatus::setStatus(const QModbusError & status)
 
 void QUaModbusDataBlockWidgetStatus::setData(const quint32 &startAddress, const QVector<quint16>& data)
 {
-	// clear all table
-	m_modelValues.setRowCount(data.count());
-	// re-populate with new data
+	
 	auto parent = m_modelValues.invisibleRootItem();
+	// check if need to resize table
+	if (m_modelValues.rowCount() != data.count())
+	{
+		// clear all table
+		m_modelValues.removeRows(0, data.count());
+		// NOTE : it is much more performant to pre-allocate the entire row in advance,
+		//        and calling parent->appendRow (calling parent->setChild is expensive)
+		QList<QStandardItem*> listCols;
+		std::generate_n(std::back_inserter(listCols), data.count(),
+		[]() {
+			return new QStandardItem;
+		});
+		parent->appendRows(listCols);
+	}
+	// check if need to reset vertical headers
+	if (m_lastStartAddress != startAddress)
+	{
+		m_lastStartAddress = startAddress;
+		// reset vertical headers
+		for (int row = 0; row < data.count(); row++)
+		{
+			// set vertical header
+			auto header = new QStandardItem(QString("%1").arg(startAddress + row));
+			m_modelValues.setVerticalHeaderItem(row, header);
+		}
+	}
+	// re-populate with new data
 	for (int row = 0; row < data.count(); row++)
 	{
-		// set vertical header
-		auto header = new QStandardItem(QString("%1").arg(startAddress + row));
-		m_modelValues.setVerticalHeaderItem(row, header);
 		// set data
-		auto item = new QStandardItem(QString("%1").arg(data.at(row)));
-		parent->setChild(row, 0, item);
+		auto item = parent->child(row, 0);
+		item->setText(QString("%1").arg(data.at(row)));
 	}
 }

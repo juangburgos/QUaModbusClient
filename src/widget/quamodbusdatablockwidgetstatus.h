@@ -26,6 +26,7 @@ public:
 private:
     Ui::QUaModbusDataBlockWidgetStatus *ui;
 	QStandardItemModel    m_modelValues;
+	quint32 m_lastStartAddress;
 };
 
 #endif // QUAMODBUSDATABLOCKWIDGETSTATUS_H

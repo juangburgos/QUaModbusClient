@@ -1,5 +1,7 @@
 #include "quamodbusclient.h"
 
+#include <QMutexLocker>
+
 #include <QUaModbusDataBlock>
 #include <QUaModbusClientList>
 
@@ -9,6 +11,7 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 #else
 	: QUaBaseObjectProtected(server)
 #endif // !QUA_ACCESS_CONTROL
+	, m_mutex(QMutex::Recursive)
 {
 	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
 	{
@@ -43,42 +46,50 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 
 QUaProperty * QUaModbusClient::type() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaProperty>("Type");
 }
 
 QUaProperty * QUaModbusClient::serverAddress() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaProperty>("ServerAddress");
 }
 
 QUaProperty * QUaModbusClient::keepConnecting() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaProperty>("KeepConnecting");
 }
 
 QUaBaseDataVariable * QUaModbusClient::state() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaBaseDataVariable>("State");
 }
 
 QUaBaseDataVariable * QUaModbusClient::lastError() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaBaseDataVariable>("LastError");
 }
 
 QUaModbusDataBlockList * QUaModbusClient::dataBlocks() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->browseChild<QUaModbusDataBlockList>("DataBlocks");
 }
 
 void QUaModbusClient::remove()
 {
+	QMutexLocker locker(&m_mutex);
 	this->disconnectDevice();
 	this->deleteLater();
 }
 
 void QUaModbusClient::connectDevice()
 {
+	QMutexLocker locker(&m_mutex);
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
 		m_modbusClient->connectDevice();
@@ -87,6 +98,7 @@ void QUaModbusClient::connectDevice()
 
 void QUaModbusClient::disconnectDevice()
 {
+	QMutexLocker locker(&m_mutex);
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
 		m_modbusClient->disconnectDevice();
@@ -95,50 +107,68 @@ void QUaModbusClient::disconnectDevice()
 
 quint8 QUaModbusClient::getServerAddress() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->serverAddress()->value().value<quint8>();
 }
 
 void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
 {
+	QMutexLocker locker(&m_mutex);
 	this->serverAddress()->setValue(serverAddress);
 	this->on_serverAddressChanged(serverAddress);
 }
 
 bool QUaModbusClient::getKeepConnecting() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->keepConnecting()->value().toBool();
 }
 
 void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
 {
+	QMutexLocker locker(&m_mutex);
 	this->keepConnecting()->setValue(keepConnecting);
 	this->on_keepConnectingChanged(keepConnecting);
 }
 
 QModbusError QUaModbusClient::getLastError() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->lastError()->value().value<QModbusError>();
 }
 
 void QUaModbusClient::setLastError(const QModbusError & error)
 {
-	this->lastError()->setValue(error);
+	QMutexLocker locker(&m_mutex);
 	this->on_errorChanged(error);
 }
 
 QUaModbusClientList * QUaModbusClient::list() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return dynamic_cast<QUaModbusClientList*>(this->parent());
 }
 
 QModbusClientType QUaModbusClient::getType() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->type()->value().value<QModbusClientType>();
 }
 
 QModbusState QUaModbusClient::getState() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
 	return this->state()->value().value<QModbusState>();
+}
+
+void QUaModbusClient::setState(const QModbusState & state)
+{
+	QMutexLocker locker(&m_mutex);
+	this->state()->setValue(state);
+	// NOTE : need to add custom signal because OPC UA valueChanged
+	//        only works for changes through network
+	// emit
+	emit this->stateChanged(state);
 }
 
 void QUaModbusClient::setupModbusClient()
@@ -178,16 +208,16 @@ void QUaModbusClient::on_keepConnectingChanged(const QVariant & value)
 
 void QUaModbusClient::on_stateChanged(QModbusState state)
 {
-	this->state()->setValue(state);
+	this->setState(state);
 	// no error if connected correctly
 	if (state == QModbusState::ConnectedState)
 	{
-		this->lastError()->setValue(QModbusError::NoError);
+		this->setLastError(QModbusError::NoError);
 	}
 	// only allow to write connection params if not connected
 	if (state == QModbusState::UnconnectedState)
 	{
-		serverAddress()->setWriteAccess(true);
+		this->serverAddress()->setWriteAccess(true);
 		// keep connecting if desired
 		bool keepConnecting = this->keepConnecting()->value().toBool();
 		if (keepConnecting)
@@ -199,10 +229,6 @@ void QUaModbusClient::on_stateChanged(QModbusState state)
 	{
 		serverAddress()->setWriteAccess(false);
 	}
-	// NOTE : need to add custom signal because OPC UA valueChanged
-	//        only works for changes through network
-	// emit
-	emit this->stateChanged(state);
 	// update block errors
 	if (state == QModbusState::ConnectedState)
 	{
@@ -215,15 +241,14 @@ void QUaModbusClient::on_stateChanged(QModbusState state)
 	}
 }
 
+// NOTE : need to add custom signal because OPC UA valueChanged
+//        only works for changes through network
 void QUaModbusClient::on_errorChanged(QModbusError error)
 {
+	// NOTe : setLastError call this, avoid recursion
 	this->lastError()->setValue(error);
-	if (error != QModbusError::NoError)
-	{
-		// TODO : send UA event
-	}
-	// NOTE : need to add custom signal because OPC UA valueChanged
-	//        only works for changes through network
+	//// TODO : send UA event
+	//if (error != QModbusError::NoError)
 	// emit
 	emit this->lastErrorChanged(error);
 }
