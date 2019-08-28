@@ -65,6 +65,7 @@ private:
 	// helpers
 	QUaAcDocking * getDockManager() const;
 
+	const static QString m_strMenuPath;
 	const static QString m_strModbusTree;
 	const static QString m_strModbusClients;
 	const static QString m_strModbusBlocks;
@@ -75,6 +76,9 @@ private:
 
 template <class T>
 const QString QUaModbusDockWidgets<T>::m_strXmlName = "QUaModbusDockWidgets";
+
+template <class T>
+const QString QUaModbusDockWidgets<T>::m_strMenuPath = "Modbus";
 
 template <class T>
 const QString QUaModbusDockWidgets<T>::m_strModbusTree = "Modbus Tree";
@@ -206,15 +210,14 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 {
 	m_modbusTreeWidget = new QUaModbusClientTree(m_thiz);
 	this->getDockManager()->addDockWidget(
-		QUaModbusDockWidgets<T>::m_strModbusTree,
+		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusTree,
 		QAd::CenterDockWidgetArea,
 		m_modbusTreeWidget
 	);
 
-	m_clientWidget = new QUaModbusClientWidget(m_thiz);
-	auto clientArea = 
+	m_clientWidget = new QUaModbusClientWidget(m_thiz); 
 	this->getDockManager()->addDockWidget(
-		QUaModbusDockWidgets<T>::m_strModbusClients,
+		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusClients,
 		QAd::RightDockWidgetArea,
 		m_clientWidget
 	);
@@ -222,32 +225,22 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 	m_clientWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_blockWidget = new QUaModbusDataBlockWidget(m_thiz);
-	auto blockArea = 
 	this->getDockManager()->addDockWidget(
-		QUaModbusDockWidgets<T>::m_strModbusBlocks,
+		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusBlocks,
 		QAd::BottomDockWidgetArea,
-		m_blockWidget,
-		nullptr,
-		nullptr,
-		clientArea
+		m_blockWidget
 	);
 	m_blockWidget->setEnabled(false);
 	m_blockWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_valueWidget = new QUaModbusValueWidget(m_thiz);
 	this->getDockManager()->addDockWidget(
-		QUaModbusDockWidgets<T>::m_strModbusValues,
+		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusValues,
 		QAd::BottomDockWidgetArea,
-		m_valueWidget,
-		nullptr,
-		nullptr,
-		blockArea
+		m_valueWidget
 	);
 	m_valueWidget->setEnabled(false);
 	m_valueWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
-
-	// TODO : create default layouts or not?
-	//this->getDockManager()->saveLayout(QUaModbusDockWidgets<T>::m_strDefault);
 }
 
 template<class T>
