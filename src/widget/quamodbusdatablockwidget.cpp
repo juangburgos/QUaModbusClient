@@ -154,13 +154,13 @@ void QUaModbusDataBlockWidget::setupPermissionsModel(QSortFilterProxyModel * pro
 
 void QUaModbusDataBlockWidget::setCanWrite(const bool & canWrite)
 {
+	// affect block attrs
 	ui->widgetBlockEdit->setTypeEditable(canWrite);
 	ui->widgetBlockEdit->setAddressEditable(canWrite);
 	ui->widgetBlockEdit->setSizeEditable(canWrite);
 	ui->widgetBlockEdit->setSamplingTimeEditable(canWrite);
 	ui->pushButtonApply->setEnabled(canWrite);
 	ui->pushButtonDelete->setVisible(canWrite);
-	ui->pushButtonClear->setVisible(canWrite);
 }
 
 void QUaModbusDataBlockWidget::setCanWriteBlockList(const bool & canWrite)
@@ -170,7 +170,9 @@ void QUaModbusDataBlockWidget::setCanWriteBlockList(const bool & canWrite)
 
 void QUaModbusDataBlockWidget::setCanWriteValueList(const bool & canWrite)
 {
+	// affect value list
 	ui->pushButtonAddValue->setVisible(canWrite);
+	ui->pushButtonClear->setVisible(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 
