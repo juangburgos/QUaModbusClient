@@ -85,8 +85,7 @@ void QUaModbusAccessControl::on_loggedUserChanged(QUaUser * user)
 		menuHelp->setTitle(tr("Login Here"));
 		actLogInOut->setText(tr("Login"));
 		// clear edit widgets
-		m_acWidgets->clearWidgets();
-		m_modWidgets->clearWidgets();
+		this->clearAllWidgets();
 		// set empty layout
 		m_dockManager->setEmptyLayout();
 		return;
@@ -532,6 +531,12 @@ QSortFilterProxyModel * QUaModbusAccessControl::getPermsComboModel()
 {
 	// TODO : use to give permissions
 	return &m_proxyPerms;
+}
+
+void QUaModbusAccessControl::clearAllWidgets()
+{
+	m_acWidgets ->clearWidgets();
+	m_modWidgets->clearWidgets();
 }
 
 void QUaModbusAccessControl::login()

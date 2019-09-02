@@ -38,6 +38,8 @@ public:
 
 	QSortFilterProxyModel * getPermsComboModel();
 
+	void clearAllWidgets();
+
 signals:
 	void loggedUserChanged(QUaUser * user);
 
