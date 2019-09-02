@@ -180,6 +180,11 @@ void QUaModbusDataBlock::on_dataChanged(const QVariant & value)
 
 void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 {
+	// avoid update or emit if no change, improves performance
+	if (error == this->getLastError())
+	{
+		return;
+	}
 	this->lastError()->setValue(error);
 	// NOTE : need to add custom signal because OPC UA valueChanged
 	//        only works for changes through network
@@ -187,16 +192,16 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	emit this->lastErrorChanged(error);
 	// update errors in values
 	auto values = this->values()->values();
-	for (int i = 0; i < values.count(); i++)
+	for (auto value : values)
 	{
-		auto oldValErr = values.at(i)->getLastError();
+		auto oldValErr = value->getLastError();
 		if (error == QModbusError::ConnectionError && oldValErr != QModbusError::ConfigurationError)
 		{
-			values.at(i)->setLastError(QModbusError::ConnectionError);
+			value->setLastError(QModbusError::ConnectionError);
 		}
 		else if (error != QModbusError::ConnectionError && oldValErr == QModbusError::NoError)
 		{
-			values.at(i)->setLastError(error);
+			value->setLastError(error);
 		}
 	}
 }
@@ -289,9 +294,9 @@ void QUaModbusDataBlock::startLoop()
 			this->setData(data, false);
 			// update modbus values and errors
 			auto values = this->values()->values();
-			for (int i = 0; i < values.count(); i++)
+			for (auto value : values)
 			{
-				values.at(i)->setValue(data, error);
+				value->setValue(data, error);
 			}
 			// delete reply on next event loop exec
 			m_replyRead->deleteLater();

@@ -215,6 +215,12 @@ void QUaModbusValue::on_valueChanged(const QVariant & value)
 
 void QUaModbusValue::on_updateLastError(const QModbusError & error)
 {
+	// avoid update or emit if no change, improves performance
+	if (error == this->getLastError())
+	{
+		return;
+	}
+	// update
 	this->lastError()->setValue(error);
 	// emit
 	emit this->lastErrorChanged(error);
@@ -269,7 +275,13 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	// convert value and set it, but leave block error code
 	this->setLastError(blockError);
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
-	this->value()->setValue(value); // NOTE : avoid recursion
+	// avoid update or emit if no change, improves performance
+	if (this->getValue() == value)
+	{
+		return;
+	}
+	// NOTE : set value before emitting to avoid recursion
+	this->value()->setValue(value);
 	// emit
 	emit this->valueChanged(value);
 }

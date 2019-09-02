@@ -53,9 +53,9 @@ QString QUaModbusClientList::addRtuSerialClient(QString strClientId)
 
 void QUaModbusClientList::clear()
 {
-	for (int i = 0; i < this->clients().count(); i++)
+	for (auto client : this->clients())
 	{
-		this->clients().at(i)->remove();
+		client->remove();
 	}
 }
 
@@ -862,6 +862,14 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 QList<QUaModbusClient*> QUaModbusClientList::clients()
 {
 	return this->browseChildren<QUaModbusClient>();
+}
+
+void QUaModbusClientList::clearInmediatly()
+{
+	for (auto client : this->clients())
+	{
+		delete client;
+	}
 }
 
 #ifdef QUA_ACCESS_CONTROL

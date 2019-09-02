@@ -54,6 +54,8 @@ public:
 
 	QList<QUaModbusClient*> clients();
 
+	void clearInmediatly();
+
 #ifdef QUA_ACCESS_CONTROL
 	QUaPermissionsList * getPermissionsList();
 #endif // QUA_ACCESS_CONTROL

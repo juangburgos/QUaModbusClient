@@ -32,9 +32,9 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 		return tr("%1 : Block Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
-	if (strBlockId.count() > 6)
+	if (strBlockId.count() > 20)
 	{
-		return  tr("%1 : Block Id cannot contain more than 6 characters.").arg("Error");
+		return  tr("%1 : Block Id cannot contain more than 20 characters.").arg("Error");
 	}
 	// check not called Name
 	if (strBlockId.compare("Name", Qt::CaseSensitive) == 0)
