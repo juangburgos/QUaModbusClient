@@ -80,9 +80,9 @@ inline QString QUaModbusClientList::addClient(QString strClientId)
 		return tr("%1 : Client Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
-	if (strClientId.count() > 6)
+	if (strClientId.count() > 40)
 	{
-		return tr("%1 : Client Id cannot contain more than 6 characters.").arg("Error");
+		return tr("%1 : Client Id cannot contain more than 40 characters.").arg("Error");
 	}
 	// check not called Name
 	if (strClientId.compare("Name", Qt::CaseSensitive) == 0)

@@ -252,7 +252,7 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 	// set client list
 	m_modbusTreeWidget->setClientList(mod);
 	// bind selected
-	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::nodeSelectionChanged, this,
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::nodeSelectionChanged, m_thiz,
 	[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
 	{
 		Q_UNUSED(nodePrev);
@@ -300,6 +300,11 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 		default:
 			break;
 		}
+	});
+	// clear widgets before clearing clients
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, m_thiz,
+	[this]() {
+		m_thiz->clearAllWidgets();
 	});
 }
 

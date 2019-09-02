@@ -298,6 +298,7 @@ void QUaModbusClientTree::on_pushButtonClear_clicked()
 	{
 		return;
 	}
+	emit this->aboutToClear();
 	// clear
 	m_listClients->clear();
 }

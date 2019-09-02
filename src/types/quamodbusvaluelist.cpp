@@ -33,9 +33,9 @@ QString QUaModbusValueList::addValue(QString strValueId)
 		return tr("%1 : Value Id argument cannot be empty.").arg("Error");
 	}
 	// check valid length
-	if (strValueId.count() > 10)
+	if (strValueId.count() > 130)
 	{
-		return tr("%1 : Value Id cannot contain more than 6 characters.").arg("Error");
+		return tr("%1 : Value Id cannot contain more than 120 characters.").arg("Error");
 	}
 	// check not called Name
 	if (strValueId.compare("Name", Qt::CaseSensitive) == 0)

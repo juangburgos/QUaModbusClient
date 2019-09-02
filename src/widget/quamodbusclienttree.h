@@ -65,8 +65,8 @@ public:
 	QItemSelectionModel * selectionModel() const;
 
 signals:
-	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev,
-		QUaNode * nodeCurr, QModbusSelectType typeCurr);
+	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
+	void aboutToClear();
 
 public slots:
 #ifdef QUA_ACCESS_CONTROL
