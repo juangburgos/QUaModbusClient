@@ -90,8 +90,9 @@ QUaModbusValueList * QUaModbusDataBlock::values() const
 void QUaModbusDataBlock::remove()
 {
 	// stop loop
-	m_loopHandle = -1;
 	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+	// make handle invalid **after** stopping loop in thread
+	m_loopHandle = -1;
 	// call deleteLater in thread, so thread has time to stop loop first
 	// NOTE : deleteLater will delete the object in the correct thread anyways
 	this->client()->m_workerThread.execInThread([this]() {
@@ -158,8 +159,9 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 		return;
 	}
 	// stop old loop
-	m_loopHandle = -1;
 	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+	// make handle invalid **after** stopping loop in thread
+	m_loopHandle = -1;
 	// start new loop
 	this->startLoop();
 	// update ua sample interval for data
@@ -223,8 +225,9 @@ void QUaModbusDataBlock::startLoop()
 	m_loopHandle = this->client()->m_workerThread.startLoopInThread(
 	[this]() {
 		//Q_ASSERT(m_loopHandle > 0); // NOTE : this does happen when cleaning all blocks form a client
-		if (m_loopHandle < 0)
+		if (m_loopHandle <= 0)
 		{
+	
 			return;
 		}
 		auto client = this->client();
@@ -304,6 +307,7 @@ void QUaModbusDataBlock::startLoop()
 			m_replyRead = nullptr;
 		}, Qt::QueuedConnection);
 	}, samplingTime);
+	Q_ASSERT(m_loopHandle > 0);
 }
 
 bool QUaModbusDataBlock::loopRunning()
@@ -534,7 +538,7 @@ void QUaModbusDataBlock::setData(const QVector<quint16>& data, const bool &write
 {
 	auto varData = QVariant::fromValue(data);
 	// set on OPC
-	this->data()->setValue(varData);
+	this->data()->setValue(varData); // TODO : check of memory leak when writing array
 	// emit change c++
 	emit this->dataChanged(data);
 	// check if write to modbus

@@ -71,9 +71,9 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 
 void QUaModbusDataBlockList::clear()
 {
-	for (int i = 0; i < this->blocks().count(); i++)
+	for (auto &block : this->blocks())
 	{
-		this->blocks().at(i)->remove();
+		block->remove();
 	}
 }
 
