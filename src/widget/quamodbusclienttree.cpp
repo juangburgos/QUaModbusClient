@@ -298,6 +298,7 @@ void QUaModbusClientTree::on_pushButtonClear_clicked()
 	{
 		return;
 	}
+	// to clear other widgets that might be attached to objects of this tree
 	emit this->aboutToClear();
 	// clear
 	m_listClients->clear();

@@ -306,6 +306,11 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 	[this]() {
 		m_thiz->clearAllWidgets();
 	});
+	// clear widgets before clearing blocks
+	QObject::connect(m_clientWidget, &QUaModbusClientWidget::aboutToClear, m_thiz,
+	[this]() {
+		m_thiz->clearAllWidgets();
+	});
 }
 
 template<class T>

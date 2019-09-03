@@ -155,6 +155,8 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 		{
 			return;
 		}
+		// to clear other widgets that might be attached to objects of this tree
+		emit this->aboutToClear();
 		// clear
 		client->dataBlocks()->clear();
 	});

@@ -33,6 +33,9 @@ public:
 	void setCanWriteBlockList (const bool &canWrite);
 #endif // QUA_ACCESS_CONTROL
 
+signals:
+	void aboutToClear();
+
 private:
     Ui::QUaModbusClientWidget *ui;
 

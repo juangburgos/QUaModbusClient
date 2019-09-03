@@ -90,8 +90,8 @@ QUaModbusValueList * QUaModbusDataBlock::values() const
 void QUaModbusDataBlock::remove()
 {
 	// stop loop
-	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
 	m_loopHandle = -1;
+	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
 	// call deleteLater in thread, so thread has time to stop loop first
 	// NOTE : deleteLater will delete the object in the correct thread anyways
 	this->client()->m_workerThread.execInThread([this]() {
@@ -158,8 +158,8 @@ void QUaModbusDataBlock::on_samplingTimeChanged(const QVariant & value)
 		return;
 	}
 	// stop old loop
-	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
 	m_loopHandle = -1;
+	this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
 	// start new loop
 	this->startLoop();
 	// update ua sample interval for data
@@ -220,8 +220,9 @@ void QUaModbusDataBlock::startLoop()
 {
 	auto samplingTime = this->samplingTime()->value().value<quint32>();
 	// exec read request in client thread
-	m_loopHandle = this->client()->m_workerThread.startLoopInThread([this]() {
-		Q_ASSERT(m_loopHandle > 0);
+	m_loopHandle = this->client()->m_workerThread.startLoopInThread(
+	[this]() {
+		//Q_ASSERT(m_loopHandle > 0); // NOTE : this does happen when cleaning all blocks form a client
 		if (m_loopHandle < 0)
 		{
 			return;
