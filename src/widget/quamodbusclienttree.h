@@ -64,6 +64,11 @@ public:
 	// get selection model to block it if necessary
 	QItemSelectionModel * selectionModel() const;
 
+	// will append _clients, _blocks, _values to baseName
+	// NOTE : baseName must contain path already e.g.
+	// PATH/project.xml ->  PATH/project_clients.xml, PATH/project_blocks.xml, PATH/project_values.xml
+	void exportAllCsv(const QString &strBaseName);
+
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
 	void aboutToClear();
@@ -92,6 +97,7 @@ private:
 #ifdef QUA_ACCESS_CONTROL
 	QUaUser * m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
+	QString m_strLastPathUsed;
 
 	void setupTreeContextMenu();
 	void setupImportButton();
@@ -105,9 +111,10 @@ private:
 	QStandardItem * handleBlockAdded (QUaModbusClient    * client, QStandardItem * parent, const QString &strBlockId);
 	QStandardItem * handleValueAdded (QUaModbusDataBlock * block , QStandardItem * parent, const QString &strValueId);
 
-	void    saveContentsCsvToFile(const QString &strContents) const;
+	void    saveContentsCsvToFile(const QString &strContents, const QString &strFileName = "");
 	QString loadContentsCsvFromFile();
-	void    displayCsvLoadResult(const QString &strError) const;
+	void    displayCsvLoadResult(const QString &strError);
+	void    exportAllCsv();
 
 	bool isFilterVisible() const;
 	void setFilterVisible(const bool &isVisible);

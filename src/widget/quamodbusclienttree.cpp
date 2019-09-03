@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -39,6 +40,7 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 #ifdef QUA_ACCESS_CONTROL
 	m_loggedUser  = nullptr;
 #endif // QUA_ACCESS_CONTROL
+	m_strLastPathUsed = QString();
 	if (QMetaType::type("QModbusSelectType") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusSelectType>("QModbusSelectType");
@@ -284,6 +286,21 @@ QItemSelectionModel * QUaModbusClientTree::selectionModel() const
 	return ui->treeViewModbus->selectionModel();
 }
 
+void QUaModbusClientTree::exportAllCsv(const QString & strBaseName)
+{
+	// NOTE : suffix must not collide with any other from the main aaplication
+	QFileInfo infoBaseName = QFileInfo(strBaseName);
+	QString strBase        = infoBaseName.baseName();
+	QString strSuff        = infoBaseName.completeSuffix();
+	QString strPath        = infoBaseName.absolutePath();
+	QString strClientsName = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_clients").arg(strSuff);
+	QString strBlocksName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_blocks" ).arg(strSuff);
+	QString strValuesName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_values" ).arg(strSuff);
+	this->saveContentsCsvToFile(m_listClients->csvClients(), strClientsName);
+	this->saveContentsCsvToFile(m_listClients->csvBlocks (), strBlocksName );
+	this->saveContentsCsvToFile(m_listClients->csvValues (), strValuesName );
+}
+
 void QUaModbusClientTree::on_pushButtonClear_clicked()
 {
 	// ask user if create new config
@@ -401,6 +418,13 @@ void QUaModbusClientTree::setupExportButton()
 	ui->toolButtonExport->setPopupMode(QToolButton::MenuButtonPopup);
 	// menu
 	auto exportMenu = new QMenu(ui->toolButtonExport);
+	// all
+	exportMenu->addAction(tr("All"), this,
+	[this]() {
+		this->exportAllCsv();
+	});
+	exportMenu->addSeparator();
+	// individual
 	exportMenu->addAction(tr("Clients"), this, 
 	[this](){
 		this->saveContentsCsvToFile(m_listClients->csvClients());
@@ -765,11 +789,12 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	return iObj;
 }
 
-void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) const
+void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents, const QString &strFileName/* = ""*/)
 {
 	// select file
-	QString strSaveFile = QFileDialog::getSaveFileName(const_cast<QUaModbusClientTree*>(this), tr("Save File"),
-		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+	QString strSaveFile = !strFileName.isEmpty() ? strFileName :
+		QFileDialog::getSaveFileName(this, tr("Save File"),
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
 		tr("CSV (*.csv *.txt)"));
 	// ignore if empty
 	if (strSaveFile.isEmpty() || strSaveFile.isNull())
@@ -780,6 +805,8 @@ void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) con
 	QFile file(strSaveFile);
 	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
 	{
+		// save last path used
+		m_strLastPathUsed = QFileInfo(file).absoluteFilePath();
 		// write
 		QTextStream stream(&file);
 		stream << strContents;
@@ -787,7 +814,7 @@ void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) con
 	else
 	{
 		QMessageBox::critical(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Error"),
 			tr("Error opening file %1 for write operations.").arg(strSaveFile)
 		);
@@ -804,24 +831,26 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	msgBox.setIcon(QMessageBox::Critical);
 	// read from file
 	QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"),
-		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-		QObject::trUtf8("CSV (*.csv *.txt)"));
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
+		tr("CSV (*.csv *.txt)"));
 	// validate
 	if (strLoadFile.isEmpty())
 	{
 		return QString();
 	}
-	QFile fileConfig(strLoadFile);
+	QFile file(strLoadFile);
 	// exists
-	if (!fileConfig.exists())
+	if (!file.exists())
 	{
 		msgBox.setText(tr("File %1 does not exist.").arg(strLoadFile));
 		msgBox.exec();
 	}
-	else if (fileConfig.open(QIODevice::ReadOnly))
+	else if (file.open(QIODevice::ReadOnly))
 	{
+		// save last path used
+		m_strLastPathUsed = QFileInfo(file).absoluteFilePath();
 		// read
-		return fileConfig.readAll();
+		return file.readAll();
 	}
 	else
 	{
@@ -831,12 +860,12 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	return QString();
 }
 
-void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
+void QUaModbusClientTree::displayCsvLoadResult(const QString & strError)
 {
 	if (strError.contains("Warning", Qt::CaseInsensitive))
 	{
 		QMessageBox::warning(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Warning"),
 			strError.left(600) + "..."
 		);
@@ -844,7 +873,7 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 	else if (strError.contains("Error", Qt::CaseInsensitive))
 	{
 		QMessageBox::critical(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Warning"),
 			strError.left(600) + "..."
 		);
@@ -852,11 +881,26 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 	else
 	{
 		QMessageBox::information(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Finished"),
 			tr("Successfully import CSV data.")
 		);
 	}
+}
+
+void QUaModbusClientTree::exportAllCsv()
+{
+	// ask for base name
+	QString strBaseName = QFileDialog::getSaveFileName(this, tr("Select Base File Name"),
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
+		tr("CSV (*.csv *.txt)"));
+	// ignore if empty
+	if (strBaseName.isEmpty() || strBaseName.isNull())
+	{
+		return;
+	}
+	// save all
+	this->exportAllCsv(strBaseName);
 }
 
 bool QUaModbusClientTree::isFilterVisible() const

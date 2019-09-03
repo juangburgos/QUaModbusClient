@@ -36,6 +36,9 @@ public:
 	QDomElement toDomElement(QDomDocument & domDoc) const;
 	void        fromDomElement(QDomElement  & domElem, QString &strError);
 
+	// CSV export
+	void exportAllCsv(const QString &strBaseName);
+
 	const static QString m_strXmlName;
 
 private:
@@ -203,6 +206,12 @@ inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QStri
 		QString strWidgetName = elem.attribute("Name");
 		this->getDockManager()->setWidgetPermissions(strWidgetName, permissions);
 	}
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::exportAllCsv(const QString & strBaseName)
+{
+	m_modbusTreeWidget->exportAllCsv(strBaseName);
 }
 
 template<class T>

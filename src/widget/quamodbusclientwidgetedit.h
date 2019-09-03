@@ -94,8 +94,6 @@ public:
 private slots:
     void on_comboBoxType_currentIndexChanged(int index);
 
-    void on_checkBoxKeepConnect_toggled(bool checked);
-
 private:
     Ui::QUaModbusClientWidgetEdit *ui;
 

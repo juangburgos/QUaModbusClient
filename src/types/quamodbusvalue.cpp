@@ -230,7 +230,7 @@ void QUaModbusValue::on_updateLastError(const QModbusError & error)
 void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError &blockError)
 {
 	// check configuration
-	auto type = this->type()->value().value<QModbusValueType>();
+	auto type = this->getType();
 	if (type == QModbusValueType::Invalid)
 	{
 		this->value()->setWriteAccess(false);
@@ -240,7 +240,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		emit this->valueChanged(QVariant());
 		return;
 	}
-	int addressOffset = this->addressOffset()->value().value<int>();
+	int addressOffset = this->getAddressOffset();
 	if (addressOffset < 0)
 	{
 		this->value()->setWriteAccess(false);
@@ -251,7 +251,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		return;
 	}
 	// set writable if block type allows it
-	auto blockType = this->block()->type()->value().value<QUaModbusDataBlock::RegisterType>();
+	auto blockType = this->block()->getType();
 	if (blockType == QUaModbusDataBlock::RegisterType::Coils ||
 		blockType == QUaModbusDataBlock::RegisterType::HoldingRegisters)
 	{
