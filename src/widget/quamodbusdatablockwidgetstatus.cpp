@@ -12,12 +12,13 @@ QUaModbusDataBlockWidgetStatus::QUaModbusDataBlockWidgetStatus(QWidget *parent) 
 	ui->tableViewData->setAlternatingRowColors(true);
 	ui->tableViewData->setSelectionBehavior(QAbstractItemView::SelectRows);
 	ui->tableViewData->horizontalHeader()->setStretchLastSection(true);
+	ui->tableViewData->setSelectionMode(QAbstractItemView::SingleSelection);
+	ui->tableViewData->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	// setup model
 	m_modelValues.setColumnCount(1);
 	m_modelValues.setHorizontalHeaderLabels(QStringList() << tr("Decimal Value"));
 
 	// TODO : improve data display with QModbusValueType ("quamodbusvalue.h")
-
 }
 
 QUaModbusDataBlockWidgetStatus::~QUaModbusDataBlockWidgetStatus()
@@ -45,7 +46,7 @@ void QUaModbusDataBlockWidgetStatus::setData(const quint32 &startAddress, const 
 	if (m_modelValues.rowCount() != data.count())
 	{
 		// clear all table
-		m_modelValues.removeRows(0, data.count());
+		m_modelValues.removeRows(0, m_modelValues.rowCount());
 		// NOTE : it is much more performant to pre-allocate the entire row in advance,
 		//        and calling parent->appendRow (calling parent->setChild is expensive)
 		QList<QStandardItem*> listCols;

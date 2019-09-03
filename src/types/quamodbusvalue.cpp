@@ -36,11 +36,13 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	// to safely update error in ua server thread
 	QObject::connect(this, &QUaModbusValue::updateLastError, this, &QUaModbusValue::on_updateLastError);
 	// set descriptions
+	/*
 	type()         ->setDescription(tr("Data type used to convert the registers to the value."));
 	registersUsed()->setDescription(tr("Number of registeres used by the selected data type"));
 	addressOffset()->setDescription(tr("Offset with respect to the data block."));
 	value()        ->setDescription(tr("The value obtained by converting the registers to the selected type."));
 	lastError()    ->setDescription(tr("Last error obtained while converting registers to value."));
+	*/
 }
 
 QUaProperty * QUaModbusValue::type() const

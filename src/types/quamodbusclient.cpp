@@ -33,12 +33,14 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	serverAddress ()->setWriteAccess(true);
 	keepConnecting()->setWriteAccess(true);
 	// set descriptions
+	/*
 	type          ()->setDescription(tr("Modbus client communication type (TCP or RTU Serial)."));
 	serverAddress ()->setDescription(tr("Modbus server Device Id or Modbus address."));
 	keepConnecting()->setDescription(tr("Whether the client should try to keep connecting after connection failure"));
 	state         ()->setDescription(tr("Modbus connection state."));
 	lastError     ()->setDescription(tr("Last error occured at connection level."));
 	dataBlocks    ()->setDescription(tr("List of Modbus data blocks updated through polling."));
+	*/
 	// handle changes
 	QObject::connect(serverAddress() , &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_serverAddressChanged , Qt::QueuedConnection);
 	QObject::connect(keepConnecting(), &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_keepConnectingChanged, Qt::QueuedConnection);

@@ -43,6 +43,7 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	// to safely update error in ua server thread
 	QObject::connect(this, &QUaModbusDataBlock::updateLastError, this, &QUaModbusDataBlock::on_updateLastError);
 	// set descriptions
+	/*
 	type        ()->setDescription(tr("Type of Modbus register for this block."));
 	address     ()->setDescription(tr("Start register address for this block (with respect to the register type)."));
 	size        ()->setDescription(tr("Size (in registers) for this block."));
@@ -50,6 +51,7 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	data        ()->setDescription(tr("The current block values as per the last successfull read."));
 	lastError   ()->setDescription(tr("The last error reported while reading or writing this block."));
 	values      ()->setDescription(tr("List of converted values."));
+	*/
 }
 
 QUaProperty * QUaModbusDataBlock::type() const
@@ -536,6 +538,7 @@ QVector<quint16> QUaModbusDataBlock::getData() const
 
 void QUaModbusDataBlock::setData(const QVector<quint16>& data, const bool &writeModbus/* = true*/)
 {
+	Q_ASSERT_X(data.count() == this->getSize(), "QUaModbusDataBlock::setData", "Received block of incorrect size");
 	auto varData = QVariant::fromValue(data);
 	// set on OPC
 	this->data()->setValue(varData); // TODO : check of memory leak when writing array

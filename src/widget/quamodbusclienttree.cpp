@@ -151,6 +151,8 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	ui->treeViewModbus->setSortingEnabled(true);
 	ui->treeViewModbus->sortByColumn((int)Headers::Objects, Qt::SortOrder::AscendingOrder);
 	ui->treeViewModbus->setSelectionBehavior(QAbstractItemView::SelectRows);
+	ui->treeViewModbus->setSelectionMode(QAbstractItemView::SingleSelection);
+	ui->treeViewModbus->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	// setup tree interactions
 	QObject::connect(ui->treeViewModbus->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
 	[this](const QModelIndex &current, const QModelIndex &previous) {

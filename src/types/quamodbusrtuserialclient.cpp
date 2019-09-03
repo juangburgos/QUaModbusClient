@@ -51,11 +51,13 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	QObject::connect(dataBits(), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_dataBitsChanged, Qt::QueuedConnection);
 	QObject::connect(stopBits(), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_stopBitsChanged, Qt::QueuedConnection);
 	// set descriptions
+	/*
 	comPort ()->setDescription("Local serial COM port used to connect to the Modbus server.");
 	parity  ()->setDescription("Parity value (for error detection) used to communicate with the Modbus server.");
 	baudRate()->setDescription("Baud Rate value (data rate in bits per second) used to communicate with the Modbus server.");
 	dataBits()->setDescription("Number of Data Bits (in each character) used to communicate with the Modbus server.");
 	stopBits()->setDescription("Number of Stop Bits (sent at the end of every character) used to communicate with the Modbus server.");
+	*/
 }
 
 QUaProperty * QUaModbusRtuSerialClient::comPort() const
