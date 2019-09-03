@@ -342,9 +342,20 @@ void QUaModbusClientTree::setupImportButton()
 		}
 		// NOTE : block signals to avoid calling currentRowChanged repetitively
 		//        it works with queued because it seems showing a dialog forces event processing
-		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
+		ui->treeViewModbus->selectionModel()->blockSignals(true);
 		QString strError = m_listClients->setCsvClients(strContents);
 		this->displayCsvLoadResult(strError);
+		ui->treeViewModbus->selectionModel()->blockSignals(false);
+		// manually select last one
+		auto parent = m_modelModbus.invisibleRootItem();
+		auto row    = parent->rowCount();
+		if (row <= 0)
+		{
+			return;
+		}
+		auto last  = parent->child(row-1, (int)Headers::Objects);
+		auto index = m_proxyModbus.mapFromSource(last->index());
+		emit ui->treeViewModbus->selectionModel()->currentRowChanged(index, QModelIndex());
 	});
 	importMenu->addAction(tr("Blocks"), this, 
 	[this](){

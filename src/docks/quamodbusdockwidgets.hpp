@@ -304,12 +304,20 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 	// clear widgets before clearing clients
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, m_thiz,
 	[this]() {
+		// clear all widgets
 		m_thiz->clearAllWidgets();
+		// disable modbus widgets
+		m_clientWidget->setEnabled(false);
+		m_blockWidget ->setEnabled(false);
+		m_valueWidget ->setEnabled(false);
 	});
 	// clear widgets before clearing blocks
 	QObject::connect(m_clientWidget, &QUaModbusClientWidget::aboutToClear, m_thiz,
 	[this]() {
 		m_thiz->clearAllWidgets();
+		// disable modbus widgets
+		m_clientWidget->setEnabled(false);
+		m_blockWidget ->setEnabled(false);
 	});
 }
 
