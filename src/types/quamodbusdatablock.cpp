@@ -297,7 +297,11 @@ void QUaModbusDataBlock::startLoop()
 			this->setLastError(error);
 			// update block value
 			QVector<quint16> data = m_replyRead->result().values();
-			this->setData(data, false);
+			// TODO : esrly exit when refactor QUaModbusValue::setValue
+			if (error == QModbusError::NoError)
+			{
+				this->setData(data, false);
+			}
 			// update modbus values and errors
 			auto values = this->values()->values();
 			for (auto value : values)
