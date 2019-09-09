@@ -207,6 +207,45 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 		// emit
 		emit this->nodeSelectionChanged(nodePrev, typePrev, nodeCurr, typeCurr);
 	});
+	// emit on double click
+	QObject::connect(ui->treeViewModbus, &QAbstractItemView::doubleClicked, this,
+	[this](const QModelIndex &index) {
+		auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
+		if (!item)
+		{
+			return;
+		}
+		auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		if (!node)
+		{
+			return;
+		}
+		auto type = item->data(QUaModbusClientTree::SelectTypeRole).value<QModbusSelectType>();
+		switch (type)
+		{
+		case QModbusSelectType::QUaModbusClient:
+			{
+				auto client = dynamic_cast<QUaModbusClient*>(node);
+				emit this->clientDoubleClicked(client);
+			}
+			break;
+		case QModbusSelectType::QUaModbusDataBlock:
+			{
+				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				emit this->blockDoubleClicked(block);
+			}
+			break;
+		case QModbusSelectType::QUaModbusValue:
+			{
+				auto value = dynamic_cast<QUaModbusValue*>(node);
+				emit this->valueDoubleClicked(value);
+			}
+			break;
+		default:
+			Q_ASSERT(false);
+			break;
+		}
+	});
 }
 
 QUaModbusClientTree::~QUaModbusClientTree()

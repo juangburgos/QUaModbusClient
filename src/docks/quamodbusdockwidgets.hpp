@@ -310,6 +310,24 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 			break;
 		}
 	});
+	// open client edit widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::clientDoubleClicked, this,
+	[this](QUaModbusClient * client) {
+		Q_UNUSED(client);
+		this->getDockManager()->setIsDockWidgetVisible(QUaModbusDockWidgets<T>::m_strModbusClients, true);
+	});
+	// open client block widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::blockDoubleClicked, this,
+	[this](QUaModbusDataBlock * block) {
+		Q_UNUSED(block);
+		this->getDockManager()->setIsDockWidgetVisible(QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+	});
+	// open client edit widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::valueDoubleClicked, this,
+	[this](QUaModbusValue * value) {
+		Q_UNUSED(value);
+		this->getDockManager()->setIsDockWidgetVisible(QUaModbusDockWidgets<T>::m_strModbusValues, true);
+	});
 	// clear widgets before clearing clients
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, m_thiz,
 	[this]() {

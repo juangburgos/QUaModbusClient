@@ -15,6 +15,7 @@ class QUaModbusClient;
 class QUaModbusClientList;
 class QUaModbusClientDialog;
 class QUaModbusDataBlock;
+class QUaModbusValue;
 
 #ifdef QUA_ACCESS_CONTROL
 class QUaUser;
@@ -71,6 +72,9 @@ public:
 
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
+	void clientDoubleClicked(QUaModbusClient    * client);
+	void blockDoubleClicked (QUaModbusDataBlock * block );
+	void valueDoubleClicked (QUaModbusValue     * value );
 	void aboutToClear();
 
 public slots:
