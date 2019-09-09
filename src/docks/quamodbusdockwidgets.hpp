@@ -388,18 +388,10 @@ inline void QUaModbusDockWidgets<T>::updateClientWidgetPermissions()
 		m_clientWidget->setCanWrite(false);
 		return;
 	}
-	// client list perms
-	auto permsClientList    = m_client->list()->permissionsObject();
-	auto canWriteClientList = !permsClientList ? true : permsClientList->canUserWrite(user);
-	m_clientWidget->setCanWriteClientList(canWriteClientList);
 	// client perms
 	auto perms    = m_client->permissionsObject();
 	auto canWrite = !perms ? true : perms->canUserWrite(user);
 	m_clientWidget->setCanWrite(canWrite);
-	// block list perms
-	auto permsBlockList    = m_client->dataBlocks()->permissionsObject();
-	auto canWriteBlockList = !permsBlockList ? true : permsBlockList->canUserWrite(user);
-	m_clientWidget->setCanWriteBlockList(canWriteBlockList);
 	// NOTE : can read implemented in select tree filter
 }
 
@@ -413,18 +405,10 @@ inline void QUaModbusDockWidgets<T>::updateBlockWidgetPermissions()
 		m_blockWidget->setCanWrite(false);
 		return;
 	}
-	// block list perms
-	auto permsBlockList = m_block->list()->permissionsObject();
-	auto canWriteBlockList = !permsBlockList ? true : permsBlockList->canUserWrite(user);
-	m_blockWidget->setCanWriteBlockList(canWriteBlockList);
 	// block perms
 	auto perms = m_block->permissionsObject();
 	auto canWrite = !perms ? true : perms->canUserWrite(user);
 	m_blockWidget->setCanWrite(canWrite);
-	// value list perms
-	auto permsValueList = m_block->values()->permissionsObject();
-	auto canWriteValueList = !permsValueList ? true : permsValueList->canUserWrite(user);
-	m_blockWidget->setCanWriteValueList(canWriteValueList);
 	// NOTE : can read implemented in select tree filter
 }
 
@@ -438,12 +422,8 @@ inline void QUaModbusDockWidgets<T>::updateValueWidgetPermissions()
 		m_valueWidget->setCanWrite(false);
 		return;
 	}
-	// value list perms
-	auto permsValueList = m_valueCurr->list()->permissionsObject();
-	auto canWriteValueList = !permsValueList ? true : permsValueList->canUserWrite(user);
-	m_valueWidget->setCanWriteValueList(canWriteValueList);
 	// value perms
-	auto perms = m_valueCurr->permissionsObject();
+	auto perms    = m_valueCurr->permissionsObject();
 	auto canWrite = !perms ? true : perms->canUserWrite(user);
 	m_valueWidget->setCanWrite(canWrite);
 	// NOTE : can read implemented in select tree filter

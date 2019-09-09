@@ -185,30 +185,24 @@ void QUaModbusClientWidget::setupPermissionsModel(QSortFilterProxyModel * proxyP
 
 void QUaModbusClientWidget::setCanWrite(const bool & canWrite)
 {
-	ui->widgetClientEdit->setDeviceAddressEditable(canWrite);
-	ui->widgetClientEdit->setKeepConnectingEditable(canWrite);
-	ui->widgetClientEdit->setIpAddressEditable(canWrite);
-	ui->widgetClientEdit->setNetworkPortEditable(canWrite);
-	ui->widgetClientEdit->setComPortEditable(canWrite);
-	ui->widgetClientEdit->setParityEditable(canWrite);
-	ui->widgetClientEdit->setBaudRateEditable(canWrite);
-	ui->widgetClientEdit->setDataBitsEditable(canWrite);
-	ui->widgetClientEdit->setStopBitsEditable(canWrite);
-	ui->pushButtonApply->setEnabled(canWrite);
-	ui->pushButtonDelete->setVisible(canWrite);
-	ui->pushButtonClear->setVisible(canWrite);
-	// TODO : permission to connect/disconnect belongs here?
-	ui->pushButtonConnect->setEnabled(canWrite);
-}
-
-void QUaModbusClientWidget::setCanWriteClientList(const bool & canWrite)
-{
-	ui->pushButtonPerms->setVisible(canWrite);
-}
-
-void QUaModbusClientWidget::setCanWriteBlockList(const bool & canWrite)
-{
-	ui->pushButtonAddBlock->setVisible(canWrite);
+	// input widgets
+	ui->widgetClientEdit  ->setDeviceAddressEditable (canWrite);
+	ui->widgetClientEdit  ->setKeepConnectingEditable(canWrite);
+	ui->widgetClientEdit  ->setIpAddressEditable     (canWrite);
+	ui->widgetClientEdit  ->setNetworkPortEditable   (canWrite);
+	ui->widgetClientEdit  ->setComPortEditable       (canWrite);
+	ui->widgetClientEdit  ->setParityEditable        (canWrite);
+	ui->widgetClientEdit  ->setBaudRateEditable      (canWrite);
+	ui->widgetClientEdit  ->setDataBitsEditable      (canWrite);
+	ui->widgetClientEdit  ->setStopBitsEditable      (canWrite);
+	// action buttons
+	ui->pushButtonApply   ->setEnabled(canWrite);
+	ui->pushButtonDelete  ->setEnabled(canWrite);
+	ui->pushButtonAddBlock->setEnabled(canWrite);
+	ui->pushButtonClear   ->setEnabled(canWrite);
+	ui->pushButtonPerms   ->setEnabled(canWrite);
+	// NOTE : dont know if permission to connect/disconnect belongs here
+	ui->pushButtonConnect ->setEnabled(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 

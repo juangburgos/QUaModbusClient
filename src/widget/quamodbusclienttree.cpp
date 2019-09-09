@@ -303,11 +303,11 @@ void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 	// update filter to take permissions into account
 	m_proxyModbus.resetFilter();
 	// show/hide add client button depending on list perms
-	auto permsList = m_listClients->permissionsObject();
+	auto permsList    = m_listClients->permissionsObject();
 	auto canWriteList = !permsList ? true : permsList->canUserWrite(m_loggedUser);
-	ui->pushButtonAddClient->setVisible(canWriteList);
-	ui->toolButtonImport->setVisible(canWriteList);
-	ui->pushButtonClear->setVisible(canWriteList);
+	ui->pushButtonAddClient->setEnabled(canWriteList);
+	ui->toolButtonImport   ->setEnabled(canWriteList);
+	ui->pushButtonClear    ->setEnabled(canWriteList);
 }
 #endif // QUA_ACCESS_CONTROL
 

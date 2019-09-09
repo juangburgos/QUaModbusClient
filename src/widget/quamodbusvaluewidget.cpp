@@ -122,15 +122,13 @@ void QUaModbusValueWidget::setupPermissionsModel(QSortFilterProxyModel * proxyPe
 
 void QUaModbusValueWidget::setCanWrite(const bool & canWrite)
 {
-	ui->widgetValueEdit->setTypeEditable(canWrite);
-	ui->widgetValueEdit->setOffsetEditable(canWrite);
-	ui->pushButtonApply->setEnabled(canWrite);
-	ui->pushButtonDelete->setVisible(canWrite);
-}
-
-void QUaModbusValueWidget::setCanWriteValueList(const bool & canWrite)
-{
-	ui->pushButtonPerms->setVisible(canWrite);
+	// input widgets
+	ui->widgetValueEdit ->setTypeEditable(canWrite);
+	ui->widgetValueEdit ->setOffsetEditable(canWrite);
+	// action buttons
+	ui->pushButtonApply ->setEnabled(canWrite);
+	ui->pushButtonDelete->setEnabled(canWrite);
+	ui->pushButtonPerms ->setEnabled(canWrite);
 }
 #endif // QUA_ACCESS_CONTROL
 

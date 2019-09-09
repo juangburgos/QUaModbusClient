@@ -29,8 +29,6 @@ public:
 #ifdef QUA_ACCESS_CONTROL
 	void setupPermissionsModel(QSortFilterProxyModel * proxyPerms);
 	void setCanWrite(const bool &canWrite);
-	void setCanWriteBlockList(const bool &canWrite);
-	void setCanWriteValueList(const bool &canWrite);
 #endif // QUA_ACCESS_CONTROL
 
 private:
