@@ -24,6 +24,7 @@ QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
 	ui->pushButtonPerms->setVisible(false);
 #else
 	m_loggedUser = nullptr;
+	m_proxyPerms = nullptr;
 	ui->pushButtonPerms->setToolTip(tr(
 		"Read permissions control if this client is shown.\n"
 		"Write permissions control if the client parameters can be changed. "

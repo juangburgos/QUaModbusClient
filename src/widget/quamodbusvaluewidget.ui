@@ -27,14 +27,14 @@
     <number>0</number>
    </property>
    <item row="0" column="0" colspan="2">
-    <spacer name="horizontalSpacer_1">
+    <spacer name="horizontalSpacerTop">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
        <width>288</width>
-       <height>20</height>
+       <height>0</height>
       </size>
      </property>
     </spacer>
@@ -47,7 +47,7 @@
     </widget>
    </item>
    <item row="1" column="0" colspan="3">
-    <widget class="Line" name="line1">
+    <widget class="Line" name="lineTop">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -57,7 +57,7 @@
     <widget class="QUaModbusValueWidgetEdit" name="widgetValueEdit" native="true"/>
    </item>
    <item row="3" column="0" colspan="3">
-    <widget class="Line" name="line2">
+    <widget class="Line" name="lineMiddle">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -67,7 +67,7 @@
     <widget class="QUaModbusValueWidgetStatus" name="widgetValueStatus" native="true"/>
    </item>
    <item row="5" column="0" colspan="3">
-    <widget class="Line" name="line3">
+    <widget class="Line" name="lineBottom">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -81,7 +81,7 @@
     </widget>
    </item>
    <item row="6" column="1">
-    <spacer name="horizontalSpacer_2">
+    <spacer name="horizontalSpacerBottom">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>

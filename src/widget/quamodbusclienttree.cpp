@@ -30,7 +30,7 @@
 #endif // QUA_ACCESS_CONTROL
 
 int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 1;
-int QUaModbusClientTree::PointerRole = Qt::UserRole + 2;
+int QUaModbusClientTree::PointerRole    = Qt::UserRole + 2;
 
 QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	QWidget(parent),
@@ -41,7 +41,8 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 #ifndef QUA_ACCESS_CONTROL
 	ui->pushButtonPerms->setVisible(false);
 #else
-	m_loggedUser  = nullptr;
+	m_loggedUser = nullptr;
+	m_proxyPerms = nullptr;
 	ui->pushButtonPerms->setToolTip(tr(
 		"Sets the client list permissions.\n"
 		"Read permissions do nothing. To disallow showing the client tree, use the dock's permissions."
@@ -297,11 +298,10 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 		// add to gui
 		this->handleClientAdded(client);
 	}
-
 #ifdef QUA_ACCESS_CONTROL
 	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, listClients,
 	[this, listClients]() {
-		// NOTE : call QUaModbusClientWidget::setupPermissionsModel first to set m_proxyPerms
+		// NOTE : call ::setupPermissionsModel first to set m_proxyPerms
 		Q_CHECK_PTR(m_proxyPerms);
 		// create permissions widget
 		auto permsWidget = new QUaDockWidgetPerms;
@@ -324,6 +324,14 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 		// update widgets
 		this->on_loggedUserChanged(m_loggedUser);
 	});
+#endif // QUA_ACCESS_CONTROL
+}
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientTree::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
+{
+	m_proxyPerms = proxyPerms;
+	Q_CHECK_PTR(m_proxyPerms);
 }
 
 void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
@@ -334,11 +342,9 @@ void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 	// show/hide add client button depending on list perms
 	auto permsList    = m_listClients->permissionsObject();
 	auto canWriteList = !permsList ? true : permsList->canUserWrite(m_loggedUser);
-
 	QString strToolTip = canWriteList ?
 		tr("") :
 		tr("Do not have permissions.");
-
 	ui->pushButtonAddClient->setEnabled(canWriteList);
 	ui->toolButtonImport   ->setEnabled(canWriteList);
 	ui->pushButtonClear    ->setEnabled(canWriteList);
@@ -385,14 +391,6 @@ void QUaModbusClientTree::exportAllCsv(const QString & strBaseName)
 	this->saveContentsCsvToFile(m_listClients->csvBlocks (), strBlocksName );
 	this->saveContentsCsvToFile(m_listClients->csvValues (), strValuesName );
 }
-
-#ifdef QUA_ACCESS_CONTROL
-void QUaModbusClientTree::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
-{
-	m_proxyPerms = proxyPerms;
-	Q_CHECK_PTR(m_proxyPerms);
-}
-#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusClientTree::on_pushButtonClear_clicked()
 {
