@@ -9,6 +9,8 @@
 #include <QUaModbusClientDialog>
 
 #ifdef QUA_ACCESS_CONTROL
+#include <QUaUser>
+#include <QUaPermissions>
 #include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
@@ -19,6 +21,12 @@ QUaModbusValueWidget::QUaModbusValueWidget(QWidget *parent) :
     ui->setupUi(this);
 #ifndef QUA_ACCESS_CONTROL
 	ui->pushButtonPerms->setVisible(false);
+#else
+	m_loggedUser = nullptr;
+	ui->pushButtonPerms->setToolTip(tr(
+		"Read permissions control if this value is shown.\n"
+		"Write permissions control if the value parameters can be changed. "
+	));
 #endif // !QUA_ACCESS_CONTROL
 }
 
@@ -75,7 +83,35 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 			return;
 		}
 		// read permissions and set them for layout list
-		value->setPermissionsObject(permsWidget->permissions());
+		auto perms = permsWidget->permissions();
+		perms ? value->setPermissionsObject(perms) : value->clearPermissions();
+		// update widgets
+		this->on_loggedUserChanged(m_loggedUser);
+	});
+	m_connections <<
+	QObject::connect(this, &QUaModbusValueWidget::loggedUserChanged, value,
+	[this, value]() {
+		// value perms
+		auto perms    = value ? value->permissionsObject() : nullptr;
+		auto canRead  = !m_loggedUser ? false : !perms ? true : perms->canUserRead(m_loggedUser);
+		auto canWrite = !m_loggedUser ? false : !perms ? true : perms->canUserWrite(m_loggedUser);
+		if (!canRead)
+		{
+			this->setEnabled(false);
+		}
+		QString strToolTip = canWrite ?
+			tr("") :
+			tr("Do not have permissions.");
+		// input widgets
+		ui->widgetValueEdit ->setTypeEditable(canWrite);
+		ui->widgetValueEdit ->setOffsetEditable(canWrite);
+		// action buttons
+		ui->pushButtonApply ->setEnabled(canWrite);
+		ui->pushButtonDelete->setEnabled(canWrite);
+		ui->pushButtonPerms ->setVisible(canWrite); // NOTE : only hide this one
+		// tooltips
+		ui->pushButtonApply   ->setToolTip(strToolTip);
+		ui->pushButtonDelete  ->setToolTip(strToolTip);
 	});
 #endif // QUA_ACCESS_CONTROL
 	m_connections <<
@@ -120,15 +156,10 @@ void QUaModbusValueWidget::setupPermissionsModel(QSortFilterProxyModel * proxyPe
 	Q_CHECK_PTR(m_proxyPerms);
 }
 
-void QUaModbusValueWidget::setCanWrite(const bool & canWrite)
+void QUaModbusValueWidget::on_loggedUserChanged(QUaUser * user)
 {
-	// input widgets
-	ui->widgetValueEdit ->setTypeEditable(canWrite);
-	ui->widgetValueEdit ->setOffsetEditable(canWrite);
-	// action buttons
-	ui->pushButtonApply ->setEnabled(canWrite);
-	ui->pushButtonDelete->setEnabled(canWrite);
-	ui->pushButtonPerms ->setEnabled(canWrite);
+	m_loggedUser = user;
+	emit this->loggedUserChanged();
 }
 #endif // QUA_ACCESS_CONTROL
 

@@ -26,6 +26,7 @@
 #ifdef QUA_ACCESS_CONTROL
 #include <QUaUser>
 #include <QUaPermissions>
+#include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
 int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 1;
@@ -37,8 +38,15 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 {
 	ui->setupUi(this);
 	m_listClients = nullptr;
-#ifdef QUA_ACCESS_CONTROL
+#ifndef QUA_ACCESS_CONTROL
+	ui->pushButtonPerms->setVisible(false);
+#else
 	m_loggedUser  = nullptr;
+	ui->pushButtonPerms->setToolTip(tr(
+		"Sets the client list permissions.\n"
+		"Read permissions do nothing. To disallow showing the client tree, use the dock's permissions."
+		"Write permissions control if clients can be added or removed."
+	));
 #endif // QUA_ACCESS_CONTROL
 	m_strLastPathUsed = QString();
 	if (QMetaType::type("QModbusSelectType") == QMetaType::UnknownType)
@@ -289,14 +297,35 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 		// add to gui
 		this->handleClientAdded(client);
 	}
-}
-
-void QUaModbusClientTree::setExpanded(const bool & expanded)
-{
-	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
-}
 
 #ifdef QUA_ACCESS_CONTROL
+	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, listClients,
+	[this, listClients]() {
+		// NOTE : call QUaModbusClientWidget::setupPermissionsModel first to set m_proxyPerms
+		Q_CHECK_PTR(m_proxyPerms);
+		// create permissions widget
+		auto permsWidget = new QUaDockWidgetPerms;
+		// configure perms widget combo
+		permsWidget->setComboModel(m_proxyPerms);
+		permsWidget->setPermissions(listClients->permissionsObject());
+		// dialog
+		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("Modbus Permissions"));
+		dialog.setWidget(permsWidget);
+		// exec dialog
+		int res = dialog.exec();
+		if (res != QDialog::Accepted)
+		{
+			return;
+		}
+		// read permissions and set them for layout list
+		auto perms = permsWidget->permissions();
+		perms ? listClients->setPermissionsObject(perms) : listClients->clearPermissions();
+		// update widgets
+		this->on_loggedUserChanged(m_loggedUser);
+	});
+}
+
 void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 {
 	m_loggedUser = user;
@@ -305,11 +334,26 @@ void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 	// show/hide add client button depending on list perms
 	auto permsList    = m_listClients->permissionsObject();
 	auto canWriteList = !permsList ? true : permsList->canUserWrite(m_loggedUser);
+
+	QString strToolTip = canWriteList ?
+		tr("") :
+		tr("Do not have permissions.");
+
 	ui->pushButtonAddClient->setEnabled(canWriteList);
 	ui->toolButtonImport   ->setEnabled(canWriteList);
 	ui->pushButtonClear    ->setEnabled(canWriteList);
+	ui->pushButtonPerms    ->setVisible(canWriteList); // NOTE : only hide this one
+	// tooltips
+	ui->pushButtonAddClient->setToolTip(strToolTip);
+	ui->toolButtonImport   ->setToolTip(strToolTip);
+	ui->pushButtonClear    ->setToolTip(strToolTip);
 }
 #endif // QUA_ACCESS_CONTROL
+
+void QUaModbusClientTree::setExpanded(const bool & expanded)
+{
+	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
+}
 
 void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 {
@@ -341,6 +385,14 @@ void QUaModbusClientTree::exportAllCsv(const QString & strBaseName)
 	this->saveContentsCsvToFile(m_listClients->csvBlocks (), strBlocksName );
 	this->saveContentsCsvToFile(m_listClients->csvValues (), strValuesName );
 }
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientTree::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
+{
+	m_proxyPerms = proxyPerms;
+	Q_CHECK_PTR(m_proxyPerms);
+}
+#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusClientTree::on_pushButtonClear_clicked()
 {
@@ -685,7 +737,14 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		this->handleBlockAdded(client, iObj, strBlockId);
 	}
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(client, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+	[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 
@@ -769,7 +828,14 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		this->handleValueAdded(block, iObj, strValueId);
 	}
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(block, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+	[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 
@@ -826,7 +892,14 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 		Q_CHECK_PTR(iObj);
 		parent->removeRows(iObj->index().row(), 1);
 	});
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(value, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+		[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 

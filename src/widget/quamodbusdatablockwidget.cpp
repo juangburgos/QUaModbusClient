@@ -9,6 +9,8 @@
 #include <QUaModbusValueWidgetEdit>
 
 #ifdef QUA_ACCESS_CONTROL
+#include <QUaUser>
+#include <QUaPermissions>
 #include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
@@ -19,6 +21,13 @@ QUaModbusDataBlockWidget::QUaModbusDataBlockWidget(QWidget *parent) :
     ui->setupUi(this);
 #ifndef QUA_ACCESS_CONTROL
 	ui->pushButtonPerms->setVisible(false);
+#else
+	m_loggedUser = nullptr;
+	ui->pushButtonPerms->setToolTip(tr(
+		"Read permissions control if this block is shown.\n"
+		"Write permissions control if the block parameters can be changed. "
+		"Also controls if values can be added or removed"
+	));
 #endif // !QUA_ACCESS_CONTROL
 }
 
@@ -75,7 +84,41 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 			return;
 		}
 		// read permissions and set them for layout list
-		block->setPermissionsObject(permsWidget->permissions());
+		auto perms = permsWidget->permissions();
+		perms ? block->setPermissionsObject(perms) : block->clearPermissions();
+		// update widgets
+		this->on_loggedUserChanged(m_loggedUser);
+	});
+	m_connections <<
+	QObject::connect(this, &QUaModbusDataBlockWidget::loggedUserChanged, block,
+	[this, block]() {
+		// block perms
+		auto perms    = block ? block->permissionsObject() : nullptr;
+		auto canRead  = !m_loggedUser ? false : !perms ? true : perms->canUserRead(m_loggedUser);
+		auto canWrite = !m_loggedUser ? false : !perms ? true : perms->canUserWrite(m_loggedUser);
+		if (!canRead)
+		{
+			this->setEnabled(false);
+		}
+		QString strToolTip = canWrite ?
+			tr("") :
+			tr("Do not have permissions.");
+		// input widgets
+		ui->widgetBlockEdit->setTypeEditable        (canWrite);
+		ui->widgetBlockEdit->setAddressEditable     (canWrite);
+		ui->widgetBlockEdit->setSizeEditable        (canWrite);
+		ui->widgetBlockEdit->setSamplingTimeEditable(canWrite);
+		// action buttons
+		ui->pushButtonApply   ->setEnabled(canWrite);
+		ui->pushButtonDelete  ->setEnabled(canWrite);
+		ui->pushButtonAddValue->setEnabled(canWrite);
+		ui->pushButtonClear   ->setEnabled(canWrite);
+		ui->pushButtonPerms   ->setVisible(canWrite); // NOTE : only hide this one
+		// tooltips
+		ui->pushButtonApply   ->setToolTip(strToolTip);
+		ui->pushButtonDelete  ->setToolTip(strToolTip);
+		ui->pushButtonAddValue->setToolTip(strToolTip);
+		ui->pushButtonClear   ->setToolTip(strToolTip);
 	});
 #endif // QUA_ACCESS_CONTROL
 	m_connections <<
@@ -152,19 +195,10 @@ void QUaModbusDataBlockWidget::setupPermissionsModel(QSortFilterProxyModel * pro
 	Q_CHECK_PTR(m_proxyPerms);
 }
 
-void QUaModbusDataBlockWidget::setCanWrite(const bool & canWrite)
+void QUaModbusDataBlockWidget::on_loggedUserChanged(QUaUser * user)
 {
-	// input widgets
-	ui->widgetBlockEdit->setTypeEditable        (canWrite);
-	ui->widgetBlockEdit->setAddressEditable     (canWrite);
-	ui->widgetBlockEdit->setSizeEditable        (canWrite);
-	ui->widgetBlockEdit->setSamplingTimeEditable(canWrite);
-	// action buttons
-	ui->pushButtonApply   ->setEnabled(canWrite);
-	ui->pushButtonDelete  ->setEnabled(canWrite);
-	ui->pushButtonAddValue->setEnabled(canWrite);
-	ui->pushButtonClear   ->setEnabled(canWrite);
-	ui->pushButtonPerms   ->setEnabled(canWrite);
+	m_loggedUser = user;
+	emit this->loggedUserChanged();
 }
 #endif // QUA_ACCESS_CONTROL
 

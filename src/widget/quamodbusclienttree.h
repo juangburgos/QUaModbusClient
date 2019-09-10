@@ -70,11 +70,15 @@ public:
 	// PATH/project.xml ->  PATH/project_clients.xml, PATH/project_blocks.xml, PATH/project_values.xml
 	void exportAllCsv(const QString &strBaseName);
 
+#ifdef QUA_ACCESS_CONTROL
+	void setupPermissionsModel(QSortFilterProxyModel * proxyPerms);
+#endif // QUA_ACCESS_CONTROL
+
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
-	void clientDoubleClicked(QUaModbusClient    * client);
-	void blockDoubleClicked (QUaModbusDataBlock * block );
-	void valueDoubleClicked (QUaModbusValue     * value );
+	void clientDoubleClicked (QUaModbusClient    * client);
+	void blockDoubleClicked  (QUaModbusDataBlock * block );
+	void valueDoubleClicked  (QUaModbusValue     * value );
 	void aboutToClear();
 
 public slots:
@@ -94,12 +98,13 @@ private slots:
     void on_lineEditFilterText_textChanged(const QString &arg1);
 
 private:
-    Ui::QUaModbusClientTree *ui;
+    Ui::QUaModbusClientTree  * ui;
 	QUaModbusClientList      * m_listClients;
 	QStandardItemModel         m_modelModbus;
 	QUaModbusLambdaFilterProxy m_proxyModbus;
 #ifdef QUA_ACCESS_CONTROL
 	QUaUser * m_loggedUser;
+	QSortFilterProxyModel * m_proxyPerms;
 #endif // QUA_ACCESS_CONTROL
 	QString m_strLastPathUsed;
 

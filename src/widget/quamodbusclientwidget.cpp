@@ -10,6 +10,8 @@
 #include <QUaModbusDataBlockWidgetEdit>
 
 #ifdef QUA_ACCESS_CONTROL
+#include <QUaUser>
+#include <QUaPermissions>
 #include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
@@ -20,6 +22,13 @@ QUaModbusClientWidget::QUaModbusClientWidget(QWidget *parent) :
     ui->setupUi(this);
 #ifndef QUA_ACCESS_CONTROL
 	ui->pushButtonPerms->setVisible(false);
+#else
+	m_loggedUser = nullptr;
+	ui->pushButtonPerms->setToolTip(tr(
+		"Read permissions control if this client is shown.\n"
+		"Write permissions control if the client parameters can be changed. "
+		"Also controls if blocks can be added or removed"
+	));
 #endif // !QUA_ACCESS_CONTROL
 }
 
@@ -53,7 +62,6 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 	this->bindClientWidgetEdit(client);
 	// bind status widget
 	this->bindClientWidgetStatus(client);
-	// bind buttons
 #ifdef QUA_ACCESS_CONTROL
 	m_connections <<
 	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, client,
@@ -76,9 +84,51 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 			return;
 		}
 		// read permissions and set them for layout list
-		client->setPermissionsObject(permsWidget->permissions());
+		auto perms = permsWidget->permissions();
+		perms ? client->setPermissionsObject(perms) : client->clearPermissions();
+		// update widgets
+		this->on_loggedUserChanged(m_loggedUser);
+	});
+	m_connections <<
+	QObject::connect(this, &QUaModbusClientWidget::loggedUserChanged, client,
+	[this, client]() {
+		// client perms
+		auto perms    = client ? client->permissionsObject() : nullptr;
+		auto canRead  = !m_loggedUser ? false : !perms ? true : perms->canUserRead(m_loggedUser);
+		auto canWrite = !m_loggedUser ? false : !perms ? true : perms->canUserWrite(m_loggedUser);
+		if (!canRead)
+		{
+			this->setEnabled(false);
+		}
+		QString strToolTip = canWrite ?
+			tr("") :
+			tr("Do not have permissions.");
+		// input widgets
+		ui->widgetClientEdit->setDeviceAddressEditable (canWrite);
+		ui->widgetClientEdit->setKeepConnectingEditable(canWrite);
+		ui->widgetClientEdit->setIpAddressEditable     (canWrite);
+		ui->widgetClientEdit->setNetworkPortEditable   (canWrite);
+		ui->widgetClientEdit->setComPortEditable       (canWrite);
+		ui->widgetClientEdit->setParityEditable        (canWrite);
+		ui->widgetClientEdit->setBaudRateEditable      (canWrite);
+		ui->widgetClientEdit->setDataBitsEditable      (canWrite);
+		ui->widgetClientEdit->setStopBitsEditable      (canWrite);
+		// action buttons
+		ui->pushButtonApply   ->setEnabled(canWrite);
+		ui->pushButtonDelete  ->setEnabled(canWrite);
+		ui->pushButtonAddBlock->setEnabled(canWrite);
+		ui->pushButtonClear   ->setEnabled(canWrite);
+		ui->pushButtonPerms   ->setVisible(canWrite); // NOTE : only hide this one
+		ui->pushButtonConnect ->setEnabled(canWrite); // NOTE : dont know if permission to connect/disconnect belongs here
+		// tooltips
+		ui->pushButtonApply   ->setToolTip(strToolTip);
+		ui->pushButtonDelete  ->setToolTip(strToolTip);
+		ui->pushButtonAddBlock->setToolTip(strToolTip);
+		ui->pushButtonClear   ->setToolTip(strToolTip);
+		ui->pushButtonConnect ->setToolTip(strToolTip);
 	});
 #endif // QUA_ACCESS_CONTROL
+	// bind buttons
 	ui->pushButtonConnect->setText(
 		client->state()->value().value<QModbusState>() == QModbusState::UnconnectedState ? 
 		tr("Connect") : tr("Disconnect")
@@ -183,26 +233,10 @@ void QUaModbusClientWidget::setupPermissionsModel(QSortFilterProxyModel * proxyP
 	Q_CHECK_PTR(m_proxyPerms);
 }
 
-void QUaModbusClientWidget::setCanWrite(const bool & canWrite)
+void QUaModbusClientWidget::on_loggedUserChanged(QUaUser * user)
 {
-	// input widgets
-	ui->widgetClientEdit  ->setDeviceAddressEditable (canWrite);
-	ui->widgetClientEdit  ->setKeepConnectingEditable(canWrite);
-	ui->widgetClientEdit  ->setIpAddressEditable     (canWrite);
-	ui->widgetClientEdit  ->setNetworkPortEditable   (canWrite);
-	ui->widgetClientEdit  ->setComPortEditable       (canWrite);
-	ui->widgetClientEdit  ->setParityEditable        (canWrite);
-	ui->widgetClientEdit  ->setBaudRateEditable      (canWrite);
-	ui->widgetClientEdit  ->setDataBitsEditable      (canWrite);
-	ui->widgetClientEdit  ->setStopBitsEditable      (canWrite);
-	// action buttons
-	ui->pushButtonApply   ->setEnabled(canWrite);
-	ui->pushButtonDelete  ->setEnabled(canWrite);
-	ui->pushButtonAddBlock->setEnabled(canWrite);
-	ui->pushButtonClear   ->setEnabled(canWrite);
-	ui->pushButtonPerms   ->setEnabled(canWrite);
-	// NOTE : dont know if permission to connect/disconnect belongs here
-	ui->pushButtonConnect ->setEnabled(canWrite);
+	m_loggedUser = user;
+	emit this->loggedUserChanged();
 }
 #endif // QUA_ACCESS_CONTROL
 
