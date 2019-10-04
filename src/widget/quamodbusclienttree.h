@@ -25,6 +25,12 @@ class QUaModbusClientTree : public QWidget
 {
     Q_OBJECT
 
+	// expose to style
+	Q_PROPERTY(QIcon iconClientTcp    READ iconClientTcp    WRITE setIconClientTcp   )
+	Q_PROPERTY(QIcon iconClientSerial READ iconClientSerial WRITE setIconClientSerial)
+	Q_PROPERTY(QIcon iconBlock        READ iconBlock        WRITE setIconBlock       )
+	Q_PROPERTY(QIcon iconValue        READ iconValue        WRITE setIconValue       )
+
 public:
     explicit QUaModbusClientTree(QWidget *parent = nullptr);
     ~QUaModbusClientTree();
@@ -74,6 +80,20 @@ public:
 	void setupPermissionsModel(QSortFilterProxyModel * proxyPerms);
 #endif // QUA_ACCESS_CONTROL
 
+	// stylesheet
+
+	QIcon iconClientTcp() const;
+	void  setIconClientTcp(const QIcon &icon);
+
+	QIcon iconClientSerial() const;
+	void  setIconClientSerial(const QIcon &icon);
+
+	QIcon iconBlock() const;
+	void  setIconBlock(const QIcon &icon);
+
+	QIcon iconValue() const;
+	void  setIconValue(const QIcon &icon);
+
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
 	void clientDoubleClicked (QUaModbusClient    * client);
@@ -108,11 +128,19 @@ private:
 #endif // QUA_ACCESS_CONTROL
 	QString m_strLastPathUsed;
 
+	QIcon m_iconClientTcp;
+	QIcon m_iconClientSerial;
+	QIcon m_iconBlock;
+	QIcon m_iconValue;
+
 	void setupTreeContextMenu();
 	void setupImportButton();
 	void setupExportButton();
 	void setupFilterWidgets();
 	void expandRecursivelly(const QModelIndex &index, const bool &expand);
+
+	typedef std::function<bool(QStandardItem*)> QUaModbusFuncSetIcon;
+	void updateIconRecursive(QStandardItem * parent, const quint32 &depth, const QIcon &icon, const QUaModbusFuncSetIcon &func);
 
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
 

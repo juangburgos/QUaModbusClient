@@ -29,8 +29,8 @@
 #include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
-int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 1;
-int QUaModbusClientTree::PointerRole    = Qt::UserRole + 2;
+int QUaModbusClientTree::PointerRole    = Qt::UserRole + 1;
+int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 2;
 
 QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	QWidget(parent),
@@ -255,6 +255,12 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			break;
 		}
 	});
+
+	//// TEST
+	//this->setIconClientTcp   (QIcon(":/default/icons/wired_network.svg"));
+	//this->setIconClientSerial(QIcon(":/default/icons/rs_232_male.svg"));
+	//this->setIconBlock       (QIcon(":/default/icons/block.svg"));
+	//this->setIconValue       (QIcon(":/default/icons/counter.svg"));
 }
 
 QUaModbusClientTree::~QUaModbusClientTree()
@@ -567,6 +573,24 @@ void QUaModbusClientTree::expandRecursivelly(const QModelIndex & index, const bo
 	ui->treeViewModbus->setExpanded(index, expand);
 }
 
+void QUaModbusClientTree::updateIconRecursive(QStandardItem * parent, const quint32 & depth, const QIcon & icon, const QUaModbusFuncSetIcon & func)
+{
+	// start with invisible root if invalid parent
+	if (!parent)
+	{
+		parent = m_modelModbus.invisibleRootItem();
+	}
+	else if (depth == 0 && func(parent))
+	{
+		parent->setIcon(icon);
+	}
+	// loop children
+	for (int row = 0; row < parent->rowCount(); row++)
+	{
+		this->updateIconRecursive(parent->child(row), depth-1, icon, func);
+	}
+}
+
 void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
 {
 	int res = dialog.exec();
@@ -668,6 +692,16 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(client), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	auto clientType = client->getType();
+	if (clientType == QModbusClientType::Tcp && !this->iconClientTcp().isNull())
+	{
+		iObj->setIcon(this->iconClientTcp());
+	}
+	if (clientType == QModbusClientType::Serial && !this->iconClientSerial().isNull())
+	{
+		iObj->setIcon(this->iconClientSerial());
+	}
 
 	// status column
 	auto enumState = QMetaEnum::fromType<QModbusState>();
@@ -764,13 +798,16 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	parent->appendRow(listCols);
 
 	// object column
-	//auto iObj = new QStandardItem(strBlockId);
-	//parent->setChild(row, (int)Headers::Objects, iObj);
 	auto iObj = parent->child(row, (int)Headers::Objects);
 	iObj->setText(strBlockId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(block), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	if (!this->iconBlock().isNull())
+	{
+		iObj->setIcon(this->iconBlock());
+	}
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -854,13 +891,16 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	});
 	parent->appendRow(listCols);
 	// object column
-	//auto iObj = new QStandardItem(strValueId);
-	//parent->setChild(row, (int)Headers::Objects, iObj);
 	auto iObj = parent->child(row, (int)Headers::Objects);
 	iObj->setText(strValueId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(value), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	if (!this->iconValue().isNull())
+	{
+		iObj->setIcon(this->iconValue());
+	}
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -1052,4 +1092,78 @@ void QUaModbusClientTree::on_lineEditFilterText_textChanged(const QString &arg1)
 {
 	Q_UNUSED(arg1);
 	m_proxyModbus.resetFilter();
+}
+
+QIcon QUaModbusClientTree::iconClientTcp() const
+{
+	return m_iconClientTcp;
+}
+
+void QUaModbusClientTree::setIconClientTcp(const QIcon & icon)
+{
+	m_iconClientTcp = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 1, m_iconClientTcp,
+	[](QStandardItem * item) {
+		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto client = dynamic_cast<QUaModbusClient*>(node);
+		Q_CHECK_PTR(client);
+		auto clientType = client->getType();
+		return clientType == QModbusClientType::Tcp;
+	});
+}
+
+QIcon QUaModbusClientTree::iconClientSerial() const
+{
+	return m_iconClientSerial;
+}
+
+void QUaModbusClientTree::setIconClientSerial(const QIcon & icon)
+{
+	m_iconClientSerial = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 1, m_iconClientSerial,
+	[](QStandardItem * item) {
+		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto client = dynamic_cast<QUaModbusClient*>(node);
+		Q_CHECK_PTR(client);
+		auto clientType = client->getType();
+		return clientType == QModbusClientType::Serial;
+	});
+}
+
+QIcon QUaModbusClientTree::iconBlock() const
+{
+	return m_iconBlock;
+}
+
+void QUaModbusClientTree::setIconBlock(const QIcon & icon)
+{
+	m_iconBlock = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 2, m_iconBlock,
+	[](QStandardItem * item) {
+		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+		Q_CHECK_PTR(block);
+		return block;
+	});
+}
+
+QIcon QUaModbusClientTree::iconValue() const
+{
+	return m_iconValue;
+}
+
+void QUaModbusClientTree::setIconValue(const QIcon & icon)
+{
+	m_iconValue = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 3, m_iconValue,
+	[](QStandardItem * item) {
+		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto value = dynamic_cast<QUaModbusValue*>(node);
+		Q_CHECK_PTR(value);
+		return value;
+	});
 }
