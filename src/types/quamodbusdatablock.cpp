@@ -229,10 +229,14 @@ void QUaModbusDataBlock::startLoop()
 		//Q_ASSERT(m_loopHandle > 0); // NOTE : this does happen when cleaning all blocks form a client
 		if (m_loopHandle <= 0)
 		{
-	
 			return;
 		}
 		auto client = this->client();
+		// TODO : can happen in shutdown? possible BUG
+		if (!client)
+		{
+			return;
+		}
 		// check if ongoing request
 		if (m_replyRead)
 		{
