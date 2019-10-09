@@ -152,11 +152,11 @@ inline QDomElement QUaModbusDockWidgets<T>::toDomElement(QDomDocument & domDoc) 
 	// serialize each widget
 	for (auto wName : QUaModbusDockWidgets<T>::m_listWidgetNames)
 	{
-		QDomElement elemW = domDoc.createElement(QUaAcDocking::m_strXmlWidgetName);
+		QDomElement elemW = domDoc.createElement(QUaAcDocking::m_strXmlDockName);
 		// set name
 		elemW.setAttribute("Name", wName);
 		// set permissions if any
-		QUaPermissions * perms = this->getDockManager()->widgetPermissions(wName);
+		QUaPermissions * perms = this->getDockManager()->dockPermissions(wName);
 		if (perms)
 		{
 			elemW.setAttribute("Permissions", perms->nodeId());
@@ -171,7 +171,7 @@ inline QDomElement QUaModbusDockWidgets<T>::toDomElement(QDomDocument & domDoc) 
 template<class T>
 inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QString & strError)
 {
-	QDomNodeList listNodesW = domElem.elementsByTagName(QUaAcDocking::m_strXmlWidgetName);
+	QDomNodeList listNodesW = domElem.elementsByTagName(QUaAcDocking::m_strXmlDockName);
 	for (int i = 0; i < listNodesW.count(); i++)
 	{
 		QDomElement elem = listNodesW.at(i).toElement();
@@ -201,7 +201,7 @@ inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QStri
 			continue;
 		}
 		QString strWidgetName = elem.attribute("Name");
-		this->getDockManager()->setWidgetPermissions(strWidgetName, permissions);
+		this->getDockManager()->setDockPermissions(strWidgetName, permissions);
 	}
 }
 
@@ -209,14 +209,14 @@ template<class T>
 inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 {
 	m_modbusTreeWidget = new QUaModbusClientTree(m_thiz);
-	this->getDockManager()->addDockWidget(
+	this->getDockManager()->addDock(
 		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusTree,
 		QAd::CenterDockWidgetArea,
 		m_modbusTreeWidget
 	);
 
 	m_clientWidget = new QUaModbusClientWidget(m_thiz); 
-	this->getDockManager()->addDockWidget(
+	this->getDockManager()->addDock(
 		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusClients,
 		QAd::RightDockWidgetArea,
 		m_clientWidget
@@ -225,7 +225,7 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 	m_clientWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_blockWidget = new QUaModbusDataBlockWidget(m_thiz);
-	this->getDockManager()->addDockWidget(
+	this->getDockManager()->addDock(
 		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusBlocks,
 		QAd::BottomDockWidgetArea,
 		m_blockWidget
@@ -234,7 +234,7 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 	m_blockWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
 
 	m_valueWidget = new QUaModbusValueWidget(m_thiz);
-	this->getDockManager()->addDockWidget(
+	this->getDockManager()->addDock(
 		QUaModbusDockWidgets<T>::m_strMenuPath + "/" + QUaModbusDockWidgets<T>::m_strModbusValues,
 		QAd::BottomDockWidgetArea,
 		m_valueWidget
