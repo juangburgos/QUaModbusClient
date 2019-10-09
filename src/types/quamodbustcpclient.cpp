@@ -33,8 +33,10 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	QObject::connect(networkAddress(), &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkAddressChanged, Qt::QueuedConnection);
 	QObject::connect(networkPort()   , &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkPortChanged   , Qt::QueuedConnection);
 	// set descriptions
+	/*
 	networkAddress()->setDescription(tr("Network address (IP address or domain name) of the Modbus server."));
 	networkPort()   ->setDescription(tr("Network port (TCP port) of the Modbus server."));
+	*/
 }
 
 QUaProperty * QUaModbusTcpClient::networkAddress() const

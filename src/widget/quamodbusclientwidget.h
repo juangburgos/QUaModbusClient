@@ -5,6 +5,7 @@
 
 #ifdef QUA_ACCESS_CONTROL
 #include <QSortFilterProxyModel>
+class QUaUser;
 #endif // QUA_ACCESS_CONTROL
 
 class QUaModbusClient;
@@ -28,13 +29,17 @@ public:
 
 #ifdef QUA_ACCESS_CONTROL
 	void setupPermissionsModel(QSortFilterProxyModel * proxyPerms);
-	void setCanWrite(const bool &canWrite);
-	void setCanWriteClientList(const bool &canWrite);
-	void setCanWriteBlockList (const bool &canWrite);
 #endif // QUA_ACCESS_CONTROL
 
 signals:
 	void aboutToClear();
+
+#ifdef QUA_ACCESS_CONTROL
+	// NOTE : internal signal
+	void loggedUserChanged();
+public slots:
+	void on_loggedUserChanged(QUaUser * user);
+#endif // QUA_ACCESS_CONTROL
 
 private:
     Ui::QUaModbusClientWidget *ui;
@@ -47,6 +52,7 @@ private:
 	void showNewBlockDialog(QUaModbusClient * client, QUaModbusClientDialog &dialog);
 
 #ifdef QUA_ACCESS_CONTROL
+	QUaUser * m_loggedUser;
 	QSortFilterProxyModel * m_proxyPerms;
 #endif // QUA_ACCESS_CONTROL
 

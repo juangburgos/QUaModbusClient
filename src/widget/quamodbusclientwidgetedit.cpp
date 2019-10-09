@@ -240,7 +240,6 @@ bool QUaModbusClientWidgetEdit::keepConnecting() const
 void QUaModbusClientWidgetEdit::setKeepConnecting(const bool & keepConnecting)
 {
 	ui->checkBoxKeepConnect->setChecked(keepConnecting);
-	ui->checkBoxKeepConnect->setText(keepConnecting ? tr("Enabled") : tr("Disabled"));
 }
 
 QString QUaModbusClientWidgetEdit::ipAddress() const
@@ -352,9 +351,4 @@ void QUaModbusClientWidgetEdit::on_comboBoxType_currentIndexChanged(int index)
 	Q_UNUSED(index);
 	QModbusClientType type = this->type();
 	this->updateTypeInGui(type);
-}
-
-void QUaModbusClientWidgetEdit::on_checkBoxKeepConnect_toggled(bool checked)
-{
-	ui->checkBoxKeepConnect->setText(checked ? tr("Enabled") : tr("Disabled"));
 }

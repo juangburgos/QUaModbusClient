@@ -36,11 +36,13 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	// to safely update error in ua server thread
 	QObject::connect(this, &QUaModbusValue::updateLastError, this, &QUaModbusValue::on_updateLastError);
 	// set descriptions
+	/*
 	type()         ->setDescription(tr("Data type used to convert the registers to the value."));
 	registersUsed()->setDescription(tr("Number of registeres used by the selected data type"));
 	addressOffset()->setDescription(tr("Offset with respect to the data block."));
 	value()        ->setDescription(tr("The value obtained by converting the registers to the selected type."));
 	lastError()    ->setDescription(tr("Last error obtained while converting registers to value."));
+	*/
 }
 
 QUaProperty * QUaModbusValue::type() const
@@ -230,7 +232,7 @@ void QUaModbusValue::on_updateLastError(const QModbusError & error)
 void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError &blockError)
 {
 	// check configuration
-	auto type = this->type()->value().value<QModbusValueType>();
+	auto type = this->getType(); // TODO : change to event-based with flag
 	if (type == QModbusValueType::Invalid)
 	{
 		this->value()->setWriteAccess(false);
@@ -240,7 +242,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		emit this->valueChanged(QVariant());
 		return;
 	}
-	int addressOffset = this->addressOffset()->value().value<int>();
+	int addressOffset = this->getAddressOffset(); // TODO : change to event-based with flag
 	if (addressOffset < 0)
 	{
 		this->value()->setWriteAccess(false);
@@ -251,7 +253,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		return;
 	}
 	// set writable if block type allows it
-	auto blockType = this->block()->type()->value().value<QUaModbusDataBlock::RegisterType>();
+	auto blockType = this->block()->getType(); // TODO : change to event-based with flag
 	if (blockType == QUaModbusDataBlock::RegisterType::Coils ||
 		blockType == QUaModbusDataBlock::RegisterType::HoldingRegisters)
 	{
@@ -273,7 +275,7 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		return;
 	}
 	// convert value and set it, but leave block error code
-	this->setLastError(blockError);
+	this->setLastError(blockError); // TODO : change to event-based
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	// avoid update or emit if no change, improves performance
 	if (this->getValue() == value)

@@ -88,7 +88,7 @@
          <string>Retry connection indefinetively if connection fails.</string>
         </property>
         <property name="text">
-         <string>Disabled</string>
+         <string>Enable</string>
         </property>
        </widget>
       </item>

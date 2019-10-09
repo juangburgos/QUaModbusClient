@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -25,10 +26,11 @@
 #ifdef QUA_ACCESS_CONTROL
 #include <QUaUser>
 #include <QUaPermissions>
+#include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
-int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 1;
-int QUaModbusClientTree::PointerRole = Qt::UserRole + 2;
+int QUaModbusClientTree::PointerRole    = Qt::UserRole + 1;
+int QUaModbusClientTree::SelectTypeRole = Qt::UserRole + 2;
 
 QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	QWidget(parent),
@@ -36,9 +38,18 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 {
 	ui->setupUi(this);
 	m_listClients = nullptr;
-#ifdef QUA_ACCESS_CONTROL
-	m_loggedUser  = nullptr;
+#ifndef QUA_ACCESS_CONTROL
+	ui->pushButtonPerms->setVisible(false);
+#else
+	m_loggedUser = nullptr;
+	m_proxyPerms = nullptr;
+	ui->pushButtonPerms->setToolTip(tr(
+		"Sets the client list permissions.\n"
+		"Read permissions do nothing. To disallow showing the client tree, use the dock's permissions."
+		"Write permissions control if clients can be added or removed."
+	));
 #endif // QUA_ACCESS_CONTROL
+	m_strLastPathUsed = QString();
 	if (QMetaType::type("QModbusSelectType") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusSelectType>("QModbusSelectType");
@@ -149,6 +160,8 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	ui->treeViewModbus->setSortingEnabled(true);
 	ui->treeViewModbus->sortByColumn((int)Headers::Objects, Qt::SortOrder::AscendingOrder);
 	ui->treeViewModbus->setSelectionBehavior(QAbstractItemView::SelectRows);
+	ui->treeViewModbus->setSelectionMode(QAbstractItemView::SingleSelection);
+	ui->treeViewModbus->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	// setup tree interactions
 	QObject::connect(ui->treeViewModbus->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
 	[this](const QModelIndex &current, const QModelIndex &previous) {
@@ -203,6 +216,51 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 		// emit
 		emit this->nodeSelectionChanged(nodePrev, typePrev, nodeCurr, typeCurr);
 	});
+	// emit on double click
+	QObject::connect(ui->treeViewModbus, &QAbstractItemView::doubleClicked, this,
+	[this](const QModelIndex &index) {
+		auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
+		if (!item)
+		{
+			return;
+		}
+		auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		if (!node)
+		{
+			return;
+		}
+		auto type = item->data(QUaModbusClientTree::SelectTypeRole).value<QModbusSelectType>();
+		switch (type)
+		{
+		case QModbusSelectType::QUaModbusClient:
+			{
+				auto client = dynamic_cast<QUaModbusClient*>(node);
+				emit this->clientDoubleClicked(client);
+			}
+			break;
+		case QModbusSelectType::QUaModbusDataBlock:
+			{
+				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				emit this->blockDoubleClicked(block);
+			}
+			break;
+		case QModbusSelectType::QUaModbusValue:
+			{
+				auto value = dynamic_cast<QUaModbusValue*>(node);
+				emit this->valueDoubleClicked(value);
+			}
+			break;
+		default:
+			Q_ASSERT(false);
+			break;
+		}
+	});
+
+	//// TEST
+	//this->setIconClientTcp   (QIcon(":/default/icons/wired_network.svg"));
+	//this->setIconClientSerial(QIcon(":/default/icons/rs_232_male.svg"));
+	//this->setIconBlock       (QIcon(":/default/icons/block.svg"));
+	//this->setIconValue       (QIcon(":/default/icons/counter.svg"));
 }
 
 QUaModbusClientTree::~QUaModbusClientTree()
@@ -246,27 +304,68 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 		// add to gui
 		this->handleClientAdded(client);
 	}
-}
-
-void QUaModbusClientTree::setExpanded(const bool & expanded)
-{
-	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(ui->pushButtonPerms, &QPushButton::clicked, listClients,
+	[this, listClients]() {
+		// NOTE : call ::setupPermissionsModel first to set m_proxyPerms
+		Q_CHECK_PTR(m_proxyPerms);
+		// create permissions widget
+		auto permsWidget = new QUaDockWidgetPerms;
+		// configure perms widget combo
+		permsWidget->setComboModel(m_proxyPerms);
+		permsWidget->setPermissions(listClients->permissionsObject());
+		// dialog
+		QUaModbusClientDialog dialog(this);
+		dialog.setWindowTitle(tr("Modbus Permissions"));
+		dialog.setWidget(permsWidget);
+		// exec dialog
+		int res = dialog.exec();
+		if (res != QDialog::Accepted)
+		{
+			return;
+		}
+		// read permissions and set them for layout list
+		auto perms = permsWidget->permissions();
+		perms ? listClients->setPermissionsObject(perms) : listClients->clearPermissions();
+		// update widgets
+		this->on_loggedUserChanged(m_loggedUser);
+	});
+#endif // QUA_ACCESS_CONTROL
 }
 
 #ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientTree::setupPermissionsModel(QSortFilterProxyModel * proxyPerms)
+{
+	m_proxyPerms = proxyPerms;
+	Q_CHECK_PTR(m_proxyPerms);
+}
+
 void QUaModbusClientTree::on_loggedUserChanged(QUaUser * user)
 {
 	m_loggedUser = user;
 	// update filter to take permissions into account
 	m_proxyModbus.resetFilter();
 	// show/hide add client button depending on list perms
-	auto permsList = m_listClients->permissionsObject();
+	auto permsList    = m_listClients->permissionsObject();
 	auto canWriteList = !permsList ? true : permsList->canUserWrite(m_loggedUser);
-	ui->pushButtonAddClient->setVisible(canWriteList);
-	ui->toolButtonImport->setVisible(canWriteList);
-	ui->pushButtonClear->setVisible(canWriteList);
+	QString strToolTip = canWriteList ?
+		tr("") :
+		tr("Do not have permissions.");
+	ui->pushButtonAddClient->setEnabled(canWriteList);
+	ui->toolButtonImport   ->setEnabled(canWriteList);
+	ui->pushButtonClear    ->setEnabled(canWriteList);
+	ui->pushButtonPerms    ->setVisible(canWriteList); // NOTE : only hide this one
+	// tooltips
+	ui->pushButtonAddClient->setToolTip(strToolTip);
+	ui->toolButtonImport   ->setToolTip(strToolTip);
+	ui->pushButtonClear    ->setToolTip(strToolTip);
 }
 #endif // QUA_ACCESS_CONTROL
+
+void QUaModbusClientTree::setExpanded(const bool & expanded)
+{
+	this->expandRecursivelly(ui->treeViewModbus->rootIndex(), expanded);
+}
 
 void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 {
@@ -282,6 +381,21 @@ void QUaModbusClientTree::on_pushButtonAddClient_clicked()
 QItemSelectionModel * QUaModbusClientTree::selectionModel() const
 {
 	return ui->treeViewModbus->selectionModel();
+}
+
+void QUaModbusClientTree::exportAllCsv(const QString & strBaseName)
+{
+	// NOTE : suffix must not collide with any other from the main aaplication
+	QFileInfo infoBaseName = QFileInfo(strBaseName);
+	QString strBase        = infoBaseName.baseName();
+	QString strSuff        = infoBaseName.completeSuffix();
+	QString strPath        = infoBaseName.absolutePath();
+	QString strClientsName = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_clients").arg(strSuff);
+	QString strBlocksName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_blocks" ).arg(strSuff);
+	QString strValuesName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_values" ).arg(strSuff);
+	this->saveContentsCsvToFile(m_listClients->csvClients(), strClientsName);
+	this->saveContentsCsvToFile(m_listClients->csvBlocks (), strBlocksName );
+	this->saveContentsCsvToFile(m_listClients->csvValues (), strValuesName );
 }
 
 void QUaModbusClientTree::on_pushButtonClear_clicked()
@@ -342,9 +456,20 @@ void QUaModbusClientTree::setupImportButton()
 		}
 		// NOTE : block signals to avoid calling currentRowChanged repetitively
 		//        it works with queued because it seems showing a dialog forces event processing
-		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
+		ui->treeViewModbus->selectionModel()->blockSignals(true);
 		QString strError = m_listClients->setCsvClients(strContents);
 		this->displayCsvLoadResult(strError);
+		ui->treeViewModbus->selectionModel()->blockSignals(false);
+		// manually select last one
+		auto parent = m_modelModbus.invisibleRootItem();
+		auto row    = parent->rowCount();
+		if (row <= 0)
+		{
+			return;
+		}
+		auto last  = parent->child(row-1, (int)Headers::Objects);
+		auto index = m_proxyModbus.mapFromSource(last->index());
+		emit ui->treeViewModbus->selectionModel()->currentRowChanged(index, QModelIndex());
 	});
 	importMenu->addAction(tr("Blocks"), this, 
 	[this](){
@@ -390,6 +515,13 @@ void QUaModbusClientTree::setupExportButton()
 	ui->toolButtonExport->setPopupMode(QToolButton::MenuButtonPopup);
 	// menu
 	auto exportMenu = new QMenu(ui->toolButtonExport);
+	// all
+	exportMenu->addAction(tr("All"), this,
+	[this]() {
+		this->exportAllCsv();
+	});
+	exportMenu->addSeparator();
+	// individual
 	exportMenu->addAction(tr("Clients"), this, 
 	[this](){
 		this->saveContentsCsvToFile(m_listClients->csvClients());
@@ -439,6 +571,24 @@ void QUaModbusClientTree::expandRecursivelly(const QModelIndex & index, const bo
 	}
 	// finally parent
 	ui->treeViewModbus->setExpanded(index, expand);
+}
+
+void QUaModbusClientTree::updateIconRecursive(QStandardItem * parent, const quint32 & depth, const QIcon & icon, const QUaModbusFuncSetIcon & func)
+{
+	// start with invisible root if invalid parent
+	if (!parent)
+	{
+		parent = m_modelModbus.invisibleRootItem();
+	}
+	else if (depth == 0 && func(parent))
+	{
+		parent->setIcon(icon);
+	}
+	// loop children
+	for (int row = 0; row < parent->rowCount(); row++)
+	{
+		this->updateIconRecursive(parent->child(row), depth-1, icon, func);
+	}
 }
 
 void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
@@ -542,6 +692,16 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusClient), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(client), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	auto clientType = client->getType();
+	if (clientType == QModbusClientType::Tcp && !this->iconClientTcp().isNull())
+	{
+		iObj->setIcon(this->iconClientTcp());
+	}
+	if (clientType == QModbusClientType::Serial && !this->iconClientSerial().isNull())
+	{
+		iObj->setIcon(this->iconClientSerial());
+	}
 
 	// status column
 	auto enumState = QMetaEnum::fromType<QModbusState>();
@@ -609,7 +769,14 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		this->handleBlockAdded(client, iObj, strBlockId);
 	}
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(client, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+	[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 
@@ -631,13 +798,16 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	parent->appendRow(listCols);
 
 	// object column
-	//auto iObj = new QStandardItem(strBlockId);
-	//parent->setChild(row, (int)Headers::Objects, iObj);
 	auto iObj = parent->child(row, (int)Headers::Objects);
 	iObj->setText(strBlockId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusDataBlock), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(block), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	if (!this->iconBlock().isNull())
+	{
+		iObj->setIcon(this->iconBlock());
+	}
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -693,7 +863,14 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		this->handleValueAdded(block, iObj, strValueId);
 	}
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(block, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+	[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 
@@ -714,13 +891,16 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 	});
 	parent->appendRow(listCols);
 	// object column
-	//auto iObj = new QStandardItem(strValueId);
-	//parent->setChild(row, (int)Headers::Objects, iObj);
 	auto iObj = parent->child(row, (int)Headers::Objects);
 	iObj->setText(strValueId);
 	// set data
 	iObj->setData(QVariant::fromValue(QModbusSelectType::QUaModbusValue), QUaModbusClientTree::SelectTypeRole);
 	iObj->setData(QVariant::fromValue(value), QUaModbusClientTree::PointerRole);
+	// set icon (if any)
+	if (!this->iconValue().isNull())
+	{
+		iObj->setIcon(this->iconValue());
+	}
 
 	// status column
 	auto enumError = QMetaEnum::fromType<QModbusError>();
@@ -750,15 +930,23 @@ QStandardItem *  QUaModbusClientTree::handleValueAdded(QUaModbusDataBlock * bloc
 		Q_CHECK_PTR(iObj);
 		parent->removeRows(iObj->index().row(), 1);
 	});
-
+	// handle permissions change
+#ifdef QUA_ACCESS_CONTROL
+	QObject::connect(value, &QUaBaseObjectProtected::permissionsObjectChanged, this,
+		[this]() {
+		// update filter to take permissions into account
+		m_proxyModbus.resetFilter();
+	});
+#endif // QUA_ACCESS_CONTROL
 	return iObj;
 }
 
-void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) const
+void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents, const QString &strFileName/* = ""*/)
 {
 	// select file
-	QString strSaveFile = QFileDialog::getSaveFileName(const_cast<QUaModbusClientTree*>(this), tr("Save File"),
-		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+	QString strSaveFile = !strFileName.isEmpty() ? strFileName :
+		QFileDialog::getSaveFileName(this, tr("Save File"),
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
 		tr("CSV (*.csv *.txt)"));
 	// ignore if empty
 	if (strSaveFile.isEmpty() || strSaveFile.isNull())
@@ -769,6 +957,8 @@ void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) con
 	QFile file(strSaveFile);
 	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
 	{
+		// save last path used
+		m_strLastPathUsed = QFileInfo(file).absoluteFilePath();
 		// write
 		QTextStream stream(&file);
 		stream << strContents;
@@ -776,7 +966,7 @@ void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents) con
 	else
 	{
 		QMessageBox::critical(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Error"),
 			tr("Error opening file %1 for write operations.").arg(strSaveFile)
 		);
@@ -793,24 +983,26 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	msgBox.setIcon(QMessageBox::Critical);
 	// read from file
 	QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"),
-		QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-		QObject::trUtf8("CSV (*.csv *.txt)"));
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
+		tr("CSV (*.csv *.txt)"));
 	// validate
 	if (strLoadFile.isEmpty())
 	{
 		return QString();
 	}
-	QFile fileConfig(strLoadFile);
+	QFile file(strLoadFile);
 	// exists
-	if (!fileConfig.exists())
+	if (!file.exists())
 	{
 		msgBox.setText(tr("File %1 does not exist.").arg(strLoadFile));
 		msgBox.exec();
 	}
-	else if (fileConfig.open(QIODevice::ReadOnly))
+	else if (file.open(QIODevice::ReadOnly))
 	{
+		// save last path used
+		m_strLastPathUsed = QFileInfo(file).absoluteFilePath();
 		// read
-		return fileConfig.readAll();
+		return file.readAll();
 	}
 	else
 	{
@@ -820,12 +1012,12 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	return QString();
 }
 
-void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
+void QUaModbusClientTree::displayCsvLoadResult(const QString & strError)
 {
 	if (strError.contains("Warning", Qt::CaseInsensitive))
 	{
 		QMessageBox::warning(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Warning"),
 			strError.left(600) + "..."
 		);
@@ -833,7 +1025,7 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 	else if (strError.contains("Error", Qt::CaseInsensitive))
 	{
 		QMessageBox::critical(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Warning"),
 			strError.left(600) + "..."
 		);
@@ -841,11 +1033,26 @@ void QUaModbusClientTree::displayCsvLoadResult(const QString & strError) const
 	else
 	{
 		QMessageBox::information(
-			const_cast<QUaModbusClientTree*>(this),
+			this,
 			tr("Finished"),
 			tr("Successfully import CSV data.")
 		);
 	}
+}
+
+void QUaModbusClientTree::exportAllCsv()
+{
+	// ask for base name
+	QString strBaseName = QFileDialog::getSaveFileName(this, tr("Select Base File Name"),
+		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
+		tr("CSV (*.csv *.txt)"));
+	// ignore if empty
+	if (strBaseName.isEmpty() || strBaseName.isNull())
+	{
+		return;
+	}
+	// save all
+	this->exportAllCsv(strBaseName);
 }
 
 bool QUaModbusClientTree::isFilterVisible() const
@@ -885,4 +1092,78 @@ void QUaModbusClientTree::on_lineEditFilterText_textChanged(const QString &arg1)
 {
 	Q_UNUSED(arg1);
 	m_proxyModbus.resetFilter();
+}
+
+QIcon QUaModbusClientTree::iconClientTcp() const
+{
+	return m_iconClientTcp;
+}
+
+void QUaModbusClientTree::setIconClientTcp(const QIcon & icon)
+{
+	m_iconClientTcp = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 1, m_iconClientTcp,
+	[](QStandardItem * item) {
+		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto client = dynamic_cast<QUaModbusClient*>(node);
+		Q_CHECK_PTR(client);
+		auto clientType = client->getType();
+		return clientType == QModbusClientType::Tcp;
+	});
+}
+
+QIcon QUaModbusClientTree::iconClientSerial() const
+{
+	return m_iconClientSerial;
+}
+
+void QUaModbusClientTree::setIconClientSerial(const QIcon & icon)
+{
+	m_iconClientSerial = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 1, m_iconClientSerial,
+	[](QStandardItem * item) {
+		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto client = dynamic_cast<QUaModbusClient*>(node);
+		Q_CHECK_PTR(client);
+		auto clientType = client->getType();
+		return clientType == QModbusClientType::Serial;
+	});
+}
+
+QIcon QUaModbusClientTree::iconBlock() const
+{
+	return m_iconBlock;
+}
+
+void QUaModbusClientTree::setIconBlock(const QIcon & icon)
+{
+	m_iconBlock = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 2, m_iconBlock,
+	[](QStandardItem * item) {
+		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+		Q_CHECK_PTR(block);
+		return block;
+	});
+}
+
+QIcon QUaModbusClientTree::iconValue() const
+{
+	return m_iconValue;
+}
+
+void QUaModbusClientTree::setIconValue(const QIcon & icon)
+{
+	m_iconValue = icon;
+	// update existing
+	this->updateIconRecursive(nullptr, 3, m_iconValue,
+	[](QStandardItem * item) {
+		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto value = dynamic_cast<QUaModbusValue*>(node);
+		Q_CHECK_PTR(value);
+		return value;
+	});
 }
