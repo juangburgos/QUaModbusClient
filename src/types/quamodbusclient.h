@@ -1,10 +1,12 @@
 #ifndef QUAMODBUSCLIENT_H
 #define QUAMODBUSCLIENT_H
 
+#include <QModbusClient>
 #include <QModbusTcpClient>
 #include <QModbusRtuSerialMaster>
 #include <QSerialPort>
 #include <QMutex>
+#include <QSharedPointer>
 
 #include <QLambdaThreadWorker>
 

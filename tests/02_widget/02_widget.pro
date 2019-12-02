@@ -5,13 +5,15 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = 02_widget
 TEMPLATE = app
 
+SOURCES += \
+main.cpp \
+quamodbusclientwidgettest.cpp
 
-SOURCES += main.cpp\
-        quamodbusclientwidgettest.cpp
+HEADERS += \
+quamodbusclientwidgettest.h
 
-HEADERS  += quamodbusclientwidgettest.h
-
-FORMS    += quamodbusclientwidgettest.ui
+FORMS += \
+quamodbusclientwidgettest.ui
 
 include($$PWD/../../src/widget/quamodbusclientwidget.pri)
 include($$PWD/../../libs/QDeferred.git/src/qlambdathreadworker.pri)

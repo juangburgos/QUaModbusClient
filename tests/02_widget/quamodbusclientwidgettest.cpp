@@ -34,7 +34,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 	this->setupModbusWidgets();
 	// add list entry point to object's folder
 	QUaFolderObject * objsFolder = m_server.objectsFolder();
-	auto modCliList = objsFolder->addChild<QUaModbusClientList>();
+	auto modCliList = objsFolder->addChild<QUaModbusClientList>("ns=1;s=modbus.clients");
 	modCliList->setDisplayName("ModbusClients");
 	modCliList->setBrowseName("ModbusClients");
 	// set client list into widget
