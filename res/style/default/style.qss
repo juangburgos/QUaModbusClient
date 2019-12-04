@@ -1,0 +1,128 @@
+/*****************************************************************************
+QUaModbus
+*/
+
+QUaModbus {
+	/* TODO */
+
+/*****************************************************************************
+QUaModbusClientTree
+*/
+
+QUaModbusClientTree {
+	qproperty-iconClientTcp    : url(":/default/icons/wired_network.svg");
+	qproperty-iconClientSerial : url(":/default/icons/rs_232_male.svg");
+	qproperty-iconBlock        : url(":/default/icons/block.svg");
+	qproperty-iconValue        : url(":/default/icons/weight.svg");
+}
+
+QUaModbusClientTree QCheckBox#checkBoxFilter {
+	qproperty-icon    : url(":/default/icons/filled_filter.svg");
+	qproperty-toolTip : "Filter Tree Nodes";
+}
+
+QUaModbusClientTree QPushButton#pushButtonPerms {
+	qproperty-icon    : url(":/default/icons/lock.svg");
+}
+
+QUaModbusClientTree QToolButton#toolButtonImport {
+	qproperty-icon    : url(":/default/icons/import_csv.svg");
+	qproperty-toolTip : "Import CSV";
+	qproperty-toolButtonStyle : "Qt::ToolButtonTextBesideIcon";
+}
+
+QUaModbusClientTree QToolButton#toolButtonExport {
+	qproperty-icon    : url(":/default/icons/export_csv.svg");
+	qproperty-toolTip : "Export CSV";
+	qproperty-toolButtonStyle : "Qt::ToolButtonTextBesideIcon";
+}
+
+QUaModbusClientTree QPushButton#pushButtonClear {
+	qproperty-icon    : url(":/default/icons/waste.svg");
+	qproperty-toolTip : "Clear All Clients";
+}
+
+QUaModbusClientTree QPushButton#pushButtonAddClient {
+	qproperty-icon    : url(":/default/icons/add.svg");
+	qproperty-toolTip : "Add New Client";
+}
+
+
+/*****************************************************************************
+QUaModbusClientWidget
+*/
+
+QUaModbusClientWidget QPushButton#pushButtonConnect {
+	qproperty-icon    : url(":/default/icons/disconnected.svg");
+	qproperty-toolTip : "Connect to Modbus Server";
+}
+
+QUaModbusClientWidget QPushButton#pushButtonPerms {
+	qproperty-icon    : url(":/default/icons/lock.svg");
+}
+
+QUaModbusClientWidget QPushButton#pushButtonClear {
+	qproperty-icon    : url(":/default/icons/waste.svg");
+	qproperty-toolTip : "Clear All Blocks in Client";
+}
+
+QUaModbusClientWidget QPushButton#pushButtonAddBlock {
+	qproperty-icon    : url(":/default/icons/add.svg");
+	qproperty-toolTip : "Add New Block to Client";
+}
+
+QUaModbusClientWidget QPushButton#pushButtonDelete {
+	qproperty-icon    : url(":/default/icons/delete_sign.svg");
+	qproperty-toolTip : "Delete Client";
+}
+
+QUaModbusClientWidget QPushButton#pushButtonApply {
+	qproperty-icon    : url(":/default/icons/refresh.svg");
+	qproperty-toolTip : "Apply Changes to Client";
+}
+
+/*****************************************************************************
+QUaModbusDataBlockWidget
+*/
+
+QUaModbusDataBlockWidget QPushButton#pushButtonPerms {
+	qproperty-icon    : url(":/default/icons/lock.svg");
+}
+
+QUaModbusDataBlockWidget QPushButton#pushButtonClear {
+	qproperty-icon    : url(":/default/icons/waste.svg");
+	qproperty-toolTip : "Clear All Values in Block";
+}
+
+QUaModbusDataBlockWidget QPushButton#pushButtonAddValue {
+	qproperty-icon    : url(":/default/icons/add.svg");
+	qproperty-toolTip : "Add New Value to Block";
+}
+
+QUaModbusDataBlockWidget QPushButton#pushButtonDelete {
+	qproperty-icon    : url(":/default/icons/delete_sign.svg");
+	qproperty-toolTip : "Delete Block";
+}
+
+QUaModbusDataBlockWidget QPushButton#pushButtonApply {
+	qproperty-icon    : url(":/default/icons/refresh.svg");
+	qproperty-toolTip : "Apply Changes to Block";
+}
+
+/*****************************************************************************
+QUaModbusValueWidget
+*/
+
+QUaModbusValueWidget QPushButton#pushButtonPerms {
+	qproperty-icon    : url(":/default/icons/lock.svg");
+}
+
+QUaModbusValueWidget QPushButton#pushButtonDelete {
+	qproperty-icon    : url(":/default/icons/delete_sign.svg");
+	qproperty-toolTip : "Delete Value";
+}
+
+QUaModbusValueWidget QPushButton#pushButtonApply {
+	qproperty-icon    : url(":/default/icons/refresh.svg");
+	qproperty-toolTip : "Apply Changes to Value";
+}
