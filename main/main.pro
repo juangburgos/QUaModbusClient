@@ -21,6 +21,11 @@ CONFIG(debug, debug|release) {
 	OBJECTS_DIR = $$TEMP_DIR/release
 }
 
+include($$PWD/../src/widget/quamodbusclientwidget.pri)
+include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
+include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)
+include($$PWD/../libs/qadvanceddocking.pri)
+
 SOURCES += \
 main.cpp \
 quamodbus.cpp
@@ -36,10 +41,6 @@ RESOURCES += $$PWD/../res/res.qrc
 win32 {
 	RC_ICONS = $$PWD/../res/logo/logo.ico
 }
-
-include($$PWD/../src/widget/quamodbusclientwidget.pri)
-include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
-include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)
-include($$PWD/../libs/QUaServer.git/src/helper/add_qt_path_win.pri)
+include($$PWD/../libs/add_qad_path_win.pri)
 
 include($$PWD/../postapp.pri)

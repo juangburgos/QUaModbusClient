@@ -19,6 +19,18 @@
 #include <QUaModbusDataBlockWidget>
 #include <QUaModbusValueWidget>
 
+#include <DockManager.h>
+#include <DockWidget.h>
+#include <DockAreaWidget.h>
+#include <DockWidgetTab.h>
+
+namespace QAd = ads;
+typedef QAd::CDockManager    QAdDockManager;
+typedef QAd::CDockWidget     QAdDockWidget;
+typedef QAd::DockWidgetArea  QAdDockArea;
+typedef QAd::CDockAreaWidget QAdDockWidgetArea;
+typedef QAd::CDockWidgetTab  QAdDockWidgetTab;
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class QUaModbus; }
 QT_END_NAMESPACE
@@ -51,17 +63,37 @@ private:
 	QString   m_strTitle;
 	QString   m_strConfigFile;
 	QString   m_strLastPathUsed;
+	QFileSystemWatcher m_styleWatcher;
+
+	// widgets
+	QUaModbusClientTree      * m_modbusTreeWidget;
+	QUaModbusClientWidget    * m_clientWidget    ;
+	QUaModbusDataBlockWidget * m_blockWidget     ;
+	QUaModbusValueWidget	 * m_valueWidget     ; 
+	QAdDockManager           * m_dockManager     ;
 
 	// constants
 	const static QString m_strAppName;
 	const static QString m_strUntitiled;
 	const static QString m_strDefault;
+	const static QString m_strModbusTree;
+	const static QString m_strModbusClients;
+	const static QString m_strModbusBlocks;
+	const static QString m_strModbusValues;
 
 	// methods
 	void setupInfoModel();
+	void setupWidgets();
 	void setupMenuBar();
+	void setupStyle();
 
+	void bindClientWidget(QUaModbusClient    * client);
+	void bindBlockWidget (QUaModbusDataBlock * block );
+	void bindValueWidget (QUaModbusValue     * value );
 	void clearWidgets();
+
+	bool isDockVisible(const QString& strDockName);
+	bool setIsDockVisible(const QString& strDockName, const bool& visible);
 
 	// xml import / export
 	QByteArray  xmlConfig();

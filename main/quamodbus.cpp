@@ -11,6 +11,11 @@ const QString QUaModbus::m_strAppName   = QObject::tr("QUaModbusClient");
 const QString QUaModbus::m_strUntitiled = QObject::tr("Untitled");
 const QString QUaModbus::m_strDefault   = QObject::tr("Default");
 
+const QString QUaModbus::m_strModbusTree    = QObject::tr("Modbus Tree");
+const QString QUaModbus::m_strModbusClients = QObject::tr("Modbus Client Edit");
+const QString QUaModbus::m_strModbusBlocks  = QObject::tr("Modbus DataBlock Edit");
+const QString QUaModbus::m_strModbusValues  = QObject::tr("Modbus Value Edit");
+
 QUaModbus::QUaModbus(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::QUaModbus)
@@ -18,7 +23,6 @@ QUaModbus::QUaModbus(QWidget *parent)
     ui->setupUi(this);
 	QApplication::setApplicationName(QUaModbus::m_strAppName);
 	// initial values
-	this->setCentralWidget(ui->mdiArea);
 	this->setWindowIcon(QIcon(":/logo/logo/logo.svg"));
 	m_deleting        = false;
 	m_strTitle        = QString("%1 - %2");
@@ -27,8 +31,12 @@ QUaModbus::QUaModbus(QWidget *parent)
 	this->setWindowTitle(m_strTitle.arg(QUaModbus::m_strUntitiled).arg(QUaModbus::m_strAppName));
 	// setup opc ua information model and server
 	this->setupInfoModel();
+	// setup widgets and dock
+	this->setupWidgets();
 	// setup menu bar
 	this->setupMenuBar();
+	// setup the styles (inc. icons for widgets)
+	this->setupStyle();
 }
 
 QUaModbus::~QUaModbus()
@@ -308,6 +316,123 @@ void QUaModbus::setupInfoModel()
 	m_server.start();
 }
 
+void QUaModbus::setupWidgets()
+{
+	// setup docks
+	m_dockManager = new QAdDockManager(this);
+	// create tree and put it inside a dock
+	m_modbusTreeWidget = new QUaModbusClientTree(m_dockManager);
+	auto pDockTree = new QAdDockWidget(QUaModbus::m_strModbusTree, m_dockManager);
+	pDockTree->setWidget(m_modbusTreeWidget);
+	auto pAreaTree = m_dockManager->addDockWidget(QAd::CenterDockWidgetArea, pDockTree, nullptr);
+	// create client edit and put it inside a dock
+	m_clientWidget = new QUaModbusClientWidget(m_dockManager);
+	auto pDockClientEdit = new QAdDockWidget(QUaModbus::m_strModbusClients, m_dockManager);
+	pDockClientEdit->setWidget(m_clientWidget);
+	auto pAreaClientEdit = m_dockManager->addDockWidget(QAd::RightDockWidgetArea, pDockClientEdit, pAreaTree);
+	// create block edit and put it inside a dock
+	m_blockWidget = new QUaModbusDataBlockWidget(m_dockManager);
+	auto pDockBlockEdit = new QAdDockWidget(QUaModbus::m_strModbusBlocks, m_dockManager);
+	pDockBlockEdit->setWidget(m_blockWidget);
+	m_dockManager->addDockWidget(QAd::RightDockWidgetArea, pDockBlockEdit, pAreaClientEdit);
+	// create value edit and put it inside a dock
+	m_valueWidget = new QUaModbusValueWidget(m_dockManager);
+	auto pDockValueEdit = new QAdDockWidget(QUaModbus::m_strModbusValues, m_dockManager);
+	pDockValueEdit->setWidget(m_valueWidget);
+	m_dockManager->addDockWidget(QAd::BottomDockWidgetArea, pDockValueEdit, pAreaClientEdit);
+	// setup widgets
+	// get modbus
+	QUaModbusClientList * mod = this->modbusClientList();
+	// set client list
+	m_modbusTreeWidget->setClientList(mod);
+	// bind selected
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::nodeSelectionChanged, this,
+	[this](QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr) 
+	{
+		Q_UNUSED(nodePrev);
+		Q_UNUSED(typePrev);
+		// early exit
+		if (m_deleting || !nodeCurr)
+		{
+			return;
+		}
+		// set up widgets for current selection
+		switch (typeCurr)
+		{
+		case QModbusSelectType::QUaModbusClient:
+			{
+				auto client = dynamic_cast<QUaModbusClient*>(nodeCurr);
+				this->bindClientWidget(client);
+				// clear and disable block and value widgets
+				m_blockWidget->clear();
+				m_blockWidget->setEnabled(false);
+				m_valueWidget->clear();
+				m_valueWidget->setEnabled(false);
+			}
+			break;
+		case QModbusSelectType::QUaModbusDataBlock:
+			{
+				auto block = dynamic_cast<QUaModbusDataBlock*>(nodeCurr);
+				this->bindBlockWidget(block);
+				auto client = block->client();
+				this->bindClientWidget(client);
+				// clear and disable value widget
+				m_valueWidget->clear();
+				m_valueWidget->setEnabled(false);
+			}
+			break;
+		case QModbusSelectType::QUaModbusValue:
+			{
+				auto value = dynamic_cast<QUaModbusValue*>(nodeCurr);
+				this->bindValueWidget(value);
+				auto block = value->block();
+				this->bindBlockWidget(block);
+				auto client = block->client();
+				this->bindClientWidget(client);
+			}
+			break;
+		default:
+			break;
+		}
+	});
+	// open client edit widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::clientDoubleClicked, this,
+	[this](QUaModbusClient * client) {
+		Q_UNUSED(client);
+		this->setIsDockVisible(QUaModbus::m_strModbusClients, true);
+	});
+	// open client block widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::blockDoubleClicked, this,
+	[this](QUaModbusDataBlock * block) {
+		Q_UNUSED(block);
+		this->setIsDockVisible(QUaModbus::m_strModbusBlocks, true);
+	});
+	// open client edit widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::valueDoubleClicked, this,
+	[this](QUaModbusValue * value) {
+		Q_UNUSED(value);
+		this->setIsDockVisible(QUaModbus::m_strModbusValues, true);
+	});
+	// clear widgets before clearing clients
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, this,
+	[this]() {
+		// clear all widgets
+		this->clearWidgets();
+		// disable modbus widgets
+		m_clientWidget->setEnabled(false);
+		m_blockWidget ->setEnabled(false);
+		m_valueWidget ->setEnabled(false);
+	});
+	// clear widgets before clearing blocks
+	QObject::connect(m_clientWidget, &QUaModbusClientWidget::aboutToClear, this,
+	[this]() {
+		this->clearWidgets();
+		// disable modbus widgets
+		m_clientWidget->setEnabled(false);
+		m_blockWidget ->setEnabled(false);
+	});
+}
+
 void QUaModbus::setupMenuBar()
 {
 	// handle file menu events
@@ -318,16 +443,121 @@ void QUaModbus::setupMenuBar()
 	QObject::connect(ui->actionClose , &QAction::triggered, this, &QUaModbus::on_closeConfig );
 	QObject::connect(ui->actionExit  , &QAction::triggered, this, &QUaModbus::on_exit        );
 	// handle view menu events
-
-	// TODO
-
+	ui->menuView->addAction(m_dockManager->findDockWidget(QUaModbus::m_strModbusTree   )->toggleViewAction());
+	ui->menuView->addAction(m_dockManager->findDockWidget(QUaModbus::m_strModbusClients)->toggleViewAction());
+	ui->menuView->addAction(m_dockManager->findDockWidget(QUaModbus::m_strModbusBlocks )->toggleViewAction());
+	ui->menuView->addAction(m_dockManager->findDockWidget(QUaModbus::m_strModbusValues )->toggleViewAction());
 	// handle help menu events
 	QObject::connect(ui->actionAbout, &QAction::triggered, this, &QUaModbus::on_about);
 }
 
+void QUaModbus::setupStyle()
+{
+	// try to find theme file
+	const QString strThemeFile = "style.qss";
+	QFileInfo infoThemeFile;
+	QString   strThemePath;
+	QString   strDebugThemeDir = QString("%1/../../../../res/style/default")
+		.arg(QCoreApplication::applicationDirPath());
+	// try application path
+	strThemePath  = QString("%1/%2").arg(strDebugThemeDir).arg(strThemeFile);
+	infoThemeFile = QFileInfo(strThemePath);
+	// else try current path
+	if (!infoThemeFile.exists())
+	{
+		strThemePath  = QString("%1/%2").arg(QDir::currentPath()).arg(strThemeFile);
+		infoThemeFile = QFileInfo(strThemePath);
+	}
+	// else use embedded
+	if (!infoThemeFile.exists())
+	{
+		strThemePath  = QString(":/style/style/default/%1").arg(strThemeFile);
+		infoThemeFile = QFileInfo(strThemePath);
+	}
+	Q_ASSERT(infoThemeFile.exists());
+	// set stylesheet
+	QFile fileTheme(strThemePath);
+	if (fileTheme.open(QFile::ReadOnly | QFile::Text))
+	{
+		QTextStream ts(&fileTheme);
+		this->setStyleSheet("");
+		this->setStyleSheet(ts.readAll());
+		// subscribe to changes
+		m_styleWatcher.addPath(strThemePath);
+		QObject::connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, this,
+		[this]()
+		{
+			this->setupStyle();
+		});
+	}
+	else
+	{
+		QMessageBox::critical(
+			this,
+			tr("Theme Error"),
+			tr(
+				"Could not apply style.\n"
+				"File %1 could not be opened."
+			).arg(strThemeFile)
+		);
+	}
+	fileTheme.close();
+}
+
+void QUaModbus::bindClientWidget(QUaModbusClient* client)
+{
+	// bind widget
+	m_clientWidget->bindClient(client);
+}
+
+void QUaModbus::bindBlockWidget(QUaModbusDataBlock* block)
+{
+	// bind widget
+	m_blockWidget->bindBlock(block);
+}
+
+void QUaModbus::bindValueWidget(QUaModbusValue* value)
+{
+	// bind widget
+	m_valueWidget->bindValue(value);
+}
+
 void QUaModbus::clearWidgets()
 {
-	// TODO
+	m_clientWidget->clear();
+	m_blockWidget ->clear();
+	m_valueWidget ->clear();
+}
+
+bool QUaModbus::isDockVisible(const QString& strDockName)
+{
+	auto dock = m_dockManager->findDockWidget(strDockName);
+	Q_ASSERT_X(dock, "QUaModbus", "Invalid dock.");
+	if (!dock)
+	{
+		return false;
+	}
+	return !dock->isClosed();
+}
+
+bool QUaModbus::setIsDockVisible(const QString& strDockName, const bool& visible)
+{
+	auto dock = m_dockManager->findDockWidget(strDockName);
+	Q_ASSERT_X(dock, "QUaModbus", "Invalid dock.");
+	if (!dock)
+	{
+		return false;
+	}
+	// check if already
+	if (
+		(!dock->isClosed() && visible) ||
+		(dock->isClosed() && !visible)
+		)
+	{
+		return true;
+	}
+	dock->toggleView(visible);
+	return true;
 }
 
 QByteArray QUaModbus::xmlConfig()
@@ -376,62 +606,17 @@ QDomElement QUaModbus::toDomElement(QDomDocument& domDoc) const
 {
 	// add element
 	QDomElement elemApp = domDoc.createElement(QUaModbus::staticMetaObject.className());
-
-	// actions
-	elemApp.setAttribute("ShowTree"         , ui->actionTree->isChecked()          );
-	elemApp.setAttribute("ShowClientEdit"   , ui->actionClient_Edit->isChecked()   );
-	elemApp.setAttribute("ShowDataBlockEdit", ui->actionDataBlock_Edit->isChecked());
-	elemApp.setAttribute("ShowValueEdit"    , ui->actionValue_Edit->isChecked()    );
 	// modbus
 	QUaModbusClientList* mod = this->modbusClientList();
 	elemApp.appendChild(mod->toDomElement(domDoc));
-	// modbus widgets
-
-	// TODO
-
+	// dock
+	elemApp.setAttribute("DockState", QString(m_dockManager->saveState().toHex()));
 	// return element
 	return elemApp;
 }
 
 void QUaModbus::fromDomElement(QDomElement& domElem, QString& strError)
 {
-	// actions
-	if (domElem.hasAttribute("ShowTree"))
-	{
-		bool ok = false;
-		bool en = static_cast<bool>(domElem.attribute("ShowTree").toInt(&ok));
-		if (ok)
-		{
-			ui->actionTree->setChecked(en);
-		}
-	}
-	if (domElem.hasAttribute("ShowClientEdit"))
-	{
-		bool ok = false;
-		bool en = static_cast<bool>(domElem.attribute("ShowClientEdit").toInt(&ok));
-		if (ok)
-		{
-			ui->actionClient_Edit->setChecked(en);
-		}
-	}
-	if (domElem.hasAttribute("ShowValueEdit"))
-	{
-		bool ok = false;
-		bool en = static_cast<bool>(domElem.attribute("ShowValueEdit").toInt(&ok));
-		if (ok)
-		{
-			ui->actionDataBlock_Edit->setChecked(en);
-		}
-	}
-	if (domElem.hasAttribute("ShowDataBlockEdit"))
-	{
-		bool ok = false;
-		bool en = static_cast<bool>(domElem.attribute("ShowDataBlockEdit").toInt(&ok));
-		if (ok)
-		{
-			ui->actionValue_Edit->setChecked(en);
-		}
-	}
 	// modbus
 	QDomElement elemMod = domElem.firstChildElement(QUaModbusClientList::staticMetaObject.className());
 	if (elemMod.isNull())
@@ -441,8 +626,10 @@ void QUaModbus::fromDomElement(QDomElement& domElem, QString& strError)
 	}
 	QUaModbusClientList* mod = this->modbusClientList();
 	mod->fromDomElement(elemMod, strError);
-	// modbus widgets
-
-	// TODO
+	// dock
+	if (domElem.hasAttribute("DockState"))
+	{
+		m_dockManager->restoreState(QByteArray::fromHex(domElem.attribute("DockState").toUtf8()));
+	}
 }
 
