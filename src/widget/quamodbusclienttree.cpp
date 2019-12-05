@@ -428,16 +428,8 @@ void QUaModbusClientTree::setupTreeContextMenu()
 		QModelIndex index = ui->treeViewModbus->indexAt(point);
 		if (index.isValid()) 
 		{
-			// for all
+			// expand/collapse
 			QMenu contextMenu(ui->treeViewModbus);
-			contextMenu.addAction(m_iconExpand, tr("Expand All"), this,
-			[this, index]() {
-				this->expandRecursivelly(index, true);
-			});
-			contextMenu.addAction(m_iconCollapse, tr("Collapse All"), this,
-			[this, index]() {
-				this->expandRecursivelly(index, false);
-			});
 			// specific
 			auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
 			auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
@@ -447,6 +439,14 @@ void QUaModbusClientTree::setupTreeContextMenu()
 			case QModbusSelectType::QUaModbusClient:
 				// for clients only
 				{
+					contextMenu.addAction(m_iconExpand, tr("Expand"), this,
+					[this, index]() {
+						this->expandRecursivelly(index, true);
+					});
+					contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
+					[this, index]() {
+						this->expandRecursivelly(index, false);
+					});
 					auto client = dynamic_cast<QUaModbusClient*>(node);
 					contextMenu.addSeparator();
 					// connect
@@ -513,6 +513,14 @@ void QUaModbusClientTree::setupTreeContextMenu()
 			case QModbusSelectType::QUaModbusDataBlock:
 				// for blocks only
 				{
+					contextMenu.addAction(m_iconExpand, tr("Expand"), this,
+					[this, index]() {
+						this->expandRecursivelly(index, true);
+					});
+					contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
+					[this, index]() {
+						this->expandRecursivelly(index, false);
+					});
 					auto block = dynamic_cast<QUaModbusDataBlock*>(node);
 					contextMenu.addSeparator();
 					// values
