@@ -330,18 +330,24 @@ void QUaModbus::setupWidgets()
 	auto pDockClientEdit = new QAdDockWidget(QUaModbus::m_strModbusClients, m_dockManager);
 	pDockClientEdit->setWidget(m_clientWidget);
 	auto pAreaClientEdit = m_dockManager->addDockWidget(QAd::RightDockWidgetArea, pDockClientEdit, pAreaTree);
+	// disable intially
+	m_clientWidget->setEnabled(false);
 	// create block edit and put it inside a dock
 	m_blockWidget = new QUaModbusDataBlockWidget(m_dockManager);
 	auto pDockBlockEdit = new QAdDockWidget(QUaModbus::m_strModbusBlocks, m_dockManager);
 	pDockBlockEdit->setWidget(m_blockWidget);
 	m_dockManager->addDockWidget(QAd::RightDockWidgetArea, pDockBlockEdit, pAreaClientEdit);
+	// disable intially
+	m_blockWidget->setEnabled(false);
 	// create value edit and put it inside a dock
 	m_valueWidget = new QUaModbusValueWidget(m_dockManager);
 	auto pDockValueEdit = new QAdDockWidget(QUaModbus::m_strModbusValues, m_dockManager);
 	pDockValueEdit->setWidget(m_valueWidget);
 	m_dockManager->addDockWidget(QAd::BottomDockWidgetArea, pDockValueEdit, pAreaClientEdit);
+	// disable intially
+	m_valueWidget->setEnabled(false);
+
 	// setup widgets
-	// get modbus
 	QUaModbusClientList * mod = this->modbusClientList();
 	// set client list
 	m_modbusTreeWidget->setClientList(mod);

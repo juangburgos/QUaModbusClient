@@ -290,7 +290,7 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 			// on apply
 			m_connections <<
 			QObject::connect(ui->pushButtonApply, &QPushButton::clicked, ui->widgetClientEdit,
-				[cliTcp, this]() {
+			[cliTcp, this]() {
 				// common
 				cliTcp->setServerAddress(ui->widgetClientEdit->deviceAddress());
 				cliTcp->setKeepConnecting(ui->widgetClientEdit->keepConnecting());
@@ -298,60 +298,93 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 				cliTcp->setNetworkAddress(ui->widgetClientEdit->ipAddress());
 				cliTcp->setNetworkPort(ui->widgetClientEdit->networkPort());
 			});
-	}
+			// on client connect/disconnect
+			bool isConnected = cliTcp->getState() == QModbusState::ConnectedState;
+			ui->widgetClientEdit->setDeviceAddressEditable(!isConnected);
+			ui->widgetClientEdit->setIpAddressEditable    (!isConnected);
+			ui->widgetClientEdit->setNetworkPortEditable  (!isConnected);
+			m_connections <<
+			QObject::connect(cliTcp, &QUaModbusTcpClient::stateChanged, ui->widgetClientEdit,
+			[this](const QModbusState &state) {
+				bool isConnected = state == QModbusState::ConnectedState;
+				ui->widgetClientEdit->setDeviceAddressEditable(!isConnected);
+				ui->widgetClientEdit->setIpAddressEditable    (!isConnected);
+				ui->widgetClientEdit->setNetworkPortEditable  (!isConnected);
+			});
+		}
 		break;
 	case QModbusClientType::Serial:
-	{
-		auto cliSerial = dynamic_cast<QUaModbusRtuSerialClient*>(client);
-		Q_CHECK_PTR(cliSerial);
-		// com port
-		ui->widgetClientEdit->setComPortKey(cliSerial->getComPortKey());
-		m_connections <<
-		QObject::connect(cliSerial, &QUaModbusRtuSerialClient::comPortChanged, ui->widgetClientEdit,
-		[this](const QString &strComPort) {
-			ui->widgetClientEdit->setComPort(strComPort);
-		});
-		// parity
-		ui->widgetClientEdit->setParity(cliSerial->getParity());
-		m_connections <<
-		QObject::connect(cliSerial, &QUaModbusRtuSerialClient::parityChanged, ui->widgetClientEdit,
-		[this](const QParity &parity) {
-			ui->widgetClientEdit->setParity(parity);
-		});
-		// baud rate
-		ui->widgetClientEdit->setBaudRate(cliSerial->getBaudRate());
-		m_connections <<
-		QObject::connect(cliSerial, &QUaModbusRtuSerialClient::baudRateChanged, ui->widgetClientEdit,
-		[this](const QBaudRate &baudRate) {
-			ui->widgetClientEdit->setBaudRate(baudRate);
-		});
-		// data bits
-		ui->widgetClientEdit->setDataBits(cliSerial->getDataBits());
-		m_connections <<
-		QObject::connect(cliSerial, &QUaModbusRtuSerialClient::dataBitsChanged, ui->widgetClientEdit,
-		[this](const QDataBits &dataBits) {
-			ui->widgetClientEdit->setDataBits(dataBits);
-		});
-		// stop bits
-		ui->widgetClientEdit->setStopBits(cliSerial->getStopBits());
-		m_connections <<
-		QObject::connect(cliSerial, &QUaModbusRtuSerialClient::stopBitsChanged, ui->widgetClientEdit,
-		[this](const QStopBits &stopBits) {
-			ui->widgetClientEdit->setStopBits(stopBits);
-		});
-		// on apply
-		m_connections <<
-		QObject::connect(ui->pushButtonApply, &QPushButton::clicked, ui->widgetClientEdit,
-		[cliSerial, this]() {
-			// common
-			cliSerial->setServerAddress(ui->widgetClientEdit->deviceAddress());
-			cliSerial->setKeepConnecting(ui->widgetClientEdit->keepConnecting());
-			// serial
-			cliSerial->setComPortKey(ui->widgetClientEdit->comPortKey());
-			cliSerial->setParity(ui->widgetClientEdit->parity());
-			cliSerial->setBaudRate(ui->widgetClientEdit->baudRate());
-			cliSerial->setDataBits(ui->widgetClientEdit->dataBits());
-			cliSerial->setStopBits(ui->widgetClientEdit->stopBits());
+		{
+			auto cliSerial = dynamic_cast<QUaModbusRtuSerialClient*>(client);
+			Q_CHECK_PTR(cliSerial);
+			// com port
+			ui->widgetClientEdit->setComPortKey(cliSerial->getComPortKey());
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::comPortChanged, ui->widgetClientEdit,
+			[this](const QString &strComPort) {
+				ui->widgetClientEdit->setComPort(strComPort);
+			});
+			// parity
+			ui->widgetClientEdit->setParity(cliSerial->getParity());
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::parityChanged, ui->widgetClientEdit,
+			[this](const QParity &parity) {
+				ui->widgetClientEdit->setParity(parity);
+			});
+			// baud rate
+			ui->widgetClientEdit->setBaudRate(cliSerial->getBaudRate());
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::baudRateChanged, ui->widgetClientEdit,
+			[this](const QBaudRate &baudRate) {
+				ui->widgetClientEdit->setBaudRate(baudRate);
+			});
+			// data bits
+			ui->widgetClientEdit->setDataBits(cliSerial->getDataBits());
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::dataBitsChanged, ui->widgetClientEdit,
+			[this](const QDataBits &dataBits) {
+				ui->widgetClientEdit->setDataBits(dataBits);
+			});
+			// stop bits
+			ui->widgetClientEdit->setStopBits(cliSerial->getStopBits());
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::stopBitsChanged, ui->widgetClientEdit,
+			[this](const QStopBits &stopBits) {
+				ui->widgetClientEdit->setStopBits(stopBits);
+			});
+			// on apply
+			m_connections <<
+			QObject::connect(ui->pushButtonApply, &QPushButton::clicked, ui->widgetClientEdit,
+			[cliSerial, this]() {
+				// common
+				cliSerial->setServerAddress (ui->widgetClientEdit->deviceAddress());
+				cliSerial->setKeepConnecting(ui->widgetClientEdit->keepConnecting());
+				// serial
+				cliSerial->setComPortKey(ui->widgetClientEdit->comPortKey());
+				cliSerial->setParity    (ui->widgetClientEdit->parity()    );
+				cliSerial->setBaudRate  (ui->widgetClientEdit->baudRate()  );
+				cliSerial->setDataBits  (ui->widgetClientEdit->dataBits()  );
+				cliSerial->setStopBits  (ui->widgetClientEdit->stopBits()  );
+			});
+			// on client connect/disconnect
+			bool isConnected = cliSerial->getState() == QModbusState::ConnectedState;
+			ui->widgetClientEdit->setDeviceAddressEditable(!isConnected);
+			ui->widgetClientEdit->setComPortEditable      (!isConnected);
+			ui->widgetClientEdit->setParityEditable       (!isConnected);
+			ui->widgetClientEdit->setBaudRateEditable     (!isConnected);
+			ui->widgetClientEdit->setDataBitsEditable     (!isConnected);
+			ui->widgetClientEdit->setStopBitsEditable     (!isConnected);
+			m_connections <<
+			QObject::connect(cliSerial, &QUaModbusRtuSerialClient::stateChanged, ui->widgetClientEdit,
+			[this](const QModbusState &state) {
+				bool isConnected = state == QModbusState::ConnectedState;
+				ui->widgetClientEdit->setDeviceAddressEditable(!isConnected);
+				ui->widgetClientEdit->setComPortEditable      (!isConnected);
+				ui->widgetClientEdit->setParityEditable       (!isConnected);
+				ui->widgetClientEdit->setBaudRateEditable     (!isConnected);
+				ui->widgetClientEdit->setDataBitsEditable     (!isConnected);
+				ui->widgetClientEdit->setStopBitsEditable     (!isConnected);
+				
 			});
 		}
 		break;

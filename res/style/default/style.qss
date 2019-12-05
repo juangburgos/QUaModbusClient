@@ -14,6 +14,12 @@ QUaModbusClientTree {
 	qproperty-iconClientSerial : url(":/default/icons/vga.svg");
 	qproperty-iconBlock        : url(":/default/icons/package.svg");
 	qproperty-iconValue        : url(":/default/icons/wrist.svg");
+	qproperty-iconExpand       : url(":/default/icons/drag.svg");
+	qproperty-iconCollapse     : url(":/default/icons/maximize.svg");
+	qproperty-iconAdd          : url(":/default/icons/perspective.svg");
+	qproperty-iconDelete       : url(":/default/icons/perspective-1.svg");
+	qproperty-iconClear        : url(":/default/icons/trash.svg");
+	qproperty-iconConnect      : url(":/default/icons/plug.svg");
 }
 
 QUaModbusClientTree QCheckBox#checkBoxFilter {

@@ -30,6 +30,12 @@ class QUaModbusClientTree : public QWidget
 	Q_PROPERTY(QIcon iconClientSerial READ iconClientSerial WRITE setIconClientSerial)
 	Q_PROPERTY(QIcon iconBlock        READ iconBlock        WRITE setIconBlock       )
 	Q_PROPERTY(QIcon iconValue        READ iconValue        WRITE setIconValue       )
+	Q_PROPERTY(QIcon iconExpand       READ iconExpand       WRITE setIconExpand      )
+	Q_PROPERTY(QIcon iconCollapse     READ iconCollapse     WRITE setIconCollapse    )
+	Q_PROPERTY(QIcon iconAdd          READ iconAdd          WRITE setIconAdd         )
+	Q_PROPERTY(QIcon iconDelete       READ iconDelete       WRITE setIconDelete      )
+	Q_PROPERTY(QIcon iconClear        READ iconClear        WRITE setIconClear       )
+	Q_PROPERTY(QIcon iconConnect      READ iconConnect      WRITE setIconConnect     )
 
 public:
     explicit QUaModbusClientTree(QWidget *parent = nullptr);
@@ -94,6 +100,24 @@ public:
 	QIcon iconValue() const;
 	void  setIconValue(const QIcon &icon);
 
+	QIcon iconExpand() const;
+	void  setIconExpand(const QIcon& icon);
+
+	QIcon iconCollapse() const;
+	void  setIconCollapse(const QIcon& icon);
+
+	QIcon iconAdd   () const;
+	void  setIconAdd(const QIcon& icon);
+
+	QIcon iconDelete() const;
+	void  setIconDelete(const QIcon& icon);
+
+	QIcon iconClear () const;
+	void  setIconClear(const QIcon& icon);
+
+	QIcon iconConnect() const;
+	void  setIconConnect(const QIcon& icon);
+
 signals:
 	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
 	void clientDoubleClicked (QUaModbusClient    * client);
@@ -132,6 +156,12 @@ private:
 	QIcon m_iconClientSerial;
 	QIcon m_iconBlock;
 	QIcon m_iconValue;
+	QIcon m_iconExpand;
+	QIcon m_iconCollapse;
+	QIcon m_iconAdd;
+	QIcon m_iconDelete;
+	QIcon m_iconClear;
+	QIcon m_iconConnect;
 
 	void setupTreeContextMenu();
 	void setupImportButton();
@@ -155,6 +185,9 @@ private:
 
 	bool isFilterVisible() const;
 	void setFilterVisible(const bool &isVisible);
+
+	void showNewBlockDialog(QUaModbusClient* client, QUaModbusClientDialog& dialog);
+	void showNewValueDialog(QUaModbusDataBlock* block, QUaModbusClientDialog& dialog);
 
 	static int SelectTypeRole;
 	static int PointerRole;

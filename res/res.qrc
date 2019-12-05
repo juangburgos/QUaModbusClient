@@ -61,6 +61,12 @@
 		<file>icons/voltmeter.svg</file>
 		<file>icons/wrench.svg</file>
 		<file>icons/wrist.svg</file>
+		<file>icons/maximize.svg</file>
+		<file>icons/drag.svg</file>
+		<file>icons/up-arrow.svg</file>
+		<file>icons/left-arrow.svg</file>
+		<file>icons/right-arrow.svg</file>
+		<file>icons/down-arrow.svg</file>
 	</qresource>
 	<qresource prefix="/logo">
 		<file>logo/logo.svg</file>
