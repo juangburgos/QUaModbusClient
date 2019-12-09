@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+	<Name>QUaModbusClient</Name>
+	<Version>1.0</Version>
+	<Title>QUaModbusClient</Title>
+	<Publisher>PPower</Publisher>
+	<StartMenuDir>QUaModbusClient</StartMenuDir>
+	<TargetDir>@RootDir@/QUaModbusClient</TargetDir>
+	<AllowSpaceInPath>true</AllowSpaceInPath>
+	<WizardStyle>Modern</WizardStyle>
+</Installer>

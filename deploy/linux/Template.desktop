@@ -1,0 +1,12 @@
+[Desktop Entry]
+GenericName={UNKNOWN_BIN}
+Name={UNKNOWN_BIN}
+Version=1.0
+Exec={UNKNOWN_DIR}/bin/Run_{UNKNOWN_BIN} %U
+Icon={UNKNOWN_DIR}/icons/{UNKNOWN_BIN}.png
+Comment=OPC UA {UNKNOWN_BIN}
+Type=Application
+Terminal=false
+StartupNotify=false
+Encoding=UTF-8
+Categories=OPC UA;
