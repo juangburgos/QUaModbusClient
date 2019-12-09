@@ -130,7 +130,7 @@ else
 fi
 
 # clean untracked files
-git clean -f -x -d
+git clean -xfd ${dirname}
 
 # copy style files
 echo "[INFO] searching style files."
@@ -224,7 +224,7 @@ length_bins=${#list_bins[@]}
 # get dependencies for all binaries using windeployqt/linuxdeployqt
 # it is one big statement containing all binaries
 if [[ $machine == "Win" ]]; then
-	deploy_cmd="windeployqt --release --no-compiler-runtime"
+	deploy_cmd="windeployqt --release --no-compiler-runtime --no-translations"
 else
 	deploy_cmd="linuxdeployqt"
 fi
