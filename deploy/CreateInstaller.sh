@@ -279,11 +279,11 @@ echo "[INFO] creating installer please wait..."
 if [[ $machine == "Win" ]]; then
 	install_config=${dirname}/win/config/config.xml
 	install_package=${dirname}/win/packages
-	installer_name=${app_name}_${machine}${bitness}_${package_commit}.exe
+	installer_name=${dirname}/${app_name}_${machine}${bitness}_${package_commit}.exe
 else
 	install_config=${dirname}/linux/config/config.xml
 	install_package=${dirname}/linux/packages
-	installer_name=${app_name}_${machine}${bitness}_${package_commit}.run
+	installer_name=${dirname}/${app_name}_${machine}${bitness}_${package_commit}.run
 fi
 binarycreator --offline-only -c ${install_config} -p ${install_package} ${installer_name}
 #clear;
