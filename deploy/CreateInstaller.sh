@@ -224,7 +224,7 @@ length_bins=${#list_bins[@]}
 # get dependencies for all binaries using windeployqt/linuxdeployqt
 # it is one big statement containing all binaries
 if [[ $machine == "Win" ]]; then
-	deploy_cmd="windeployqt --release --no-styless --no-compiler-runtime"
+	deploy_cmd="windeployqt --release --no-compiler-runtime"
 else
 	deploy_cmd="linuxdeployqt"
 fi
@@ -246,11 +246,11 @@ if [[ $machine == "Win" ]]; then
 	echo $deploy_cmd
 	$deploy_cmd
 else
-	deploy_cmd="$deploy_cmd -no-styless -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so"
+	deploy_cmd="$deploy_cmd -no-styles -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so"
 	echo $deploy_cmd
 	$deploy_cmd
 	# cleanup
-	rm $(find ${PWD} -name '*AppRun*')
+	rm $(find ${dirname} -name '*AppRun*')
 fi
 echo "[INFO] finished getting binary dependencies"
 
