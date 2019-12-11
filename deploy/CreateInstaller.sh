@@ -57,6 +57,7 @@ else
 	PATH="${PATH}:/home/${USER}/Qt/QtIFW-2.0.5/bin"
 	PATH="${PATH}:/home/${USER}/Qt/QtIFW-3.1.1/bin"
 	PATH="${PATH}:/root/Qt/QtIFW-3.1.1/bin"
+	PATH="${PATH}:/opt/QtIFW-3.1.1/bin"
 fi
 echo "[INFO] will copy binaries from ${path_source_app}"
 
