@@ -151,7 +151,7 @@ if [[ $machine == "Win" ]]; then
 	list_apps=( $(find ${path_source_app} -name '*.exe') )	
 else
 	# files marked as executable
-	list_apps=( $( file $(find ${path_source_app} -type f) | grep "LSB executable" | grep -o -P '.*(?=:)' | grep -v ".pdb") )
+	list_apps=( $( file $(find ${path_source_app} -type f) | grep "LSB " | grep -o -P '.*(?=:)' | grep -v ".pdb") )
 fi
 # copy all app files to target
 for f in ${!list_apps[@]}; do
@@ -215,7 +215,7 @@ if [[ $machine == "Win" ]]; then
 	list_apps=( $(find ${path_target_bin} -name '*.exe') )
 	list_libs=( $(find ${path_target_bin} -name '*.dll') )
 else
-	list_apps=( $( file $(find ${path_target_bin} -type f) | grep "LSB executable" | grep -o -P '.*(?=:)' | grep -v ".pdb") )
+	list_apps=( $( file $(find ${path_target_bin} -type f) | grep "LSB " | grep -o -P '.*(?=:)' | grep -v ".pdb") )
 	list_libs=( $(find ${path_target_bin} -name '*.so') )
 fi
 # join lists
@@ -246,7 +246,7 @@ if [[ $machine == "Win" ]]; then
 	echo $deploy_cmd
 	$deploy_cmd
 else
-	deploy_cmd="$deploy_cmd -no-styles -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so"
+	deploy_cmd="$deploy_cmd -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so"
 	echo $deploy_cmd
 	$deploy_cmd
 	# cleanup
