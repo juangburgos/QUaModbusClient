@@ -3,7 +3,7 @@
 	<Name>QUaModbusClient</Name>
 	<Version>1.0</Version>
 	<Title>QUaModbusClient</Title>
-	<Publisher>PPower</Publisher>
+	<Publisher>juangburgos</Publisher>
 	<StartMenuDir>QUaModbusClient</StartMenuDir>
 	<TargetDir>@RootDir@/QUaModbusClient</TargetDir>
 	<AllowSpaceInPath>true</AllowSpaceInPath>

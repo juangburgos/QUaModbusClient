@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
-	<Name>VrConfigurator</Name>
+	<Name>QUaModbusClient</Name>
 	<Version>1.0</Version>
-	<Title>VrConfigurator</Title>
-	<Publisher>PPower</Publisher>
-	<StartMenuDir>VrConfigurator</StartMenuDir>
-	<TargetDir>@ApplicationsDir@/VrConfigurator</TargetDir>
+	<Title>QUaModbusClient</Title>
+	<Publisher>juangburgos</Publisher>
+	<StartMenuDir>QUaModbusClient</StartMenuDir>
+	<TargetDir>@ApplicationsDir@/QUaModbusClient</TargetDir>
 	<AllowSpaceInPath>true</AllowSpaceInPath>
 	<WizardStyle>Modern</WizardStyle>
 </Installer>
