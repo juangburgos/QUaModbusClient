@@ -102,6 +102,31 @@ checkAndCopy() {
     printf "[INFO] copied :\n%s to \n%s\n" $1 $2 
 }
 
+# function replaceInFile ***************************************************************
+# replace text in file and overwrite it
+replaceInFile() {
+	# Check arguments
+	[[ $# -ne 3 ]] && { printf "\n[ERROR] missing arguments in replaceInFile\n\n" >&2; exit 1; }
+	# Check source file exists
+	if [[ ! -e $1 ]]; then
+	    printf "\n[ERROR] source file for replaceInFile :\n%s \ndoes not exist!\n\n" $1
+	    exit 1
+	fi
+	# Copy args
+	filename_src=$1
+	str_to_match=$2
+	str_to_write=$3
+	# Substitute
+	while read a ; do 
+	    echo ${a//$str_to_match/$str_to_write} ; 
+	done < $filename_src > ${filename_src}.t ; 
+	# Replace
+	rm -f $filename_src
+	mv ${filename_src}.t $filename_src
+	# Success
+    printf "[INFO] updated :\n%s\n" $1
+}
+
 # function main *****************************************************************************
 # create list of necessary dependencies
 declare -a list_depends
@@ -122,10 +147,12 @@ if [[ $machine == "Win" ]]; then
 	path_target_root="${dirname}/win/packages/${app_name}/data/"
 	path_target_bin="${path_target_root}bin/"
 else
-	path_target_root="${dirname}/linux/packages/${app_name}/data/"
+	path_target_root="${dirname}/linux/${app_name}/usr/"
 	path_target_bin="${path_target_root}bin/"
-	path_target_icons="${path_target_root}icons/"
-	# need to add target path to library path so linuxdeployqt finds portal deps
+	path_target_lib="${path_target_root}lib/"
+	path_target_icons="${path_target_root}share/icons/hicolor/256x256/apps/"
+	path_target_desktop="${path_target_root}share/applications/"
+	# need to add target path to library path so linuxdeployqt finds deps
 	LD_LIBRARY_PATH=$path_target_bin:$LD_LIBRARY_PATH
 	export LD_LIBRARY_PATH
 fi
@@ -163,15 +190,11 @@ for f in ${!list_apps[@]}; do
 	if [[ $machine == "Win" ]]; then
     	checkAndCopy $curr_fname $curr_tname
 	else
-		# note : asume binaries with no symbols, else need to strip them
-		#strip --strip-debug --strip-unneeded $curr_fname -o $curr_tname
 		checkAndCopy $curr_fname $curr_tname
-		# copy run scripts
-		checkAndCopy "${path_source_app}Run_${curr_bname}" "${path_target_bin}Run_${curr_bname}"
 	fi
 done
 
-# Version file (About dialog)
+# version file (about dialog)
 curr_fname=${path_source_app}version.txt
 curr_bname="$(basename "${curr_fname}")"
 curr_tname="$path_target_bin$curr_bname"
@@ -179,17 +202,12 @@ checkAndCopy $curr_fname $curr_tname
 
 # linux only
 if [[ $machine == "Linux" ]]; then
-	# copy bootstrap script
-	checkAndCopy ${dirname}/linux/LinuxBootstrap.sh ${path_target_root}LinuxBootstrap.sh
-	chmod +x ${path_target_root}LinuxBootstrap.sh
-	# copy linux runner script to /bin
-	checkAndCopy ${dirname}/linux/LinuxRunner.sh ${path_target_bin}LinuxRunner.sh
-	chmod +x ${path_target_bin}LinuxRunner.sh
 	# copy logo
 	checkAndCopy "${path_source_app_icons}logo.png" "${path_target_icons}${app_name}.png"
 	# copy shortcut template files
-	checkAndCopy ${dirname}/linux/Template.desktop ${path_target_root}Template.desktop
-	checkAndCopy ${dirname}/linux/Template.directory ${path_target_root}Template.directory
+	desk_fname=${path_target_desktop}${app_name}.desktop
+	checkAndCopy ${dirname}/linux/Template.desktop ${desk_fname}
+	replaceInFile ${desk_fname} "{UNKNOWN_BIN}" ${app_name}
 fi
 
 # copy dependencies
@@ -202,11 +220,10 @@ if [[ $machine == "Win" ]]; then
 else
 	# *.so files
 	list_sos=( $(find ${path_source_lib}/../ -name '*qtadvanceddocking.so*') )	
-	# copy all styles files to target
 	for f in ${!list_sos[@]}; do
 	    curr_fname=${list_sos[$f]}
 	    curr_bname="$(basename "${curr_fname}")"
-	    curr_tname="$path_target_bin$curr_bname"
+	    curr_tname="$path_target_lib$curr_bname"
 	    checkAndCopy $curr_fname $curr_tname
 	done
 fi
@@ -216,8 +233,8 @@ if [[ $machine == "Win" ]]; then
 	list_apps=( $(find ${path_target_bin} -name '*.exe') )
 	list_libs=( $(find ${path_target_bin} -name '*.dll') )
 else
-	list_apps=( $( file $(find ${path_target_bin} -type f) | grep "LSB " | grep -o -P '.*(?=:)' | grep -v ".pdb") )
-	list_libs=( $(find ${path_target_bin} -name '*.so') )
+	list_apps=( $(find ${path_target_desktop} -name '*.desktop') )
+	list_libs=( $(find ${path_target_lib} -name '*.so*') )
 fi
 # join lists
 list_bins=( "${list_apps[@]}" "${list_libs[@]}")
@@ -247,48 +264,45 @@ if [[ $machine == "Win" ]]; then
 	echo $deploy_cmd
 	$deploy_cmd
 else
-	deploy_cmd="$deploy_cmd -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so"
+	deploy_cmd="$deploy_cmd -bundle-non-qt-libs -extra-plugins=imageformats/libqsvg.so,iconengines/libqsvgicon.so -appimage"
 	echo $deploy_cmd
 	$deploy_cmd
-	# cleanup
-	rm $(find ${dirname} -name '*AppRun*')
 fi
 echo "[INFO] finished getting binary dependencies"
 
-# target path for package_info.json
-path_package_info="${path_target_root}package_info.json"
-# get package creator
-package_creator=$(git config user.name)
-# get current branch
-package_branch=$(git rev-parse --abbrev-ref HEAD)
-# get current commit
-package_commit=$(git rev-parse --short=8 HEAD)
-# get current date
-package_date=$(date +%Y%m%d_%H%M)
-# get qt info (split by line, get second line)
-qt_info=$(qmake -v)
-IFS=$'\n' list_qt_info=($qt_info)
-package_qtver=${list_qt_info[1]}
-# remove json file if exists
-if [[ -e $path_package_info ]]; then
-	rm -f $path_package_info
-fi
-# create json to be printed in file
-printf '{\n\t"package_creator": "%s",\n\t"package_branch": "%s",\n\t"package_commit": "%s",\n\t"package_date": "%s",\n\t"package_qtver": "%s",\n\t"package_arch": "%s"\n}\n' "$package_creator" "$package_branch" "$package_commit" "$package_date" "$package_qtver" "$bitness" >> $path_package_info
 # create installer appending current commit
 echo "[INFO] creating installer please wait..."
 if [[ $machine == "Win" ]]; then
+	# target path for package_info.json
+	path_package_info="${path_target_root}package_info.json"
+	# get package creator
+	package_creator=$(git config user.name)
+	# get current branch
+	package_branch=$(git rev-parse --abbrev-ref HEAD)
+	# get current commit
+	package_commit=$(git rev-parse --short=8 HEAD)
+	# get current date
+	package_date=$(date +%Y%m%d_%H%M)
+	# get qt info (split by line, get second line)
+	qt_info=$(qmake -v)
+	IFS=$'\n' list_qt_info=($qt_info)
+	package_qtver=${list_qt_info[1]}
+	# remove json file if exists
+	if [[ -e $path_package_info ]]; then
+		rm -f $path_package_info
+	fi
+	# create json to be printed in file
+	printf '{\n\t"package_creator": "%s",\n\t"package_branch": "%s",\n\t"package_commit": "%s",\n\t"package_date": "%s",\n\t"package_qtver": "%s",\n\t"package_arch": "%s"\n}\n' "$package_creator" "$package_branch" "$package_commit" "$package_date" "$package_qtver" "$bitness" >> $path_package_info
 	install_config=${dirname}/win/config/config.xml
 	install_package=${dirname}/win/packages
 	installer_name=${dirname}/${app_name}_${machine}${bitness}_${package_commit}.exe
+	binarycreator --offline-only -c ${install_config} -p ${install_package} ${installer_name}
 else
-	install_config=${dirname}/linux/config/config.xml
-	install_package=${dirname}/linux/packages
-	installer_name=${dirname}/${app_name}_${machine}${bitness}_${package_commit}.run
+	installer_name=$(find ${dirname} -name '*.AppImage')
 fi
-binarycreator --offline-only -c ${install_config} -p ${install_package} ${installer_name}
-#clear;
-if [[ $machine == "Linux" ]]; then
-	chmod +x ${installer_name}
+
+if [[ ! -e ${installer_name} ]]; then
+    printf "\n[ERROR] failed to create installer file %s!\n\n" $installer_name
+    exit 1
 fi
 echo "[INFO] successfully created ${installer_name}"
