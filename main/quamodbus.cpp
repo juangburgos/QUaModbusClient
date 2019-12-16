@@ -295,9 +295,11 @@ void QUaModbus::on_about()
 		tr("About %1").arg(QUaModbus::m_strAppName),
 		tr(
 			"Version : %1\n"
-			"Build   : %2\n"
+			"Commit  : %2\n"
+			"Source  : https://github.com/juangburgos/QUaModbusClient\n"
 			"Copyright 2019 - juangburgos\n\n"
-			"Icons made by 'prettycons' from www.flaticon.com"
+			"Icons made by 'prettycons' from https://www.flaticon.com/\n"
+			"Made with Qt https://www.qt.io/\n"
 		).arg(strVersion).arg(strBuild)
 	);
 }

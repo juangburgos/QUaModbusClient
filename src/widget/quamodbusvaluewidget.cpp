@@ -21,6 +21,7 @@ QUaModbusValueWidget::QUaModbusValueWidget(QWidget *parent) :
     ui->setupUi(this);
 #ifndef QUA_ACCESS_CONTROL
 	ui->pushButtonPerms->setVisible(false);
+	ui->lineTop->setVisible(false);
 #else
 	m_loggedUser = nullptr;
 	ui->pushButtonPerms->setToolTip(tr(
