@@ -298,6 +298,9 @@ if [[ $machine == "Win" ]]; then
 	installer_name=${dirname}/${app_name}_${machine}${bitness}_${package_commit}.exe
 	binarycreator --offline-only -c ${install_config} -p ${install_package} ${installer_name}
 else
+	# move to deploy dir
+	installer_name=$(find ${dirname}/.. -name '*.AppImage')
+	mv $installer_name ${dirname}/$(basename $installer_name)
 	installer_name=$(find ${dirname} -name '*.AppImage')
 fi
 

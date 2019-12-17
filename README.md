@@ -4,6 +4,8 @@ Modbus client to OPC UA Server Gateway.
 
 ## Dependencies
 
+* C++11 or higher.
+
 * Qt 5.7 or higher.
 
 * CMake.
