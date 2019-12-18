@@ -2,6 +2,12 @@
 
 Modbus client to OPC UA Server Gateway.
 
+**Download** :
+
+* [Windows Installer](https://github.com/juangburgos/QUaModbusClient/releases/tag/latest)
+
+* [Linux AppImage](https://github.com/juangburgos/QUaModbusClient/releases/tag/latest)
+
 ## Dependencies
 
 * C++11 or higher.
