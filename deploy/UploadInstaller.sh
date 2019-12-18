@@ -100,7 +100,8 @@ if [[ ${GH_ASSETS_COUNT} -gt 2 ]]; then
 fi
 
 # delete old artifact if exists
-GH_ARTIFACT_OLD=$(echo $GH_ASSETS | jq -r '.[] | select(.name | contains("${GH_ARTIFACT_EXT}")) | .id')
+# NOTE : use jq with double quotes instead of single quotes to expand GH_ARTIFACT_EXT
+GH_ARTIFACT_OLD=$(echo $GH_ASSETS | jq -r ".[] | select(.name | contains(\"${GH_ARTIFACT_EXT}\")) | .id")
 if [[ ! -z "$GH_ARTIFACT_OLD" ]]; then
     curl --request DELETE -H "Authorization:token ${GH_TOKEN}" ${GH_REPO_RELEASES_URL}/assets/${GH_ARTIFACT_OLD}
 fi
