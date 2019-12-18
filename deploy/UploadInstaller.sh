@@ -62,10 +62,12 @@ fi
 # get platform dependent artifact
 if [[ $machine == "Win" ]]; then
 	GH_ARTIFACT_EXT="exe"
+	GH_ARTIFACT=$(find ${dirname} -name "*${GH_REPO}*.${GH_ARTIFACT_EXT}*" | head -n 1)
 else
 	GH_ARTIFACT_EXT="AppImage"
+	GH_ARTIFACT=$(find ${dirname}/.. -name "*.${GH_ARTIFACT_EXT}*")
 fi
-GH_ARTIFACT=$(find ${dirname}/.. -name "*.${GH_ARTIFACT_EXT}*")
+
 if [[ ! -e ${GH_ARTIFACT} ]]; then
     printf "\n[ERROR] Artifact file :\n%s \ndoes not exist!\n\n" ${GH_ARTIFACT}
     exit 1
