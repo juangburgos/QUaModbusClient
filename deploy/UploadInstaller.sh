@@ -61,8 +61,9 @@ fi
 
 # get platform dependent artifact
 if [[ $machine == "Win" ]]; then
+    GH_CURR_SHA_SHORT=$(git rev-parse --short=6 HEAD)
 	GH_ARTIFACT_EXT="exe"
-	GH_ARTIFACT=$(find ${dirname} -name "*${GH_REPO}*.${GH_ARTIFACT_EXT}*" | head -n 1)
+	GH_ARTIFACT=$(find ${dirname} -name "*${GH_REPO}*${GH_CURR_SHA_SHORT}*.${GH_ARTIFACT_EXT}*" | head -n 1)
 else
 	GH_ARTIFACT_EXT="AppImage"
 	GH_ARTIFACT=$(find ${dirname}/.. -name "*.${GH_ARTIFACT_EXT}*")
