@@ -426,11 +426,23 @@ void QUaModbusClientTree::setupTreeContextMenu()
 	QObject::connect(ui->treeViewModbus, &QTreeView::customContextMenuRequested, this, 
 	[this](const QPoint &point) {
 		QModelIndex index = ui->treeViewModbus->indexAt(point);
+        QMenu contextMenu(ui->treeViewModbus);
 		if (!index.isValid())
 		{
+            contextMenu.addAction(m_iconAdd, tr("Add Client"), this,
+            [this]() {
+                QUaModbusClientWidgetEdit * widgetNewClient = new QUaModbusClientWidgetEdit;
+                QUaModbusClientDialog dialog(this);
+                dialog.setWindowTitle(tr("New Modbus Client"));
+                // NOTE : dialog takes ownershit
+                dialog.setWidget(widgetNewClient);
+                // NOTE : call in own method to we can recall it if fails
+                this->showNewClientDialog(dialog);
+            });
+            // exec
+            contextMenu.exec(ui->treeViewModbus->viewport()->mapToGlobal(point));
 			return;
-		}
-		QMenu contextMenu(ui->treeViewModbus);
+        }
 		// specific
 		auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
 		auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
