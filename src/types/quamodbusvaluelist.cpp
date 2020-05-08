@@ -24,9 +24,9 @@ QUaModbusValueList::QUaModbusValueList(QUaServer *server)
 	// NOTE : QObject parent might not be yet available in constructor
 }
 
-QString QUaModbusValueList::addValue(QString strValueId)
+QString QUaModbusValueList::addValue(const QUaQualifiedName& valueId)
 {
-	strValueId = strValueId.trimmed();
+	auto strValueId = valueId.name();
 	// check empty
 	if (strValueId.isEmpty())
 	{
@@ -50,22 +50,23 @@ QString QUaModbusValueList::addValue(QString strValueId)
 		return tr("%1 : Value Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
-	if (this->hasChild(strValueId))
+	if (this->hasChild(valueId))
 	{
 		return tr("%1 : Value Id already exists.").arg("Error");
 	}
 	// create instance
-	QString strNodeId = QString("ns=1;s=modbus.%1.%2.%3")
-		.arg(this->block()->client()->browseName())
-		.arg(this->block()->browseName())
-		.arg(strValueId);
-	auto value = this->addChild<QUaModbusValue>(strNodeId);
+	QUaNodeId strNodeId = { 
+		0, 
+		QString("modbus.%1.%2.%3")
+			.arg(this->block()->client()->browseName().name())
+			.arg(this->block()->browseName().name())
+			.arg(strValueId) 
+	};
+	auto value = this->addChild<QUaModbusValue>(valueId, strNodeId);
 	if (!value)
 	{
 		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
 	}
-	value->setDisplayName(strValueId);
-	value->setBrowseName(strValueId);
 	// return
 	return "Success";
 }

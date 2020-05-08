@@ -304,13 +304,9 @@ void QUaModbusAccessControl::setupInfoModel()
 {
 	// setup access control information model
 	QUaFolderObject * objsFolder = m_server.objectsFolder();
-	auto ac = objsFolder->addChild<QUaAccessControl>();
-	ac->setDisplayName("AccessControl");
-	ac->setBrowseName("AccessControl");
+	auto ac = objsFolder->addChild<QUaAccessControl>("AccessControl");
 	// setup modbus gateway information model
-	auto mod = objsFolder->addChild<QUaModbusClientList>();
-	mod->setDisplayName("ModbusClients");
-	mod->setBrowseName("ModbusClients");
+	objsFolder->addChild<QUaModbusClientList>("ModbusClients");
 
 	// disable anon login
 	m_server.setAnonymousLoginAllowed(false);

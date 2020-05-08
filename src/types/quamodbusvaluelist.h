@@ -29,7 +29,7 @@ public:
 
 	// UA methods
 
-	Q_INVOKABLE QString addValue(QString strValueId);
+	Q_INVOKABLE QString addValue(const QUaQualifiedName& valueId);
 
 	Q_INVOKABLE void clear();
 

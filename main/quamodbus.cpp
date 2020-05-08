@@ -308,9 +308,7 @@ void QUaModbus::setupInfoModel()
 {
 	QUaFolderObject* objsFolder = m_server.objectsFolder();
 	// setup modbus gateway information model
-	auto mod = objsFolder->addChild<QUaModbusClientList>("ns=1;s=modbus.clientlist");
-	mod->setDisplayName("ModbusClients");
-	mod->setBrowseName("ModbusClients");
+	objsFolder->addChild<QUaModbusClientList>("ModbusClients", "ns=0;s=modbus.clientlist");
 
 	// TODO : remove server start and provide controls to users
 

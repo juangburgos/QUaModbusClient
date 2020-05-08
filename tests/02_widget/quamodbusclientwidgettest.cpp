@@ -21,7 +21,7 @@
 QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::QUaModbusClientWidgetTest),
-	m_server(4840, QByteArray(), this)
+	m_server(this)
 {
     ui->setupUi(this);
 	m_deleting = false;
@@ -34,9 +34,7 @@ QUaModbusClientWidgetTest::QUaModbusClientWidgetTest(QWidget *parent) :
 	this->setupModbusWidgets();
 	// add list entry point to object's folder
 	QUaFolderObject * objsFolder = m_server.objectsFolder();
-	auto modCliList = objsFolder->addChild<QUaModbusClientList>("ns=1;s=modbus.clients");
-	modCliList->setDisplayName("ModbusClients");
-	modCliList->setBrowseName("ModbusClients");
+	auto modCliList = objsFolder->addChild<QUaModbusClientList>("ModbusClients", "ns=0;s=modbus.clients");
 	// set client list into widget
 	ui->widgetModbus->setClientList(modCliList);
 
@@ -119,7 +117,7 @@ void QUaModbusClientWidgetTest::on_pushButtonImport_clicked()
 	else if (fileConfig.open(QIODevice::ReadOnly))
 	{
 		// load config into client list
-		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>();
+		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>("ModbusClients");
 		Q_CHECK_PTR(modCliList);
 		auto strError   = modCliList->setXmlConfig(fileConfig.readAll());
 		if (strError.contains("Error"))
@@ -154,7 +152,7 @@ void QUaModbusClientWidgetTest::on_pushButtonExport_clicked()
 	if (file.open(QIODevice::ReadWrite | QFile::Truncate))
 	{
 		// convert config to xml
-		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>();
+		auto modCliList = m_server.objectsFolder()->browseChild<QUaModbusClientList>("ModbusClients");
 		Q_CHECK_PTR(modCliList);
 		// get config
 		QTextStream stream(&file);

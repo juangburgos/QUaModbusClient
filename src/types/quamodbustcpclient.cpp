@@ -8,8 +8,8 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	: QUaModbusClient(server)
 {
 	// set defaults
-	type          ()->setValue(QModbusClientType::Tcp);
 	type          ()->setDataTypeEnum(QMetaEnum::fromType<QModbusClientType>());
+	type          ()->setValue(QModbusClientType::Tcp);
 	networkAddress()->setValue("127.0.0.1");
 	networkPort   ()->setDataType(QMetaType::UShort);
 	networkPort   ()->setValue(502);
@@ -41,12 +41,12 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 
 QUaProperty * QUaModbusTcpClient::networkAddress() const
 {
-	return this->browseChild<QUaProperty>("NetworkAddress");
+	return const_cast<QUaModbusTcpClient*>(this)->browseChild<QUaProperty>("NetworkAddress");
 }
 
 QUaProperty * QUaModbusTcpClient::networkPort() const
 {
-	return this->browseChild<QUaProperty>("NetworkPort");
+	return const_cast<QUaModbusTcpClient*>(this)->browseChild<QUaProperty>("NetworkPort");
 }
 
 QString QUaModbusTcpClient::getNetworkAddress() const
@@ -99,7 +99,7 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName");
-	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	Q_ASSERT(this->browseName() == QUaQualifiedName(strBrowseName));
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
 	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())

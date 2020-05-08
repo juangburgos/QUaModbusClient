@@ -23,9 +23,9 @@ QUaModbusDataBlockList::QUaModbusDataBlockList(QUaServer *server)
 	// NOTE : QObject parent might not be yet available in constructor
 }
 
-QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
+QString QUaModbusDataBlockList::addDataBlock(const QUaQualifiedName& blockId)
 {
-	strBlockId = strBlockId.trimmed();
+	auto strBlockId = blockId.name();
 	// check empty
 	if (strBlockId.isEmpty())
 	{
@@ -49,20 +49,17 @@ QString QUaModbusDataBlockList::addDataBlock(QString strBlockId)
 		return  tr("%1 : Block Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
-	if (this->hasChild(strBlockId))
+	if (this->hasChild(blockId))
 	{
 		return  tr("%1 : Block Id already exists.").arg("Error");
 	}
 	// create instance
-	// TODO : set custom nodeId when https://github.com/open62541/open62541/issues/2667 fixed
-	QString strNodeId = QString("ns=1;s=modbus.%1.%2").arg(this->client()->browseName()).arg(strBlockId);
-	auto block = this->addChild<QUaModbusDataBlock>(strNodeId);
+	QUaNodeId nodeId = { 0, QString("modbus.%1.%2").arg(this->client()->browseName().name()).arg(strBlockId) };
+	auto block = this->addChild<QUaModbusDataBlock>(blockId, nodeId);
 	if (!block)
 	{
-		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
+		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(nodeId);
 	}
-	block->setDisplayName(strBlockId);
-	block->setBrowseName(strBlockId);
 	// start block loop
 	block->startLoop();
 	// return

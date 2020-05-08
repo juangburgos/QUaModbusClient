@@ -33,7 +33,7 @@ public:
 
 	// UA methods
 
-	Q_INVOKABLE QString addDataBlock(QString strBlockId);
+	Q_INVOKABLE QString addDataBlock(const QUaQualifiedName& blockId);
 
 	Q_INVOKABLE void clear();
 

@@ -123,7 +123,7 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 		auto res = QMessageBox::question(
 			this,
 			tr("Delete Value Confirmation"),
-			tr("Would you like to delete value %1?").arg(value->browseName()),
+			tr("Would you like to delete value %1?").arg(value->browseName().name()),
 			QMessageBox::StandardButton::Ok,
 			QMessageBox::StandardButton::Cancel
 		);
@@ -168,7 +168,7 @@ void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 {
 	// id
 	ui->widgetValueEdit->setIdEditable(false);
-	ui->widgetValueEdit->setId(value->browseName());
+	ui->widgetValueEdit->setId(value->browseName().name());
 	// type
 	ui->widgetValueEdit->setType(value->getType());
 	m_connections <<

@@ -47,27 +47,27 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 
 QUaProperty * QUaModbusValue::type() const
 {
-	return this->browseChild<QUaProperty>("Type");
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("Type");
 }
 
 QUaProperty * QUaModbusValue::registersUsed() const
 {
-	return this->browseChild<QUaProperty>("RegistersUsed");
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("RegistersUsed");
 }
 
 QUaProperty * QUaModbusValue::addressOffset() const
 {
-	return this->browseChild<QUaProperty>("AddressOffset");
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("AddressOffset");
 }
 
 QUaBaseDataVariable * QUaModbusValue::value() const
 {
-	return this->browseChild<QUaBaseDataVariable>("Value");
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaBaseDataVariable>("Value");
 }
 
 QUaBaseDataVariable * QUaModbusValue::lastError() const
 {
-	return this->browseChild<QUaBaseDataVariable>("LastError");
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaBaseDataVariable>("LastError");
 }
 
 void QUaModbusValue::remove()
@@ -311,7 +311,7 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
-	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	Q_ASSERT(this->browseName() == QUaQualifiedName(strBrowseName));
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
 	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())

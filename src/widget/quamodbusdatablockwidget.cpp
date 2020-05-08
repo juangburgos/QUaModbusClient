@@ -142,7 +142,7 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 		auto res = QMessageBox::question(
 			this,
 			tr("Delete Block Confirmation"),
-			tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName()),
+			tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName().name()),
 			QMessageBox::StandardButton::Ok,
 			QMessageBox::StandardButton::Cancel
 		);
@@ -162,7 +162,7 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 		auto res = QMessageBox::question(
 			this,
 			tr("Delete All Values Confirmation"),
-			tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName()),
+			tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName().name()),
 			QMessageBox::StandardButton::Ok,
 			QMessageBox::StandardButton::Cancel
 		);
@@ -206,7 +206,7 @@ void QUaModbusDataBlockWidget::bindBlockWidgetEdit(QUaModbusDataBlock * block)
 {
 	// id
 	ui->widgetBlockEdit->setIdEditable(false);
-	ui->widgetBlockEdit->setId(block->browseName());
+	ui->widgetBlockEdit->setId(block->browseName().name());
 	// type
 	ui->widgetBlockEdit->setType(block->getType());
 	m_connections <<

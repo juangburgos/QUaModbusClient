@@ -66,14 +66,14 @@ public:
 
 private:
 	template<typename T>
-	QString addClient(QString strClientId);
+	QString addClient(const QUaQualifiedName &clientId);
 
 };
 
 template<typename T>
-inline QString QUaModbusClientList::addClient(QString strClientId)
+inline QString QUaModbusClientList::addClient(const QUaQualifiedName& clientId)
 {
-	strClientId = strClientId.trimmed();
+	auto strClientId = clientId.name();
 	// check empty
 	if (strClientId.isEmpty())
 	{
@@ -97,19 +97,17 @@ inline QString QUaModbusClientList::addClient(QString strClientId)
 		return tr("%1 : Client Id can only contain numbers, letters and underscores /^[a-zA-Z0-9_]*$/.").arg("Error");
 	}
 	// check if id already exists
-	if (this->hasChild(strClientId))
+	if (this->hasChild(clientId))
 	{
 		return tr("%1 : Client Id already exists.").arg("Error");
 	}
 	// create instance
-	QString strNodeId = QString("ns=1;s=modbus.%1").arg(strClientId);
-	auto client = this->addChild<T>(strNodeId);
+	QUaNodeId nodeId = { 0, QString("modbus.%1").arg(strClientId) };
+	auto client = this->addChild<T>(clientId, nodeId);
 	if (!client)
 	{
-		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(strNodeId);
+		return  tr("%1 : NodeId %2 already exists.").arg("Error").arg(nodeId);
 	}
-	client->setDisplayName(strClientId);
-	client->setBrowseName (strClientId);
 	return "Success";
 }
 

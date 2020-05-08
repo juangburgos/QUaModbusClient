@@ -178,7 +178,7 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 		auto res = QMessageBox::question(
 			this,
 			tr("Delete Client Confirmation"),
-			tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName()),
+			tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName().name()),
 			QMessageBox::StandardButton::Ok,
 			QMessageBox::StandardButton::Cancel
 		);
@@ -198,7 +198,7 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 		auto res = QMessageBox::question(
 			this,
 			tr("Delete All Blocks Confirmation"),
-			tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName()),
+			tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName().name()),
 			QMessageBox::StandardButton::Ok,
 			QMessageBox::StandardButton::Cancel
 		);
@@ -248,7 +248,7 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 	ui->pushButtonApply->setVisible(true);
 	// id
 	ui->widgetClientEdit->setIdEditable(false);
-	ui->widgetClientEdit->setId(client->browseName());
+	ui->widgetClientEdit->setId(client->browseName().name());
 	// type
 	ui->widgetClientEdit->setTypeEditable(false);
 	ui->widgetClientEdit->setType(client->getType());

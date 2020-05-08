@@ -56,37 +56,37 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 
 QUaProperty * QUaModbusDataBlock::type() const
 {
-	return this->browseChild<QUaProperty>("Type");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Type");
 }
 
 QUaProperty * QUaModbusDataBlock::address() const
 {
-	return this->browseChild<QUaProperty>("Address");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Address");
 }
 
 QUaProperty * QUaModbusDataBlock::size() const
 {
-	return this->browseChild<QUaProperty>("Size");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Size");
 }
 
 QUaProperty * QUaModbusDataBlock::samplingTime() const
 {
-	return this->browseChild<QUaProperty>("SamplingTime");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("SamplingTime");
 }
 
 QUaBaseDataVariable * QUaModbusDataBlock::data() const
 {
-	return this->browseChild<QUaBaseDataVariable>("Data");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaBaseDataVariable>("Data");
 }
 
 QUaBaseDataVariable * QUaModbusDataBlock::lastError() const
 {
-	return this->browseChild<QUaBaseDataVariable>("LastError");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaBaseDataVariable>("LastError");
 }
 
 QUaModbusValueList * QUaModbusDataBlock::values() const
 {
-	return this->browseChild<QUaModbusValueList>("Values");
+	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaModbusValueList>("Values");
 }
 
 void QUaModbusDataBlock::remove()
@@ -413,7 +413,7 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
-	Q_ASSERT(browseName().compare(strBrowseName, Qt::CaseInsensitive) == 0);
+	Q_ASSERT(this->browseName() == QUaQualifiedName(strBrowseName));
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
 	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())

@@ -477,7 +477,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 						auto res = QMessageBox::question(
 							this,
 							tr("Delete All Blocks Confirmation"),
-							tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName()),
+							tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName().name()),
 							QMessageBox::StandardButton::Ok,
 							QMessageBox::StandardButton::Cancel
 						);
@@ -496,7 +496,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 						auto res = QMessageBox::question(
 							this,
 							tr("Delete Client Confirmation"),
-							tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName()),
+							tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName().name()),
 							QMessageBox::StandardButton::Ok,
 							QMessageBox::StandardButton::Cancel
 						);
@@ -543,7 +543,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 						auto res = QMessageBox::question(
 							this,
 							tr("Delete All Values Confirmation"),
-							tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName()),
+							tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName().name()),
 							QMessageBox::StandardButton::Ok,
 							QMessageBox::StandardButton::Cancel
 						);
@@ -563,7 +563,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 						auto res = QMessageBox::question(
 							this,
 							tr("Delete Block Confirmation"),
-							tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName()),
+							tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName().name()),
 							QMessageBox::StandardButton::Ok,
 							QMessageBox::StandardButton::Cancel
 						);
@@ -590,7 +590,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 						auto res = QMessageBox::question(
 							this,
 							tr("Delete Value Confirmation"),
-							tr("Would you like to delete value %1?").arg(value->browseName()),
+							tr("Would you like to delete value %1?").arg(value->browseName().name()),
 							QMessageBox::StandardButton::Ok,
 							QMessageBox::StandardButton::Cancel
 						);
@@ -846,7 +846,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 {
 	Q_ASSERT_X(client, "QUaModbusClientWidget", "Client instance must already exist in OPC UA");
 	// get client id
-	QString strClientId = client->browseName();
+	QString strClientId = client->browseName().name();
 	Q_ASSERT(!strClientId.isEmpty() && !strClientId.isNull());
 	auto parent = m_modelModbus.invisibleRootItem();
 	auto row    = parent->rowCount();
@@ -925,7 +925,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
 		Q_CHECK_PTR(block);
 		// add to gui
-		QString strBlockId = block->browseName();
+		QString strBlockId = block->browseName().name();
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		auto item = this->handleBlockAdded(client, iObj, strBlockId);
 		// select newly created
@@ -938,7 +938,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	{
 		auto block = listBlocks->blocks().at(i);
 		// add to gui
-		QString strBlockId = block->browseName();
+		QString strBlockId = block->browseName().name();
 		Q_ASSERT(!strBlockId.isEmpty() && !strBlockId.isNull());
 		this->handleBlockAdded(client, iObj, strBlockId);
 	}
@@ -1019,7 +1019,7 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 		auto value = dynamic_cast<QUaModbusValue*>(node);
 		Q_CHECK_PTR(value);
 		// add to gui
-		QString strValueId = value->browseName();
+		QString strValueId = value->browseName().name();
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		auto item = this->handleValueAdded(block, iObj, strValueId);
 		// select newly created
@@ -1032,7 +1032,7 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	{
 		auto value = listValues->values().at(i);
 		// add to gui
-		QString strValueId = value->browseName();
+		QString strValueId = value->browseName().name();
 		Q_ASSERT(!strValueId.isEmpty() && !strValueId.isNull());
 		this->handleValueAdded(block, iObj, strValueId);
 	}
