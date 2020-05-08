@@ -426,190 +426,203 @@ void QUaModbusClientTree::setupTreeContextMenu()
 	QObject::connect(ui->treeViewModbus, &QTreeView::customContextMenuRequested, this, 
 	[this](const QPoint &point) {
 		QModelIndex index = ui->treeViewModbus->indexAt(point);
-		if (index.isValid()) 
+        QMenu contextMenu(ui->treeViewModbus);
+		if (!index.isValid())
 		{
-			// expand/collapse
-			QMenu contextMenu(ui->treeViewModbus);
-			// specific
-			auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
-			auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
-			auto type = item->data(QUaModbusClientTree::SelectTypeRole).value<QModbusSelectType>();
-			switch (type)
+            contextMenu.addAction(m_iconAdd, tr("Add Client"), this,
+            [this]() {
+                QUaModbusClientWidgetEdit * widgetNewClient = new QUaModbusClientWidgetEdit;
+                QUaModbusClientDialog dialog(this);
+                dialog.setWindowTitle(tr("New Modbus Client"));
+                // NOTE : dialog takes ownershit
+                dialog.setWidget(widgetNewClient);
+                // NOTE : call in own method to we can recall it if fails
+                this->showNewClientDialog(dialog);
+            });
+            // exec
+            contextMenu.exec(ui->treeViewModbus->viewport()->mapToGlobal(point));
+			return;
+        }
+		// specific
+		auto item = m_modelModbus.itemFromIndex(m_proxyModbus.mapToSource(index));
+		auto node = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
+		auto type = item->data(QUaModbusClientTree::SelectTypeRole).value<QModbusSelectType>();
+		switch (type)
+		{
+		case QModbusSelectType::QUaModbusClient:
+			// for clients only
 			{
-			case QModbusSelectType::QUaModbusClient:
-				// for clients only
-				{
-					contextMenu.addAction(m_iconExpand, tr("Expand"), this,
-					[this, index]() {
-						this->expandRecursivelly(index, true);
-					});
-					contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
-					[this, index]() {
-						this->expandRecursivelly(index, false);
-					});
-					auto client = dynamic_cast<QUaModbusClient*>(node);
-					contextMenu.addSeparator();
-					// connect
+				// expand/collapse
+				contextMenu.addAction(m_iconExpand, tr("Expand"), this,
+				[this, index]() {
+					this->expandRecursivelly(index, true);
+				});
+				contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
+				[this, index]() {
+					this->expandRecursivelly(index, false);
+				});
+				auto client = dynamic_cast<QUaModbusClient*>(node);
+				contextMenu.addSeparator();
+				// connect
+				bool isConnected = client->getState() == QModbusState::ConnectedState;
+				contextMenu.addAction(m_iconConnect, isConnected? tr("Disconnect Client") : tr("Connect Client"), this,
+				[client]() {
 					bool isConnected = client->getState() == QModbusState::ConnectedState;
-					contextMenu.addAction(m_iconConnect, isConnected? tr("Disconnect Client") : tr("Connect Client"), this,
-					[client]() {
-						bool isConnected = client->getState() == QModbusState::ConnectedState;
-						isConnected ? client->disconnectDevice() : client->connectDevice();
-					});
-					contextMenu.addSeparator();
-					// blocks
-					contextMenu.addAction(m_iconAdd, tr("Add Block"), this,
-					[this, client]() {
-						Q_CHECK_PTR(client);
-						// use block edit widget
-						QUaModbusDataBlockWidgetEdit* widgetNewBlock = new QUaModbusDataBlockWidgetEdit;
-						QUaModbusClientDialog dialog(this);
-						dialog.setWindowTitle(tr("New Modbus Block"));
-						// NOTE : dialog takes ownershit
-						dialog.setWidget(widgetNewBlock);
-						// NOTE : call in own method to we can recall it if fails
-						this->showNewBlockDialog(client, dialog);
-					});
-					contextMenu.addAction(m_iconClear, tr("Clear Blocks"), this,
-					[this, client]() {
-						Q_CHECK_PTR(client);
-						// are you sure?
-						auto res = QMessageBox::question(
-							this,
-							tr("Delete All Blocks Confirmation"),
-							tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName().name()),
-							QMessageBox::StandardButton::Ok,
-							QMessageBox::StandardButton::Cancel
-						);
-						if (res != QMessageBox::StandardButton::Ok)
-						{
-							return;
-						}
-						// clear
-						client->dataBlocks()->clear();
-					});
-					contextMenu.addSeparator();
-					// delete client
-					contextMenu.addAction(m_iconDelete, tr("Delete"), this,
-					[this, client]() {
-						// are you sure?
-						auto res = QMessageBox::question(
-							this,
-							tr("Delete Client Confirmation"),
-							tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName().name()),
-							QMessageBox::StandardButton::Ok,
-							QMessageBox::StandardButton::Cancel
-						);
-						if (res != QMessageBox::StandardButton::Ok)
-						{
-							return;
-						}
-						// delete
-						client->remove();
-						// NOTE : removed from tree on &QObject::destroyed callback
-					});
-				}
-				break;
-			case QModbusSelectType::QUaModbusDataBlock:
-				// for blocks only
-				{
-					contextMenu.addAction(m_iconExpand, tr("Expand"), this,
-					[this, index]() {
-						this->expandRecursivelly(index, true);
-					});
-					contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
-					[this, index]() {
-						this->expandRecursivelly(index, false);
-					});
-					auto block = dynamic_cast<QUaModbusDataBlock*>(node);
-					contextMenu.addSeparator();
-					// values
-					contextMenu.addAction(m_iconAdd, tr("Add Value"), this,
-					[this, block]() {
-						Q_CHECK_PTR(block);
-						// use value edit widget
-						QUaModbusValueWidgetEdit* widgetNewValue = new QUaModbusValueWidgetEdit;
-						QUaModbusClientDialog dialog(this);
-						dialog.setWindowTitle(tr("New Modbus Value"));
-						// NOTE : dialog takes ownershit
-						dialog.setWidget(widgetNewValue);
-						// NOTE : call in own method to we can recall it if fails
-						this->showNewValueDialog(block, dialog);
-					});
-					contextMenu.addAction(m_iconClear, tr("Clear Values"), this,
-					[this, block]() {
-						Q_CHECK_PTR(block);
-						// are you sure?
-						auto res = QMessageBox::question(
-							this,
-							tr("Delete All Values Confirmation"),
-							tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName().name()),
-							QMessageBox::StandardButton::Ok,
-							QMessageBox::StandardButton::Cancel
-						);
-						if (res != QMessageBox::StandardButton::Ok)
-						{
-							return;
-						}
-						// clear
-						block->values()->clear();
-					});
-					contextMenu.addSeparator();
-					// delete block
-					contextMenu.addAction(m_iconDelete, tr("Delete"), this,
-					[this, block]() {
-						Q_CHECK_PTR(block);
-						// are you sure?
-						auto res = QMessageBox::question(
-							this,
-							tr("Delete Block Confirmation"),
-							tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName().name()),
-							QMessageBox::StandardButton::Ok,
-							QMessageBox::StandardButton::Cancel
-						);
-						if (res != QMessageBox::StandardButton::Ok)
-						{
-							return;
-						}
-						// delete
-						block->remove();
-						// NOTE : removed from tree on &QObject::destroyed callback
-					});
-				}
-				break;
-			case QModbusSelectType::QUaModbusValue:
-				// for values only
-				{
-					auto value = dynamic_cast<QUaModbusValue*>(node);
-					contextMenu.addSeparator();
-					// delete value
-					contextMenu.addAction(m_iconDelete, tr("Delete"), this,
-					[this, value]() {
-						Q_CHECK_PTR(value);
-						// are you sure?
-						auto res = QMessageBox::question(
-							this,
-							tr("Delete Value Confirmation"),
-							tr("Would you like to delete value %1?").arg(value->browseName().name()),
-							QMessageBox::StandardButton::Ok,
-							QMessageBox::StandardButton::Cancel
-						);
-						if (res != QMessageBox::StandardButton::Ok)
-						{
-							return;
-						}
-						// delete
-						value->remove();
-						// NOTE : removed from tree on &QObject::destroyed callback
-					});
-				}
-				break;
-			default:
-				break;
+					isConnected ? client->disconnectDevice() : client->connectDevice();
+				});
+				contextMenu.addSeparator();
+				// blocks
+				contextMenu.addAction(m_iconAdd, tr("Add Block"), this,
+				[this, client]() {
+					Q_CHECK_PTR(client);
+					// use block edit widget
+					QUaModbusDataBlockWidgetEdit* widgetNewBlock = new QUaModbusDataBlockWidgetEdit;
+					QUaModbusClientDialog dialog(this);
+					dialog.setWindowTitle(tr("New Modbus Block"));
+					// NOTE : dialog takes ownershit
+					dialog.setWidget(widgetNewBlock);
+					// NOTE : call in own method to we can recall it if fails
+					this->showNewBlockDialog(client, dialog);
+				});
+				contextMenu.addAction(m_iconClear, tr("Clear Blocks"), this,
+				[this, client]() {
+					Q_CHECK_PTR(client);
+					// are you sure?
+					auto res = QMessageBox::question(
+						this,
+						tr("Delete All Blocks Confirmation"),
+						tr("Are you sure you want to delete all blocks for client %1?\nAll their values will also be deleted.").arg(client->browseName().name()),
+						QMessageBox::StandardButton::Ok,
+						QMessageBox::StandardButton::Cancel
+					);
+					if (res != QMessageBox::StandardButton::Ok)
+					{
+						return;
+					}
+					// clear
+					client->dataBlocks()->clear();
+				});
+				contextMenu.addSeparator();
+				// delete client
+				contextMenu.addAction(m_iconDelete, tr("Delete"), this,
+				[this, client]() {
+					// are you sure?
+					auto res = QMessageBox::question(
+						this,
+						tr("Delete Client Confirmation"),
+						tr("Deleting client %1 will also delete all its Blocks and Values.\nWould you like to delete client %1?").arg(client->browseName().name()),
+						QMessageBox::StandardButton::Ok,
+						QMessageBox::StandardButton::Cancel
+					);
+					if (res != QMessageBox::StandardButton::Ok)
+					{
+						return;
+					}
+					// delete
+					client->remove();
+					// NOTE : removed from tree on &QObject::destroyed callback
+				});
 			}
-			// exec
-			contextMenu.exec(ui->treeViewModbus->viewport()->mapToGlobal(point));
+			break;
+		case QModbusSelectType::QUaModbusDataBlock:
+			// for blocks only
+			{
+				contextMenu.addAction(m_iconExpand, tr("Expand"), this,
+				[this, index]() {
+					this->expandRecursivelly(index, true);
+				});
+				contextMenu.addAction(m_iconCollapse, tr("Collapse"), this,
+				[this, index]() {
+					this->expandRecursivelly(index, false);
+				});
+				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				contextMenu.addSeparator();
+				// values
+				contextMenu.addAction(m_iconAdd, tr("Add Value"), this,
+				[this, block]() {
+					Q_CHECK_PTR(block);
+					// use value edit widget
+					QUaModbusValueWidgetEdit* widgetNewValue = new QUaModbusValueWidgetEdit;
+					QUaModbusClientDialog dialog(this);
+					dialog.setWindowTitle(tr("New Modbus Value"));
+					// NOTE : dialog takes ownershit
+					dialog.setWidget(widgetNewValue);
+					// NOTE : call in own method to we can recall it if fails
+					this->showNewValueDialog(block, dialog);
+				});
+				contextMenu.addAction(m_iconClear, tr("Clear Values"), this,
+				[this, block]() {
+					Q_CHECK_PTR(block);
+					// are you sure?
+					auto res = QMessageBox::question(
+						this,
+						tr("Delete All Values Confirmation"),
+						tr("Are you sure you want to delete all values for block %1?\n").arg(block->browseName().name()),
+						QMessageBox::StandardButton::Ok,
+						QMessageBox::StandardButton::Cancel
+					);
+					if (res != QMessageBox::StandardButton::Ok)
+					{
+						return;
+					}
+					// clear
+					block->values()->clear();
+				});
+				contextMenu.addSeparator();
+				// delete block
+				contextMenu.addAction(m_iconDelete, tr("Delete"), this,
+				[this, block]() {
+					Q_CHECK_PTR(block);
+					// are you sure?
+					auto res = QMessageBox::question(
+						this,
+						tr("Delete Block Confirmation"),
+						tr("Deleting block %1 will also delete all its Values.\nWould you like to delete block %1?").arg(block->browseName().name()),
+						QMessageBox::StandardButton::Ok,
+						QMessageBox::StandardButton::Cancel
+					);
+					if (res != QMessageBox::StandardButton::Ok)
+					{
+						return;
+					}
+					// delete
+					block->remove();
+					// NOTE : removed from tree on &QObject::destroyed callback
+				});
+			}
+			break;
+		case QModbusSelectType::QUaModbusValue:
+			// for values only
+			{
+				auto value = dynamic_cast<QUaModbusValue*>(node);
+				contextMenu.addSeparator();
+				// delete value
+				contextMenu.addAction(m_iconDelete, tr("Delete"), this,
+				[this, value]() {
+					Q_CHECK_PTR(value);
+					// are you sure?
+					auto res = QMessageBox::question(
+						this,
+						tr("Delete Value Confirmation"),
+						tr("Would you like to delete value %1?").arg(value->browseName().name()),
+						QMessageBox::StandardButton::Ok,
+						QMessageBox::StandardButton::Cancel
+					);
+					if (res != QMessageBox::StandardButton::Ok)
+					{
+						return;
+					}
+					// delete
+					value->remove();
+					// NOTE : removed from tree on &QObject::destroyed callback
+				});
+			}
+			break;
+		default:
+			break;
 		}
+		// exec
+		contextMenu.exec(ui->treeViewModbus->viewport()->mapToGlobal(point));
 	});
 }
 
