@@ -101,6 +101,10 @@ QModbusValueType QUaModbusValue::getType() const
 
 void QUaModbusValue::setType(const QModbusValueType & type)
 {
+	if (this->getType() == type)
+	{
+		return;
+	}
 	this->type()->setValue(type);
 	this->on_typeChanged(type);
 }
@@ -130,7 +134,7 @@ QVariant QUaModbusValue::getValue() const
 void QUaModbusValue::setValue(const QVariant & value)
 {
 	this->value()->setValue(value);
-	this->on_valueChanged(value);
+	this->on_valueChanged(value, true);
 }
 
 QModbusError QUaModbusValue::getLastError() const
@@ -164,8 +168,12 @@ void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
 }
 
 // OPC UA network change
-void QUaModbusValue::on_valueChanged(const QVariant & value)
+void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& networkChange)
 {
+	if (!networkChange)
+	{
+		return;
+	}
 	// get block representation of value
 	auto type = this->type()->value().value<QModbusValueType>();
 	auto partBlockData = QUaModbusValue::valueToBlock(value, type);

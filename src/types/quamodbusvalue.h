@@ -128,7 +128,7 @@ signals:
 private slots:
 	void on_typeChanged         (const QVariant     &value);
 	void on_addressOffsetChanged(const QVariant     &value);
-	void on_valueChanged        (const QVariant     &value);
+	void on_valueChanged        (const QVariant     &value, const bool& networkChange);
 	void on_updateLastError     (const QModbusError &error);
 
 private:

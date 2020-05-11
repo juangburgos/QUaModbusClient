@@ -146,7 +146,6 @@ void QUaModbusValueWidgetStatus::setValue(const QVariant & value)
 	{
 		auto newVal = value.toBool();
 		ui->checkBoxValue->setChecked(newVal);
-		ui->checkBoxValue->setText(newVal ? tr("True") : tr("False"));
 	}
 	else if (ui->spinBoxValue->isEnabled())
 	{

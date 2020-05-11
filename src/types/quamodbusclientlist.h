@@ -28,9 +28,9 @@ public:
 
 	// UA methods
 
-	Q_INVOKABLE QString addTcpClient(QString strClientId);
+	Q_INVOKABLE QString addTcpClient(const QUaQualifiedName& clientId);
 
-	Q_INVOKABLE QString addRtuSerialClient(QString strClientId);
+	Q_INVOKABLE QString addRtuSerialClient(const QUaQualifiedName& clientId);
 
 	Q_INVOKABLE void clear();
 

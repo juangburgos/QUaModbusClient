@@ -41,14 +41,14 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerEnum(QUaModbusRtuSerialClient::ComPorts, QUaModbusRtuSerialClient::EnumComPorts());
 }
 
-QString QUaModbusClientList::addTcpClient(QString strClientId)
+QString QUaModbusClientList::addTcpClient(const QUaQualifiedName& clientId)
 {
-	return this->addClient<QUaModbusTcpClient>(strClientId);
+	return this->addClient<QUaModbusTcpClient>(clientId);
 }
 
-QString QUaModbusClientList::addRtuSerialClient(QString strClientId)
+QString QUaModbusClientList::addRtuSerialClient(const QUaQualifiedName& clientId)
 {
-	return this->addClient<QUaModbusRtuSerialClient>(strClientId);
+	return this->addClient<QUaModbusRtuSerialClient>(clientId);
 }
 
 void QUaModbusClientList::clear()
