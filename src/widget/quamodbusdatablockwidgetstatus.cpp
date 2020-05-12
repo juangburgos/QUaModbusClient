@@ -31,19 +31,16 @@ void QUaModbusDataBlockWidgetStatus::setStatus(const QModbusError & status)
 	auto metaError = QMetaEnum::fromType<QModbusError>();
 	auto strError  = QString(metaError.valueToKey(status));
 	ui->lineEditStatus->setText(strError);
-	// clear table if any error
-	if (status != QModbusError::NoError)
-	{
-		m_modelValues.clear();
-	}
+	// NOTE : do not clear table if any error
 }
 
 void QUaModbusDataBlockWidgetStatus::setData(const quint32 &startAddress, const QVector<quint16>& data)
 {
-	
+	// NOTE : only arrive here if no error
 	auto parent = m_modelValues.invisibleRootItem();
 	// check if need to resize table
-	if (m_modelValues.rowCount() != data.count())
+	int rowCount = m_modelValues.rowCount();
+	if (rowCount != data.count())
 	{
 		// clear all table
 		m_modelValues.removeRows(0, m_modelValues.rowCount());

@@ -260,6 +260,10 @@ void QUaModbusDataBlockWidget::bindBlockWidgetStatus(QUaModbusDataBlock * block)
 	m_connections <<
 	QObject::connect(block, &QUaModbusDataBlock::dataChanged, ui->widgetBlockStatus,
 	[this, block](const QVector<quint16> & data) {
+		if (block->getLastError() != QModbusError::NoError)
+		{
+			return;
+		}
 		ui->widgetBlockStatus->setData(block->getAddress(), data);
 	});
 }

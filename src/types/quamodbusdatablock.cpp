@@ -301,9 +301,10 @@ void QUaModbusDataBlock::startLoop()
 			this->setLastError(error);
 			// update block value
 			QVector<quint16> data = m_replyRead->result().values();
-			// TODO : esrly exit when refactor QUaModbusValue::setValue
+			// TODO : early exit when refactor QUaModbusValue::setValue
 			if (error == QModbusError::NoError)
 			{
+				Q_ASSERT(data.count() == m_modbusDataUnit.valueCount());
 				this->setData(data, false);
 			}
 			// update modbus values and errors
@@ -397,7 +398,7 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	}
 #endif // QUA_ACCESS_CONTROL
 	// set block attributes
-	elemBlock.setAttribute("BrowseName"  , this->browseName());
+	elemBlock.setAttribute("BrowseName"  , this->browseName().name());
 	elemBlock.setAttribute("Type"        , QMetaEnum::fromType<QModbusDataBlockType>().valueToKey(getType()));
 	elemBlock.setAttribute("Address"     , getAddress());
 	elemBlock.setAttribute("Size"        , getSize());

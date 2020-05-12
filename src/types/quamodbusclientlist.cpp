@@ -129,7 +129,7 @@ QString QUaModbusClientList::csvClients()
 #else
 		strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
 #endif // !QUA_ACCESS_CONTROL
-			.arg(clientTcp->browseName())
+			.arg(clientTcp->browseName().name())
 			.arg(strType)
 			.arg(clientTcp->getServerAddress ())
 			.arg(clientTcp->getKeepConnecting())
@@ -138,7 +138,7 @@ QString QUaModbusClientList::csvClients()
 #ifndef QUA_ACCESS_CONTROL
 			;
 #else
-			.arg(clientTcp->permissionsObject() ? clientTcp->permissionsObject()->browseName() : "");
+			.arg(clientTcp->permissionsObject() ? clientTcp->permissionsObject()->browseName().name() : "");
 #endif // !QUA_ACCESS_CONTROL	
 	}
 #ifndef QUA_ACCESS_CONTROL
@@ -174,7 +174,7 @@ QString QUaModbusClientList::csvClients()
 #else
 		strCsv += QString("%1, %2, %3, %4, %5, %6, %7, %8, %9, %10\n")
 #endif // !QUA_ACCESS_CONTROL	
-			.arg(clientSerial->browseName())
+			.arg(clientSerial->browseName().name())
 			.arg(strType)
 			.arg(clientSerial->getServerAddress ())
 			.arg(clientSerial->getKeepConnecting())
@@ -186,7 +186,7 @@ QString QUaModbusClientList::csvClients()
 #ifndef QUA_ACCESS_CONTROL
 			;
 #else
-			.arg(clientSerial->permissionsObject() ? clientSerial->permissionsObject()->browseName() : "");
+			.arg(clientSerial->permissionsObject() ? clientSerial->permissionsObject()->browseName().name() : "");
 #endif // !QUA_ACCESS_CONTROL	
 	}
 	return strCsv;
@@ -223,8 +223,8 @@ QString QUaModbusClientList::csvBlocks()
 #else
 			strCsv += QString("%1, %2, %3, %4, %5, %6, %7\n")
 #endif // !QUA_ACCESS_CONTROL
-				.arg(block->browseName())
-				.arg(client->browseName())
+				.arg(block->browseName().name())
+				.arg(client->browseName().name())
 				.arg(strType)
 				.arg(block->getAddress())
 				.arg(block->getSize())
@@ -232,7 +232,7 @@ QString QUaModbusClientList::csvBlocks()
 #ifndef QUA_ACCESS_CONTROL
 				;
 #else
-				.arg(block->permissionsObject() ? block->permissionsObject()->browseName() : "");
+				.arg(block->permissionsObject() ? block->permissionsObject()->browseName().name() : "");
 #endif // !QUA_ACCESS_CONTROL
 		}
 	}
@@ -272,15 +272,15 @@ QString QUaModbusClientList::csvValues()
 #else
 				strCsv += QString("%1, %2, %3, %4, %5, %6\n")
 #endif // !QUA_ACCESS_CONTROL
-					.arg(value->browseName())
-					.arg(client->browseName())
-					.arg(block->browseName())
+					.arg(value->browseName().name())
+					.arg(client->browseName().name())
+					.arg(block->browseName().name())
 					.arg(strType)
 					.arg(value->getAddressOffset())
 #ifndef QUA_ACCESS_CONTROL
 					;
 #else
-					.arg(value->permissionsObject() ? value->permissionsObject()->browseName() : "");
+					.arg(value->permissionsObject() ? value->permissionsObject()->browseName().name() : "");
 #endif // !QUA_ACCESS_CONTROL
 			}
 		}
@@ -666,7 +666,7 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 		{
 			strError += tr("%1 : There already exists a block '%2.%3' defined in row %4. Overwriting properties.\n")
 				.arg("Warning")
-				.arg(client->browseName())
+				.arg(client->browseName().name())
 				.arg(strBrowseName)
 				.arg(strRow);
 		}
@@ -684,7 +684,7 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 			{
 				strError += tr("%1 : Failed to find '%2' block in client '%3' list after adding row %4.\n")
 					.arg("Error")
-					.arg(client->browseName())
+					.arg(client->browseName().name())
 					.arg(strBrowseName)
 					.arg(strRow);
 				continue;
@@ -801,8 +801,8 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		{
 			strError += tr("%1 : There already exists a value '%2.%3.%4' defined in row %5. Overwriting properties.\n")
 				.arg("Warning")
-				.arg(client->browseName())
-				.arg(block->browseName())
+				.arg(client->browseName().name())
+				.arg(block->browseName().name())
 				.arg(strBrowseName)
 				.arg(strRow);
 		}
@@ -820,8 +820,8 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 			{
 				strError += tr("%1 : Failed to find '%2' value in client %3, block '%4' list after adding row %5.\n")
 					.arg("Error")
-					.arg(client->browseName())
-					.arg(block->browseName())
+					.arg(client->browseName().name())
+					.arg(block->browseName().name())
 					.arg(strBrowseName)
 					.arg(strRow);
 				continue;

@@ -244,20 +244,14 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	if (type == QModbusValueType::Invalid)
 	{
 		this->value()->setWriteAccess(false);
-		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
-		// emit
-		emit this->valueChanged(QVariant());
 		return;
 	}
 	int addressOffset = this->getAddressOffset(); // TODO : change to event-based with flag
 	if (addressOffset < 0)
 	{
 		this->value()->setWriteAccess(false);
-		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		this->setLastError(QModbusError::ConfigurationError);
-		// emit
-		emit this->valueChanged(QVariant());
 		return;
 	}
 	// set writable if block type allows it
@@ -275,15 +269,17 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > block.count())
 	{
-		this->value()->setValue(QVariant()); // NOTE : avoid recursion
 		auto newError = blockError != QModbusError::NoError ? blockError : QModbusError::ConfigurationError;
 		this->setLastError(newError);
-		// emit
-		emit this->valueChanged(QVariant());
 		return;
 	}
 	// convert value and set it, but leave block error code
 	this->setLastError(blockError); // TODO : change to event-based
+	// do not update value if error
+	if (blockError != QModbusError::NoError)
+	{
+		return;
+	}
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	// avoid update or emit if no change, improves performance
 	if (this->getValue() == value)
@@ -308,7 +304,7 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 	}
 #endif // QUA_ACCESS_CONTROL
 	// set value attributes
-	elemValue.setAttribute("BrowseName"   , this->browseName());
+	elemValue.setAttribute("BrowseName"   , this->browseName().name());
 	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QModbusValueType>().valueToKey(this->getType()));
 	elemValue.setAttribute("AddressOffset", this->getAddressOffset());
 	// return value element
