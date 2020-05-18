@@ -180,7 +180,7 @@ inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QStri
 				.arg(strPermissionsNodeId);
 			continue;
 		}
-		QUaPermissions * permissions = dynamic_cast<QUaPermissions*>(node);
+		QUaPermissions * permissions = qobject_cast<QUaPermissions*>(node);
 		if (!permissions)
 		{
 			strError += tr("%1 : Node with NodeId %2 is not a permissions instance.")
@@ -262,7 +262,7 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 		{
 		case QModbusSelectType::QUaModbusClient:
 			{
-				auto client = dynamic_cast<QUaModbusClient*>(nodeCurr);
+				auto client = qobject_cast<QUaModbusClient*>(nodeCurr);
 				this->bindClientWidget(client);
 				// clear and disable block and value widgets
 				m_blockWidget->clear();
@@ -273,7 +273,7 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 			break;
 		case QModbusSelectType::QUaModbusDataBlock:
 			{
-				auto block = dynamic_cast<QUaModbusDataBlock*>(nodeCurr);
+				auto block = qobject_cast<QUaModbusDataBlock*>(nodeCurr);
 				this->bindBlockWidget(block);
 				auto client = block->client();
 				this->bindClientWidget(client);
@@ -284,7 +284,7 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 			break;
 		case QModbusSelectType::QUaModbusValue:
 			{
-				auto value = dynamic_cast<QUaModbusValue*>(nodeCurr);
+				auto value = qobject_cast<QUaModbusValue*>(nodeCurr);
 				this->bindValueWidget(value);
 				auto block = value->block();
 				this->bindBlockWidget(block);

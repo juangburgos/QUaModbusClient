@@ -53,7 +53,7 @@ void QUaModbusClientDialog::setWidget(QWidget * w)
 	geo.setHeight(1.1 * w->height());
 	this->setGeometry(geo);
 	// if parent defined, move to center of parent
-	auto parent = dynamic_cast<QWidget*>(this->parent());
+	auto parent = qobject_cast<QWidget*>(this->parent());
 	if (!parent)
 	{
 		return;
@@ -61,7 +61,7 @@ void QUaModbusClientDialog::setWidget(QWidget * w)
 	// get root parent
 	while (parent)
 	{
-		auto newParent = dynamic_cast<QWidget*>(parent->parent());
+		auto newParent = qobject_cast<QWidget*>(parent->parent());
 		if (!newParent)
 		{
 			break;

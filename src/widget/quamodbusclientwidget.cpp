@@ -271,7 +271,7 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 	{
 	case QModbusClientType::Tcp:
 		{
-			auto cliTcp = dynamic_cast<QUaModbusTcpClient*>(client);
+			auto cliTcp = qobject_cast<QUaModbusTcpClient*>(client);
 			Q_CHECK_PTR(cliTcp);
 			// ip address
 			ui->widgetClientEdit->setIpAddress(cliTcp->getNetworkAddress());
@@ -315,7 +315,7 @@ void QUaModbusClientWidget::bindClientWidgetEdit(QUaModbusClient * client)
 		break;
 	case QModbusClientType::Serial:
 		{
-			auto cliSerial = dynamic_cast<QUaModbusRtuSerialClient*>(client);
+			auto cliSerial = qobject_cast<QUaModbusRtuSerialClient*>(client);
 			Q_CHECK_PTR(cliSerial);
 			// com port
 			ui->widgetClientEdit->setComPortKey(cliSerial->getComPortKey());

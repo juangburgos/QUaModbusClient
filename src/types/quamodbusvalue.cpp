@@ -764,7 +764,7 @@ QVector<quint16> QUaModbusValue::valueToBlock(const QVariant & value, const QMod
 
 QUaModbusValueList * QUaModbusValue::list() const
 {
-	return dynamic_cast<QUaModbusValueList*>(this->parent());
+	return qobject_cast<QUaModbusValueList*>(this->parent());
 }
 
 QUaModbusDataBlock * QUaModbusValue::block() const

@@ -76,7 +76,7 @@ void QUaModbusDataBlockList::clear()
 
 QUaModbusClient * QUaModbusDataBlockList::client()
 {
-	return dynamic_cast<QUaModbusClient*>(this->parent());
+	return qobject_cast<QUaModbusClient*>(this->parent());
 }
 
 QList<QUaModbusDataBlock*> QUaModbusDataBlockList::blocks()

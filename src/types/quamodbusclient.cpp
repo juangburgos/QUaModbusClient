@@ -148,7 +148,7 @@ void QUaModbusClient::setLastError(const QModbusError & error)
 QUaModbusClientList * QUaModbusClient::list() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return dynamic_cast<QUaModbusClientList*>(this->parent());
+	return qobject_cast<QUaModbusClientList*>(this->parent());
 }
 
 QModbusClientType QUaModbusClient::getType() const

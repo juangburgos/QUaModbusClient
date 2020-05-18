@@ -81,7 +81,7 @@ void QUaModbusValueList::clear()
 
 QUaModbusDataBlock * QUaModbusValueList::block()
 {
-	return dynamic_cast<QUaModbusDataBlock*>(this->parent());
+	return qobject_cast<QUaModbusDataBlock*>(this->parent());
 }
 
 QList<QUaModbusValue*> QUaModbusValueList::values()

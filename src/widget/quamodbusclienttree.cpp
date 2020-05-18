@@ -126,21 +126,21 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 		{
 		case QModbusSelectType::QUaModbusClient:
 			{
-				auto client = dynamic_cast<QUaModbusClient*>(node);
+				auto client = qobject_cast<QUaModbusClient*>(node);
 				Q_CHECK_PTR(client);
 				perms = client->permissionsObject();
 			}
 			break;
 		case QModbusSelectType::QUaModbusDataBlock:
 			{
-				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				auto block = qobject_cast<QUaModbusDataBlock*>(node);
 				Q_CHECK_PTR(block);
 				perms = block->permissionsObject();
 			}
 			break;
 		case QModbusSelectType::QUaModbusValue:
 			{
-				auto value = dynamic_cast<QUaModbusValue*>(node);
+				auto value = qobject_cast<QUaModbusValue*>(node);
 				Q_CHECK_PTR(value);
 				perms = value->permissionsObject();
 			}
@@ -179,13 +179,13 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			switch (typePrev)
 			{
 			case QModbusSelectType::QUaModbusClient:
-				nodePrev = dynamic_cast<QUaModbusClient*>(nodePrev);
+				nodePrev = qobject_cast<QUaModbusClient*>(nodePrev);
 				break;
 			case QModbusSelectType::QUaModbusDataBlock:
-				nodePrev = dynamic_cast<QUaModbusDataBlock*>(nodePrev);
+				nodePrev = qobject_cast<QUaModbusDataBlock*>(nodePrev);
 				break;
 			case QModbusSelectType::QUaModbusValue:
-				nodePrev = dynamic_cast<QUaModbusValue*>(nodePrev);
+				nodePrev = qobject_cast<QUaModbusValue*>(nodePrev);
 				break;
 			default:
 				nodePrev = nullptr;
@@ -202,13 +202,13 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			switch (typeCurr)
 			{
 			case QModbusSelectType::QUaModbusClient:
-				nodeCurr = dynamic_cast<QUaModbusClient*>(nodeCurr);
+				nodeCurr = qobject_cast<QUaModbusClient*>(nodeCurr);
 				break;
 			case QModbusSelectType::QUaModbusDataBlock:
-				nodeCurr = dynamic_cast<QUaModbusDataBlock*>(nodeCurr);
+				nodeCurr = qobject_cast<QUaModbusDataBlock*>(nodeCurr);
 				break;
 			case QModbusSelectType::QUaModbusValue:
-				nodeCurr = dynamic_cast<QUaModbusValue*>(nodeCurr);
+				nodeCurr = qobject_cast<QUaModbusValue*>(nodeCurr);
 				break;
 			default:
 				nodeCurr = nullptr;
@@ -236,19 +236,19 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 		{
 		case QModbusSelectType::QUaModbusClient:
 			{
-				auto client = dynamic_cast<QUaModbusClient*>(node);
+				auto client = qobject_cast<QUaModbusClient*>(node);
 				emit this->clientDoubleClicked(client);
 			}
 			break;
 		case QModbusSelectType::QUaModbusDataBlock:
 			{
-				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				auto block = qobject_cast<QUaModbusDataBlock*>(node);
 				emit this->blockDoubleClicked(block);
 			}
 			break;
 		case QModbusSelectType::QUaModbusValue:
 			{
-				auto value = dynamic_cast<QUaModbusValue*>(node);
+				auto value = qobject_cast<QUaModbusValue*>(node);
 				emit this->valueDoubleClicked(value);
 			}
 			break;
@@ -290,7 +290,7 @@ void QUaModbusClientTree::setClientList(QUaModbusClientList * listClients)
 	// NOTE : needs to be a queued connection because we want to wait until browseName is set
 	QObject::connect(listClients, &QUaNode::childAdded, this,
 	[this](QUaNode * node) {
-		auto client = dynamic_cast<QUaModbusClient*>(node);
+		auto client = qobject_cast<QUaModbusClient*>(node);
 		Q_CHECK_PTR(client);
 		// add to gui
 		auto item = this->handleClientAdded(client);
@@ -461,7 +461,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 				[this, index]() {
 					this->expandRecursivelly(index, false);
 				});
-				auto client = dynamic_cast<QUaModbusClient*>(node);
+				auto client = qobject_cast<QUaModbusClient*>(node);
 				contextMenu.addSeparator();
 				// connect
 				bool isConnected = client->getState() == QModbusState::ConnectedState;
@@ -535,7 +535,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 				[this, index]() {
 					this->expandRecursivelly(index, false);
 				});
-				auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+				auto block = qobject_cast<QUaModbusDataBlock*>(node);
 				contextMenu.addSeparator();
 				// values
 				contextMenu.addAction(m_iconAdd, tr("Add Value"), this,
@@ -594,7 +594,7 @@ void QUaModbusClientTree::setupTreeContextMenu()
 		case QModbusSelectType::QUaModbusValue:
 			// for values only
 			{
-				auto value = dynamic_cast<QUaModbusValue*>(node);
+				auto value = qobject_cast<QUaModbusValue*>(node);
 				contextMenu.addSeparator();
 				// delete value
 				contextMenu.addAction(m_iconDelete, tr("Delete"), this,
@@ -935,7 +935,7 @@ QStandardItem *  QUaModbusClientTree::handleClientAdded(QUaModbusClient * client
 	auto listBlocks = client->dataBlocks();
 	QObject::connect(listBlocks, &QUaNode::childAdded, this,
 	[this, client, iObj](QUaNode * node) {
-		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+		auto block = qobject_cast<QUaModbusDataBlock*>(node);
 		Q_CHECK_PTR(block);
 		// add to gui
 		QString strBlockId = block->browseName().name();
@@ -1029,7 +1029,7 @@ QStandardItem *  QUaModbusClientTree::handleBlockAdded(QUaModbusClient * client,
 	auto listValues = block->values();
 	QObject::connect(listValues, &QUaNode::childAdded, this,
 	[this, block, iObj](QUaNode * node) {
-		auto value = dynamic_cast<QUaModbusValue*>(node);
+		auto value = qobject_cast<QUaModbusValue*>(node);
 		Q_CHECK_PTR(value);
 		// add to gui
 		QString strValueId = value->browseName().name();
@@ -1354,7 +1354,7 @@ void QUaModbusClientTree::setIconClientTcp(const QIcon & icon)
 	this->updateIconRecursive(nullptr, 1, m_iconClientTcp,
 	[](QStandardItem * item) {
 		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
-		auto client = dynamic_cast<QUaModbusClient*>(node);
+		auto client = qobject_cast<QUaModbusClient*>(node);
 		Q_CHECK_PTR(client);
 		auto clientType = client->getType();
 		return clientType == QModbusClientType::Tcp;
@@ -1373,7 +1373,7 @@ void QUaModbusClientTree::setIconClientSerial(const QIcon & icon)
 	this->updateIconRecursive(nullptr, 1, m_iconClientSerial,
 	[](QStandardItem * item) {
 		auto node   = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
-		auto client = dynamic_cast<QUaModbusClient*>(node);
+		auto client = qobject_cast<QUaModbusClient*>(node);
 		Q_CHECK_PTR(client);
 		auto clientType = client->getType();
 		return clientType == QModbusClientType::Serial;
@@ -1392,7 +1392,7 @@ void QUaModbusClientTree::setIconBlock(const QIcon & icon)
 	this->updateIconRecursive(nullptr, 2, m_iconBlock,
 	[](QStandardItem * item) {
 		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
-		auto block = dynamic_cast<QUaModbusDataBlock*>(node);
+		auto block = qobject_cast<QUaModbusDataBlock*>(node);
 		Q_CHECK_PTR(block);
 		return block;
 	});
@@ -1410,7 +1410,7 @@ void QUaModbusClientTree::setIconValue(const QIcon & icon)
 	this->updateIconRecursive(nullptr, 3, m_iconValue,
 	[](QStandardItem * item) {
 		auto node  = item->data(QUaModbusClientTree::PointerRole).value<QUaNode*>();
-		auto value = dynamic_cast<QUaModbusValue*>(node);
+		auto value = qobject_cast<QUaModbusValue*>(node);
 		Q_CHECK_PTR(value);
 		return value;
 	});
