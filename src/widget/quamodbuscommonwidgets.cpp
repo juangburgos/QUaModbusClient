@@ -52,11 +52,18 @@ QUaModbusLambdaFilterProxy::QUaModbusLambdaFilterProxy(QObject *parent/* = 0*/)
 
 }
 
+//int QUaModbusLambdaFilterProxy::columnCount(const QModelIndex& parent) const
+//{
+//	auto source = this->sourceModel();
+//	int colCount = source ? source->columnCount(parent) : 0;
+//	return colCount;
+//}
+
+
 void QUaModbusLambdaFilterProxy::resetFilter()
 {
 	this->invalidateFilter();
 }
-
 bool QUaModbusLambdaFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex & sourceParent) const
 {
 	return m_filterAcceptsRow ? m_filterAcceptsRow(sourceRow, sourceParent) : QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);

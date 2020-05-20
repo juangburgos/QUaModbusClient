@@ -15,6 +15,7 @@ quamodbusclientwidgettest.h
 FORMS += \
 quamodbusclientwidgettest.ui
 
+include($$PWD/../../libs/QUaServerWidgets.git/src/quaserverwidgets.pri)
 include($$PWD/../../src/widget/quamodbusclientwidget.pri)
 include($$PWD/../../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../../libs/QUaServer.git/src/wrapper/quaserver.pri)

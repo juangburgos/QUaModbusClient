@@ -10,6 +10,7 @@ include($$PWD/../../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../../libs/QUaServer.git/src/wrapper/quaserver.pri)
 include($$PWD/../../libs/qadvanceddocking.pri)
 # modbus
+include($$PWD/../../libs/QUaServerWidgets.git/src/quaserverwidgets.pri)
 include($$PWD/../../src/widget/quamodbusclientwidget.pri)
 include($$PWD/../../src/docks/quamodbusdocking.pri)
 # access control

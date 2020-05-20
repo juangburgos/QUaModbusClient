@@ -36,6 +36,8 @@ class QUaModbusLambdaFilterProxy : public QSortFilterProxyModel
 public:
 	QUaModbusLambdaFilterProxy(QObject *parent = 0);
 
+	//int columnCount(const QModelIndex& parent = QModelIndex()) const;
+
 	void resetFilter();
 
 	template<typename M>

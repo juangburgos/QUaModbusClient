@@ -122,7 +122,7 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="7">
-    <widget class="QTreeView" name="treeViewModbus"/>
+    <widget class="QUaModbusNodeTreeView" name="treeViewModbus"/>
    </item>
    <item row="0" column="6">
     <widget class="QPushButton" name="pushButtonAddClient">
@@ -156,6 +156,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QUaModbusNodeTreeView</class>
+   <extends>QTreeView</extends>
+   <header location="global">quamodbusclienttree.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

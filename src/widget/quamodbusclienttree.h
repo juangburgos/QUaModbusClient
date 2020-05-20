@@ -7,6 +7,13 @@
 #include <QUaModbusCommonWidgets>
 #include <QUaNode>
 
+#include <QUaTreeModel>
+#include <QUaTreeView>
+#include <QSortFilterProxyModel>
+
+typedef QUaTreeModel<QUaNode*, 1> QUaModbusNodeTreeModel;
+typedef QUaTreeView <QUaNode*, 1> QUaModbusNodeTreeView;
+
 namespace Ui {
 class QUaModbusClientTree;
 }
@@ -119,7 +126,12 @@ public:
 	void  setIconConnect(const QIcon& icon);
 
 signals:
-	void nodeSelectionChanged(QUaNode * nodePrev, QModbusSelectType typePrev, QUaNode * nodeCurr, QModbusSelectType typeCurr);
+	void nodeSelectionChanged(
+		QUaNode * nodePrev, 
+		QModbusSelectType typePrev, 
+		QUaNode * nodeCurr, 
+		QModbusSelectType typeCurr
+	);
 	void clientDoubleClicked (QUaModbusClient    * client);
 	void blockDoubleClicked  (QUaModbusDataBlock * block );
 	void valueDoubleClicked  (QUaModbusValue     * value );
@@ -144,7 +156,7 @@ private slots:
 private:
     Ui::QUaModbusClientTree  * ui;
 	QUaModbusClientList      * m_listClients;
-	QStandardItemModel         m_modelModbus;
+	QUaModbusNodeTreeModel     m_modelModbus;
 	QUaModbusLambdaFilterProxy m_proxyModbus;
 #ifdef QUA_ACCESS_CONTROL
 	QUaUser * m_loggedUser;
@@ -169,14 +181,7 @@ private:
 	void setupFilterWidgets();
 	void expandRecursivelly(const QModelIndex &index, const bool &expand);
 
-	typedef std::function<bool(QStandardItem*)> QUaModbusFuncSetIcon;
-	void updateIconRecursive(QStandardItem * parent, const quint32 &depth, const QIcon &icon, const QUaModbusFuncSetIcon &func);
-
 	void showNewClientDialog(QUaModbusClientDialog &dialog);
-
-	QStandardItem * handleClientAdded(QUaModbusClient    * client);
-	QStandardItem * handleBlockAdded (QUaModbusClient    * client, QStandardItem * parent, const QString &strBlockId);
-	QStandardItem * handleValueAdded (QUaModbusDataBlock * block , QStandardItem * parent, const QString &strValueId);
 
 	void    saveContentsCsvToFile(const QString &strContents, const QString &strFileName = "");
 	QString loadContentsCsvFromFile();
@@ -188,9 +193,6 @@ private:
 
 	void showNewBlockDialog(QUaModbusClient* client, QUaModbusClientDialog& dialog);
 	void showNewValueDialog(QUaModbusDataBlock* block, QUaModbusClientDialog& dialog);
-
-	static int SelectTypeRole;
-	static int PointerRole;
 };
 
 typedef QUaModbusClientTree::SelectType QModbusSelectType;
