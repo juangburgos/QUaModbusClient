@@ -42,7 +42,7 @@ private:
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
-	void        fromDomElement(QDomElement  & domElem, QString &strError);
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 };
 

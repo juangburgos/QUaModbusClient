@@ -185,7 +185,7 @@ private:
 
 	void    saveContentsCsvToFile(const QString &strContents, const QString &strFileName = "");
 	QString loadContentsCsvFromFile();
-	void    displayCsvLoadResult(const QString &strError);
+	void    displayCsvLoadResult(QQueue<QUaLog>& errorLogs);
 	void    exportAllCsv();
 
 	bool isFilterVisible() const;

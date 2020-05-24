@@ -108,7 +108,7 @@ QDomElement QUaModbusDataBlockList::toDomElement(QDomDocument & domDoc) const
 	return elemListBlocks;
 }
 
-void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
@@ -125,34 +125,50 @@ void QUaModbusDataBlockList::fromDomElement(QDomElement & domElem, QString & str
 		Q_ASSERT(!elemBlock.isNull());
 		if (!elemBlock.hasAttribute("BrowseName"))
 		{
-			strError += tr("%1 : Cannot add Block without BrowseName attribute. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add Block without BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QString strBrowseName = elemBlock.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += tr("%1 : Cannot add Block with empty BrowseName attribute. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add Block with empty BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// check if exists
 		auto block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (block)
 		{
-			strError += tr("%1 : Block with %2 BrowseName already exists. Overwriting Block configuration.\n").arg("Warning").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Block with %1 BrowseName already exists. Overwriting Block configuration.").arg(strBrowseName),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			// overwrite block config
 			// NOTE : loop already should have started
-			block->fromDomElement(elemBlock, strError);
+			block->fromDomElement(elemBlock, errorLogs);
 			continue;
 		}
 		this->addDataBlock(strBrowseName);
 		block = this->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (!block)
 		{
-			strError += tr("%1 : Failed to create Block with %2 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Failed to create Block with %1 BrowseName. Skipping.").arg(strBrowseName),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// set block config
-		block->fromDomElement(elemBlock, strError);
+		block->fromDomElement(elemBlock, errorLogs);
 		// start block loop if setting samplingTime didn't
 		if (!block->loopRunning())
 		{

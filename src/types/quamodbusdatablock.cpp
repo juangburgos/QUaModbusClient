@@ -410,7 +410,7 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	return elemBlock;
 }
 
-void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
@@ -433,7 +433,11 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid Type attribute '%2' in Block %3. Default value set.\n").arg("Warning").arg(type).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid Type attribute '%1' in Block %2. Default value set.").arg(type).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	
 	// Address
@@ -444,7 +448,11 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid Address attribute '%2' in Block %3. Default value set.\n").arg("Warning").arg(address).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid Address attribute '%1' in Block %2. Default value set.").arg(address).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// Size
 	auto size = domElem.attribute("Size").toUInt(&bOK);
@@ -454,7 +462,11 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid Size attribute '%2' in Block %3. Default value set.\n").arg("Warning").arg(size).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid Size attribute '%1' in Block %2. Default value set.").arg(size).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// SamplingTime
 	auto samplingTime = domElem.attribute("SamplingTime").toUInt(&bOK);
@@ -464,17 +476,25 @@ void QUaModbusDataBlock::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid SamplingTime attribute '%2' in Block %3. Default value set.\n").arg("Warning").arg(samplingTime).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid SamplingTime attribute '%1' in Block %2. Default value set.").arg(samplingTime).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// get value list
 	QDomElement elemValueList = domElem.firstChildElement(QUaModbusValueList::staticMetaObject.className());
 	if (!elemValueList.isNull())
 	{
-		values()->fromDomElement(elemValueList, strError);
+		values()->fromDomElement(elemValueList, errorLogs);
 	}
 	else
 	{
-		strError += tr("%1 : Block %2 does not have a QUaModbusValueList child. No values will be loaded.\n").arg("Warning").arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Block %1 does not have a QUaModbusValueList child. No values will be loaded.").arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 }
 

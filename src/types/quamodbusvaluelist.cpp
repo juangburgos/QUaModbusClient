@@ -113,7 +113,7 @@ QDomElement QUaModbusValueList::toDomElement(QDomDocument & domDoc) const
 	return elemListValues;
 }
 
-void QUaModbusValueList::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusValueList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
@@ -130,32 +130,48 @@ void QUaModbusValueList::fromDomElement(QDomElement & domElem, QString & strErro
 		Q_ASSERT(!elemValue.isNull());
 		if (!elemValue.hasAttribute("BrowseName"))
 		{
-			strError += "Error : Cannot add Value without BrowseName attribute. Skipping.\n";
+			errorLogs << QUaLog(
+				tr("Cannot add Value without BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QString strBrowseName = elemValue.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += "Error : Cannot add Value with empty BrowseName attribute. Skipping.\n";
+			errorLogs << QUaLog(
+				tr("Cannot add Value with empty BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// check if exists
 		auto value = this->browseChild<QUaModbusValue>(strBrowseName);
 		if (value)
 		{
-			strError += QString("Warning : Value with %1 BrowseName already exists. Overwriting Value configuration.\n").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Value with %1 BrowseName already exists. Overwriting Value configuration.").arg(strBrowseName),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			// overwrite value config
-			value->fromDomElement(elemValue, strError);
+			value->fromDomElement(elemValue, errorLogs);
 			continue;
 		}
 		this->addValue(strBrowseName);
 		value = this->browseChild<QUaModbusValue>(strBrowseName);
 		if (!value)
 		{
-			strError += QString("Error : Failed to create Value with %1 BrowseName. Skipping.\n").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Failed to create Value with %1 BrowseName. Skipping.").arg(strBrowseName),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// set value config
-		value->fromDomElement(elemValue, strError);
+		value->fromDomElement(elemValue, errorLogs);
 	}
 }

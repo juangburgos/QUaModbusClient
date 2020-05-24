@@ -311,7 +311,7 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 	return elemValue;
 }
 
-void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusValue::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName", "");
@@ -332,7 +332,11 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	}
 	else
 	{
-		strError += tr("%1 : Invalid Type attribute '%2' in Value %3. Default value set.\n").arg("Warning").arg(type).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid Type attribute '%1' in Value %2. Default value set.").arg("Warning").arg(type).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// AddressOffset
 	auto addressOffset = domElem.attribute("AddressOffset").toInt(&bOK);
@@ -342,7 +346,11 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QString & strError)
 	}
 	else
 	{
-		strError += tr("%1 : Invalid AddressOffset attribute '%1' in Value %2. Default value set.\n").arg("Warning").arg(addressOffset).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid AddressOffset attribute '%1' in Value %2. Default value set.").arg(addressOffset).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 }
 

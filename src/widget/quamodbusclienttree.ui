@@ -51,7 +51,7 @@
    <item row="0" column="0">
     <widget class="QCheckBox" name="checkBoxFilter">
      <property name="text">
-      <string>Enable Filter</string>
+      <string>Filter</string>
      </property>
     </widget>
    </item>
@@ -83,13 +83,6 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
-       <widget class="QLabel" name="labelFilter">
-        <property name="text">
-         <string>Filter : </string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QComboBox" name="comboBoxFilterType"/>
       </item>

@@ -92,8 +92,9 @@ QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 		return strError;
 	}
 	// load config from xml
-	this->fromDomElement(elemClientList, strError);
-	if (strError.isEmpty())
+	QQueue<QUaLog> errorLogs;
+	this->fromDomElement(elemClientList, errorLogs);
+	if (errorLogs.isEmpty())
 	{
 		strError = "Success.";
 	}
@@ -288,9 +289,9 @@ QString QUaModbusClientList::csvValues()
 	return strCsv;
 }
 
-QString QUaModbusClientList::setCsvClients(QString strCsvClients)
+QQueue<QUaLog> QUaModbusClientList::setCsvClients(QString strCsvClients)
 {
-	QString strError;
+	QQueue<QUaLog> errorLogs;
 	auto listRows = strCsvClients.split("\n");
 	for (auto strRow : listRows)
 	{
@@ -307,9 +308,11 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 		if (listCols.count() < 7)
 #endif // !QUA_ACCESS_CONTROL
 		{
-			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
-				.arg("Warning")
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid column count in row [%1]. Ignoring.").arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get name
@@ -324,29 +327,32 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 		auto cliType = (QModbusClientType)QMetaEnum::fromType<QModbusClientType>().keysToValue(strType.toUtf8(), &bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid client type '%2' in row %3.\n")
-				.arg("Error")
-				.arg(strType)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid client type '%1' in row [%2].").arg(strType).arg(strRow),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get modbus address
 		auto serverAddress = listCols.at(2).trimmed().toUInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid ServerAddress '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(2).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid ServerAddress '%1' in row [%2]. Default value set.").arg(listCols.at(2).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// get keep connecting
 		auto keepConnecting = (bool)listCols.at(3).trimmed().toUInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid KeepConnecting '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(3).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid KeepConnecting '%1' in row [%2]. Default value set.").arg(listCols.at(3).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// type dependent
 		switch (cliType)
@@ -357,28 +363,31 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 				auto networkAddress = listCols.at(4).trimmed();
 				if (networkAddress.isEmpty())
 				{
-					strError += tr("%1 : Invalid NetworkAddress '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(listCols.at(4).trimmed())
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid NetworkAddress '%1' in row [%2]. Default value set.").arg(listCols.at(4).trimmed()).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// get network port
 				auto networkPort = listCols.at(5).trimmed().toUInt(&bOK);
 				if (!bOK)
 				{
-					strError += tr("%1 : Invalid NetworkPort '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(listCols.at(5).trimmed())
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid NetworkPort '%1' in row [%2]. Default value set.").arg(listCols.at(5).trimmed()).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// check if tcp client exists
 				auto clientTcp = this->browseChild<QUaModbusTcpClient>(strBrowseName);
 				if (clientTcp)
 				{
-					strError += tr("%1 : Client '%2' already exists in row %3. Overwriting properties.\n")
-						.arg("Warning")
-						.arg(strBrowseName)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Client '%1' already exists in row [%2]. Overwriting properties.").arg(strBrowseName).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				else
 				{
@@ -386,26 +395,32 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 					auto clientSerial = this->browseChild<QUaModbusRtuSerialClient>(strBrowseName);
 					if (clientSerial)
 					{
-						strError += tr("%1 : There already exists a serial client '%2' defined in row %3. Delete it first.\n")
-							.arg("Error")
-							.arg(strBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("There already exists a serial client '%1' defined in row [%2]. Delete it first.").arg(strBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 					// actually add client
 					auto strNewError = this->addTcpClient(strBrowseName);
 					if (strNewError.contains("Error", Qt::CaseInsensitive))
 					{
-						strError += strNewError;
+						errorLogs << QUaLog(
+							strNewError,
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 					clientTcp = this->browseChild<QUaModbusTcpClient>(strBrowseName);
 					if (!clientTcp)
 					{
-						strError += tr("%1 : Failed to find '%2' client in client list after adding row %3.\n")
-							.arg("Error")
-							.arg(strBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("Failed to find '%1' client in client list after adding row [%2].").arg(strBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 				}
@@ -428,10 +443,11 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 					}
 					else
 					{
-						strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
-							.arg("Error")
-							.arg(permsBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("Failed to find '%1' permissions object after adding row [%2].").arg(permsBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 					}
 				}
 #endif // QUA_ACCESS_CONTROL
@@ -446,68 +462,76 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 				if (listCols.count() < 10)
 #endif // !QUA_ACCESS_CONTROL
 				{
-					strError += tr("%1 : Invalid column count in row %2.\n")
-						.arg("Error")
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid column count in row [%1].").arg(strRow),
+						QUaLogLevel::Error,
+						QUaLogCategory::Serialization
+					);
 					continue;
 				}
 				// get com port
 				auto comPort = listCols.at(4).trimmed();
 				if (comPort.isEmpty())
 				{
-					strError += tr("%1 : Invalid ComPort '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(comPort)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid ComPort '%1' in row [%2]. Default value set.").arg(comPort).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// get parity
 				auto strParity = listCols.at(5).trimmed();
 				auto parity = (QParity)QMetaEnum::fromType<QParity>().keysToValue(strParity.toUtf8(), &bOK);
 				if (!bOK)
 				{
-					strError += tr("%1 : Invalid Parity '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(strParity)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid Parity '%1' in row [%2]. Default value set.").arg(strParity).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// get baud rate
 				auto strBaudRate = listCols.at(6).trimmed();
 				auto baudRate = (QBaudRate)QMetaEnum::fromType<QBaudRate>().keysToValue(strBaudRate.toUtf8(), &bOK);
 				if (!bOK)
 				{
-					strError += tr("%1 : Invalid BaudRate '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(strBaudRate)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid BaudRate '%1' in row [%2]. Default value set.").arg(strBaudRate).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// get data bits
 				auto strDataBits = listCols.at(7).trimmed();
 				auto dataBits = (QDataBits)QMetaEnum::fromType<QDataBits>().keysToValue(strDataBits.toUtf8(), &bOK);
 				if (!bOK)
 				{
-					strError += tr("%1 : Invalid DataBits '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(strDataBits)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid DataBits '%1' in row [%2]. Default value set.").arg(strDataBits).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// get stop bits
 				auto strStopBits = listCols.at(8).trimmed();
 				auto stopBits = (QStopBits)QMetaEnum::fromType<QStopBits>().keysToValue(strStopBits.toUtf8(), &bOK);
 				if (!bOK)
 				{
-					strError += tr("%1 : Invalid StopBits '%2' in row %3. Default value set.\n")
-						.arg("Warning")
-						.arg(strStopBits)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Invalid StopBits '%1' in row [%2]. Default value set.").arg(strStopBits).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				// check if serial client exists
 				auto clientSerial = this->browseChild<QUaModbusRtuSerialClient>(strBrowseName);
 				if (clientSerial)
 				{
-					strError += tr("%1 : Client '%2' already exists in row %3. Overwriting properties.\n")
-						.arg("Warning")
-						.arg(strBrowseName)
-						.arg(strRow);
+					errorLogs << QUaLog(
+						tr("Client '%1' already exists in row [%2]. Overwriting properties.").arg(strBrowseName).arg(strRow),
+						QUaLogLevel::Warning,
+						QUaLogCategory::Serialization
+					);
 				}
 				else
 				{
@@ -515,26 +539,32 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 					auto clientTcp = this->browseChild<QUaModbusTcpClient>(strBrowseName);
 					if (clientTcp)
 					{
-						strError += tr("%1 : There already exists a tcp client '%2' defined in row %3. Delete it first.\n")
-							.arg("Error")
-							.arg(strBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("There already exists a tcp client '%1' defined in row [%2]. Delete it first.").arg(strBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 					// actually add client
 					auto strNewError = this->addRtuSerialClient(strBrowseName);
 					if (strNewError.contains("Error", Qt::CaseInsensitive))
 					{
-						strError += strNewError;
+						errorLogs << QUaLog(
+							strNewError,
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 					clientSerial = this->browseChild<QUaModbusRtuSerialClient>(strBrowseName);
 					if (!clientSerial)
 					{
-						strError += tr("%1 : Failed to find '%2' client in client list after adding row %3.\n")
-							.arg("Error")
-							.arg(strBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("Failed to find '%1' client in client list after adding row [%2].").arg(strBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 						continue;
 					}
 				}
@@ -560,10 +590,11 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 					}
 					else
 					{
-						strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
-							.arg("Error")
-							.arg(permsBrowseName)
-							.arg(strRow);
+						errorLogs << QUaLog(
+							tr("Failed to find '%1' permissions object after adding row [%2].").arg(permsBrowseName).arg(strRow),
+							QUaLogLevel::Error,
+							QUaLogCategory::Serialization
+						);
 					}
 				}
 #endif // QUA_ACCESS_CONTROL
@@ -574,16 +605,12 @@ QString QUaModbusClientList::setCsvClients(QString strCsvClients)
 			break;
 		}
 	}
-	if (strError.isEmpty())
-	{
-		strError = "Success.";
-	}
-	return strError;
+	return errorLogs;
 }
 
-QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
+QQueue<QUaLog> QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 {
-	QString strError;
+	QQueue<QUaLog> errorLogs;
 	auto listRows = strCsvBlocks.split("\n");
 	for (auto strRow : listRows)
 	{
@@ -600,9 +627,11 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 		if (listCols.count() < 7)
 #endif // !QUA_ACCESS_CONTROL
 		{
-			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
-				.arg("Warning")
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid column count in row [%1]. Ignoring.").arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get name
@@ -617,58 +646,63 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 		auto client = this->browseChild<QUaModbusClient>(strClientName);
 		if (!client)
 		{
-			strError += tr("%1 : There is no client '%2' defined in row %3.\n")
-				.arg("Error")
-				.arg(strClientName)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("There is no client '%1' defined in row [%2].").arg(strClientName).arg(strRow),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get type
 		auto type = (QModbusDataBlockType)QMetaEnum::fromType<QModbusDataBlockType>().keysToValue(listCols.at(2).trimmed().toUtf8(), &bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid Type '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(2).trimmed()).
-				arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid Type '%1' in row [%2]. Default value set.").arg(listCols.at(2).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// get address
 		auto address = listCols.at(3).trimmed().toInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid Address '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(3).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid Address '%1' in row [%2]. Default value set.").arg(listCols.at(3).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// get size
 		auto size = listCols.at(4).trimmed().toUInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid Size '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(4).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid Size '%1' in row [%2]. Default value set.").arg(listCols.at(4).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// get sampling time
 		auto samplingTime = listCols.at(5).trimmed().toUInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid SamplingTime '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(5).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid SamplingTime '%1' in row [%2]. Default value set.").arg(listCols.at(5).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// check if block exists
 		auto blocks = client->dataBlocks();
 		auto block  = blocks->browseChild<QUaModbusDataBlock>(strBrowseName);
 		if (block)
 		{
-			strError += tr("%1 : There already exists a block '%2.%3' defined in row %4. Overwriting properties.\n")
-				.arg("Warning")
-				.arg(client->browseName().name())
-				.arg(strBrowseName)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("There already exists a block '%1.%2' defined in row [%3]. Overwriting properties.").arg(client->browseName().name()).arg(strBrowseName).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		else
 		{
@@ -676,17 +710,21 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 			auto strNewError = blocks->addDataBlock(strBrowseName);
 			if (strNewError.contains("Error", Qt::CaseInsensitive))
 			{
-				strError += strNewError;
+				errorLogs << QUaLog(
+					strNewError,
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 				continue;
 			}
 			block = blocks->browseChild<QUaModbusDataBlock>(strBrowseName);
 			if (!block)
 			{
-				strError += tr("%1 : Failed to find '%2' block in client '%3' list after adding row %4.\n")
-					.arg("Error")
-					.arg(client->browseName().name())
-					.arg(strBrowseName)
-					.arg(strRow);
+				errorLogs << QUaLog(
+					tr("Failed to find '%1' block in client '%2' list after adding row [%3].").arg(client->browseName().name()).arg(strBrowseName).arg(strRow),
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 				continue;
 			}
 		}	
@@ -709,24 +747,21 @@ QString QUaModbusClientList::setCsvBlocks(QString strCsvBlocks)
 			}
 			else
 			{
-				strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
-					.arg("Error")
-					.arg(permsBrowseName)
-					.arg(strRow);
+				errorLogs << QUaLog(
+					tr("Failed to find '%1' permissions object after adding row [%2].").arg(permsBrowseName).arg(strRow),
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 			}
 		}
 #endif // QUA_ACCESS_CONTROL
 	}
-	if (strError.isEmpty())
-	{
-		strError = "Success.";
-	}
-	return strError;
+	return errorLogs;
 }
 
-QString QUaModbusClientList::setCsvValues(QString strCsvValues)
+QQueue<QUaLog> QUaModbusClientList::setCsvValues(QString strCsvValues)
 {
-	QString strError;
+	QQueue<QUaLog> errorLogs;
 	auto listRows = strCsvValues.split("\n");
 	for (auto strRow : listRows)
 	{
@@ -743,9 +778,11 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		if (listCols.count() < 6)
 #endif // !QUA_ACCESS_CONTROL
 		{
-			strError += tr("%1 : Invalid column count in row %2. Ignoring\n")
-				.arg("Warning")
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid column count in row [%1]. Ignoring.").arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get name
@@ -760,10 +797,11 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		auto client = this->browseChild<QUaModbusClient>(strClientName);
 		if (!client)
 		{
-			strError += tr("%1 : There is no client '%2' defined in row %3.\n")
-				.arg("Error")
-				.arg(strClientName)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("There is no client '%1' defined in row [%2].").arg(strClientName).arg(strRow),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get block
@@ -771,40 +809,42 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 		auto block = client->dataBlocks()->browseChild<QUaModbusDataBlock>(strBlockName);
 		if (!block)
 		{
-			strError += tr("%1 : There is no block '%2' defined in row %3.\n")
-				.arg("Error")
-				.arg(strBlockName)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("There is no block '%1' defined in row [%2].").arg(strBlockName).arg(strRow),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// get type
 		auto type = (QModbusValueType)QMetaEnum::fromType<QModbusValueType>().keysToValue(listCols.at(3).trimmed().toUtf8(), &bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid Type '%2' in row %3. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(3).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid Type '%1' in row [%2]. Default value set.").arg(listCols.at(3).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		// get address offset
 		auto addressOffset = listCols.at(4).trimmed().toInt(&bOK);
 		if (!bOK)
 		{
-			strError += tr("%1 : Invalid AddressOffset '%1' in row %2. Default value set.\n")
-				.arg("Warning")
-				.arg(listCols.at(4).trimmed())
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("Invalid AddressOffset '%1' in row [%2]. Default value set.").arg(listCols.at(4).trimmed()).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		auto values = block->values();
 		auto value  = values->browseChild<QUaModbusValue>(strBrowseName);
 		if (value)
 		{
-			strError += tr("%1 : There already exists a value '%2.%3.%4' defined in row %5. Overwriting properties.\n")
-				.arg("Warning")
-				.arg(client->browseName().name())
-				.arg(block->browseName().name())
-				.arg(strBrowseName)
-				.arg(strRow);
+			errorLogs << QUaLog(
+				tr("There already exists a value '%1.%2.%3' defined in row [%4]. Overwriting properties.").arg(client->browseName().name()).arg(block->browseName().name()).arg(strBrowseName).arg(strRow),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 		}
 		else
 		{
@@ -812,18 +852,21 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 			auto strNewError = values->addValue(strBrowseName);
 			if (strNewError.contains("Error", Qt::CaseInsensitive))
 			{
-				strError += strNewError;
+				errorLogs << QUaLog(
+					strNewError,
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 				continue;
 			}
 			value = values->browseChild<QUaModbusValue>(strBrowseName);
 			if (!value)
 			{
-				strError += tr("%1 : Failed to find '%2' value in client %3, block '%4' list after adding row %5.\n")
-					.arg("Error")
-					.arg(client->browseName().name())
-					.arg(block->browseName().name())
-					.arg(strBrowseName)
-					.arg(strRow);
+				errorLogs << QUaLog(
+					tr("Failed to find '%2' value in client %2, block '%3' list after adding row [%4].").arg(client->browseName().name()).arg(block->browseName().name()).arg(strBrowseName).arg(strRow),
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 				continue;
 			}
 		}
@@ -844,19 +887,16 @@ QString QUaModbusClientList::setCsvValues(QString strCsvValues)
 			}
 			else
 			{
-				strError += tr("%1 : Failed to find '%2' permissions object after adding row %3.\n")
-					.arg("Error")
-					.arg(permsBrowseName)
-					.arg(strRow);
+				errorLogs << QUaLog(
+					tr("Failed to find '%1' permissions object after adding row [%2].").arg(permsBrowseName).arg(strRow),
+					QUaLogLevel::Error,
+					QUaLogCategory::Serialization
+				);
 			}
 		}
 #endif // QUA_ACCESS_CONTROL
 	}
-	if (strError.isEmpty())
-	{
-		strError = "Success.";
-	}
-	return strError;
+	return errorLogs;
 }
 
 QList<QUaModbusClient*> QUaModbusClientList::clients()
@@ -910,7 +950,7 @@ QDomElement QUaModbusClientList::toDomElement(QDomDocument & domDoc) const
 	return elemListClients;
 }
 
-void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusClientList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 #ifdef QUA_ACCESS_CONTROL
 	// load permissions if any
@@ -927,33 +967,49 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		Q_ASSERT(!elemClient.isNull());
 		if (!elemClient.hasAttribute("BrowseName"))
 		{
-			strError += tr("%1 : Cannot add TCP client without BrowseName attribute. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add TCP client without BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QString strBrowseName = elemClient.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += tr("%1 : Cannot add TCP client with empty BrowseName attribute. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add TCP client with empty BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// check if exists
 		auto client = this->browseChild<QUaModbusClient>(strBrowseName);
 		if (client)
 		{
-			strError += tr("%1 : Modbus client with %2 BrowseName already exists. Merging client configuration.\n").arg("Warning").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Modbus client with %1 BrowseName already exists. Merging client configuration.").arg(strBrowseName),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
 			// merge client config
-			client->fromDomElement(elemClient, strError);
+			client->fromDomElement(elemClient, errorLogs);
 			continue;
 		}
 		this->addClient<QUaModbusTcpClient>(strBrowseName);
 		client = this->browseChild<QUaModbusTcpClient>(strBrowseName);
 		if (!client)
 		{
-			strError += tr("%1 : Failed to create TCP client with %2 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Failed to create TCP client with %1 BrowseName. Skipping.").arg(strBrowseName),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// set client config
-		client->fromDomElement(elemClient, strError);
+		client->fromDomElement(elemClient, errorLogs);
 		// connect if keepConnecting is set
 		if (client->keepConnecting()->value().toBool())
 		{
@@ -968,31 +1024,47 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QString & strErr
 		Q_ASSERT(!elemClient.isNull());
 		if (!elemClient.hasAttribute("BrowseName"))
 		{
-			strError += tr("%1 : Cannot add Serial client without BrowseName attribute. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add Serial client without BrowseName attribute. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QString strBrowseName = elemClient.attribute("BrowseName");
 		if (strBrowseName.isEmpty())
 		{
-			strError += tr("%1 : Cannot add Serial client with empty BrowseName. Skipping.\n").arg("Error");
+			errorLogs << QUaLog(
+				tr("Cannot add Serial client with empty BrowseName. Skipping."),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// check if exists
 		auto client = this->browseChild<QUaModbusClient>(strBrowseName);
 		if (client)
 		{
-			strError += tr("%1 : Modbus client with %1 BrowseName already exists. Skipping.\n").arg("Error").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Modbus client with %1 BrowseName already exists. Skipping.").arg(strBrowseName),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		this->addClient<QUaModbusRtuSerialClient>(strBrowseName);
 		client = this->browseChild<QUaModbusRtuSerialClient>(strBrowseName);
 		if (!client)
 		{
-			strError += tr("%1 : Failed to create Serial client with %1 BrowseName. Skipping.\n").arg("Error").arg(strBrowseName);
+			errorLogs << QUaLog(
+				tr("Failed to create Serial client with %1 BrowseName. Skipping.").arg(strBrowseName),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		// set client config
-		client->fromDomElement(elemClient, strError);
+		client->fromDomElement(elemClient, errorLogs);
 		// connect if keepConnecting is set
 		if (client->keepConnecting()->value().toBool())
 		{

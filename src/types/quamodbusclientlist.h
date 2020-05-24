@@ -38,21 +38,21 @@ public:
 
 	Q_INVOKABLE QString setXmlConfig(QString strXmlConfig);
 
-	Q_INVOKABLE QString csvClients();
-
-	Q_INVOKABLE QString csvBlocks();
-
-	Q_INVOKABLE QString csvValues();
-
-	Q_INVOKABLE QString setCsvClients(QString strCsvClients);
-
-	Q_INVOKABLE QString setCsvBlocks(QString strCsvBlocks);
-
-	Q_INVOKABLE QString setCsvValues(QString strCsvValues);
-
 	// C++ API
 
 	QList<QUaModbusClient*> clients();
+
+	QString csvClients();
+
+	QString csvBlocks();
+
+	QString csvValues();
+
+	QQueue<QUaLog> setCsvClients(QString strCsvClients);
+
+	QQueue<QUaLog> setCsvBlocks(QString strCsvBlocks);
+
+	QQueue<QUaLog> setCsvValues(QString strCsvValues);
 
 	void clearInmediatly();
 
@@ -62,7 +62,7 @@ public:
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
-	void        fromDomElement(QDomElement  & domElem, QString &strError);
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 private:
 	template<typename T>

@@ -95,7 +95,7 @@ QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 	return elemTcpClient;
 }
 
-void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	// get client attributes (BrowseName must be already set)
 	QString strBrowseName = domElem.attribute("BrowseName");
@@ -116,7 +116,11 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid ServerAddress attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(serverAddress).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid ServerAddress attribute '%1' in Modbus client %2. Ignoring.").arg(serverAddress).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// KeepConnecting
 	auto keepConnecting = (bool)domElem.attribute("KeepConnecting").toUInt(&bOK);
@@ -126,7 +130,11 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid KeepConnecting attribute '%2' in Modbus client %3. Ignoring.\n").arg("Warning").arg(keepConnecting).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid KeepConnecting attribute '%2' in Modbus client %2. Ignoring.").arg(keepConnecting).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// NetworkAddress
 	auto networkAddress = domElem.attribute("NetworkAddress");
@@ -136,7 +144,11 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid NetworkAddress attribute '%2' in Modbus client %3. Default value set.\n").arg("Warning").arg(networkAddress).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid NetworkAddress attribute '%1' in Modbus client %2. Default value set.").arg(networkAddress).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// NetworkPort
 	auto networkPort = domElem.attribute("NetworkPort").toUInt(&bOK);
@@ -146,17 +158,25 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QString & strErro
 	}
 	else
 	{
-		strError += tr("%1 : Invalid NetworkPort attribute '%2' in Modbus client %3. Default value set.\n").arg("Warning").arg(networkPort).arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Invalid NetworkPort attribute '%1' in Modbus client %2. Default value set.").arg(networkPort).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 	// get block list
 	QDomElement elemBlockList = domElem.firstChildElement(QUaModbusDataBlockList::staticMetaObject.className());
 	if (!elemBlockList.isNull())
 	{
-		dataBlocks()->fromDomElement(elemBlockList, strError);
+		dataBlocks()->fromDomElement(elemBlockList, errorLogs);
 	}
 	else
 	{
-		strError += tr("%1 : Modbus client %2 does not have a QUaModbusDataBlockList child. No blocks will be loaded.\n").arg("Warning").arg(strBrowseName);
+		errorLogs << QUaLog(
+			tr("Modbus client %1 does not have a QUaModbusDataBlockList child. No blocks will be loaded.").arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
 	}
 }
 

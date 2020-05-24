@@ -7,6 +7,9 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 
+#include <QUaCommonDialog>
+#include <QUaLogWidget>
+
 const QString QUaModbus::m_strAppName   = QObject::tr("QUaModbusClient");
 const QString QUaModbus::m_strUntitiled = QObject::tr("Untitled");
 const QString QUaModbus::m_strDefault   = QObject::tr("Default");
@@ -99,17 +102,38 @@ void QUaModbus::on_openConfig()
 			return;
 		}
 		// try load config
-		auto strError = this->setXmlConfig(byteContents);
-		if (strError.contains("Error"))
+		auto errorLogs = this->setXmlConfig(byteContents);
+		if (!errorLogs.isEmpty())
 		{
-			msgBox.setText(strError
-				.replace("Success.\n", "")
-				.replace("Success", "")
-				.left(600) + "..."
-			);
-			msgBox.exec();
-			this->on_closeConfig(true);
-			return;
+			// setup log widget
+			auto logWidget = new QUaLogWidget;
+			logWidget->setFilterVisible(false);
+			logWidget->setSettingsVisible(false);
+			logWidget->setClearVisible(false);
+			logWidget->setColumnVisible(QUaLogWidget::Columns::Timestamp, false);
+			logWidget->setColumnVisible(QUaLogWidget::Columns::Category, false);
+			logWidget->setLevelColor(QUaLogLevel::Error, QBrush(QColor("#8E2F1C")));
+			logWidget->setLevelColor(QUaLogLevel::Warning, QBrush(QColor("#766B0F")));
+			logWidget->setLevelColor(QUaLogLevel::Info, QBrush(QColor("#265EB6")));
+			bool hasError = false;
+			while (errorLogs.count() > 0)
+			{
+				auto errorLog = errorLogs.dequeue();
+				hasError = hasError || errorLog.level == QUaLogLevel::Error ? true : false;
+				logWidget->addLog(errorLog);
+			}
+			// NOTE : dialog takes ownershit
+			QUaCommonDialog dialog(this);
+			dialog.setWindowTitle(tr("Config Issues"));
+			dialog.setWidget(logWidget);
+			dialog.clearButtons();
+			dialog.addButton(tr("Close"), QDialogButtonBox::ButtonRole::AcceptRole);
+			dialog.exec();
+			if (hasError)
+			{
+				this->on_closeConfig(true);
+				return;
+			}
 		}
 		// update file name
 		m_strConfigFile = strConfigFileName;
@@ -580,8 +604,9 @@ QByteArray QUaModbus::xmlConfig()
 	return doc.toByteArray();
 }
 
-QString QUaModbus::setXmlConfig(const QByteArray& xmlConfig)
+QQueue<QUaLog> QUaModbus::setXmlConfig(const QByteArray& xmlConfig)
 {
+	QQueue<QUaLog> errorLogs;
 	QString strError;
 	// set to dom doc
 	QDomDocument doc;
@@ -589,23 +614,27 @@ QString QUaModbus::setXmlConfig(const QByteArray& xmlConfig)
 	doc.setContent(xmlConfig, &strError, &line, &col);
 	if (!strError.isEmpty())
 	{
-		strError = tr("%1 : Invalid XML in Line %2 Column %3 Error %4.\n").arg("Error").arg(line).arg(col).arg(strError);
-		return strError;
+		errorLogs << QUaLog(
+			tr("Invalid XML in Line %2 Column %3 Error %4.").arg(line).arg(col).arg(strError),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return errorLogs;
 	}
 	// get config
 	QDomElement elemApp = doc.firstChildElement(QUaModbus::staticMetaObject.className());
 	if (elemApp.isNull())
 	{
-		strError = tr("%1 : No Application %2 element found in XML config.\n").arg("Error").arg(QUaModbus::staticMetaObject.className());
-		return strError;
+		errorLogs << QUaLog(
+			tr("No Application %2 element found in XML config.").arg(QUaModbus::staticMetaObject.className()),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return errorLogs;
 	}
 	// load config from xml
-	this->fromDomElement(elemApp, strError);
-	if (strError.isEmpty())
-	{
-		strError = "Success.\n";
-	}
-	return strError;
+	this->fromDomElement(elemApp, errorLogs);
+	return errorLogs;
 }
 
 QDomElement QUaModbus::toDomElement(QDomDocument& domDoc) const
@@ -621,17 +650,21 @@ QDomElement QUaModbus::toDomElement(QDomDocument& domDoc) const
 	return elemApp;
 }
 
-void QUaModbus::fromDomElement(QDomElement& domElem, QString& strError)
+void QUaModbus::fromDomElement(QDomElement& domElem, QQueue<QUaLog>& errorLogs)
 {
 	// modbus
 	QDomElement elemMod = domElem.firstChildElement(QUaModbusClientList::staticMetaObject.className());
 	if (elemMod.isNull())
 	{
-		strError = tr("%1 : No Modbus Client List %2 element found in XML config.\n").arg("Error").arg(QUaModbusClientList::staticMetaObject.className());
+		errorLogs << QUaLog(
+			tr("No Modbus Client List %1 element found in XML config.").arg(QUaModbusClientList::staticMetaObject.className()),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
 		return;
 	}
 	QUaModbusClientList* mod = this->modbusClientList();
-	mod->fromDomElement(elemMod, strError);
+	mod->fromDomElement(elemMod, errorLogs);
 	// dock
 	if (domElem.hasAttribute("DockState"))
 	{

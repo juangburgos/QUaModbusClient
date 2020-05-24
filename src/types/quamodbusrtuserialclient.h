@@ -70,7 +70,7 @@ signals:
 protected:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;
-	void        fromDomElement(QDomElement  & domElem, QString &strError) override;
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs) override;
 
 private slots:
 	void on_comPortChanged (const QVariant &value);

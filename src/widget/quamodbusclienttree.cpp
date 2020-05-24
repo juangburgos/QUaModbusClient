@@ -25,6 +25,9 @@
 #include <QUaModbusDataBlockWidgetEdit>
 #include <QUaModbusValueWidgetEdit>
 
+#include <QUaCommonDialog>
+#include <QUaLogWidget>
+
 #ifdef QUA_ACCESS_CONTROL
 #include <QUaUser>
 #include <QUaPermissions>
@@ -856,8 +859,8 @@ void QUaModbusClientTree::setupImportButton()
 		// NOTE : block signals to avoid calling currentRowChanged repetitively
 		//        it works with queued because it seems showing a dialog forces event processing
 		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
-		QString strError = m_listClients->setCsvClients(strContents);
-		this->displayCsvLoadResult(strError);
+		QQueue<QUaLog> errorLogs = m_listClients->setCsvClients(strContents);
+		this->displayCsvLoadResult(errorLogs);
 	});
 	importMenu->addAction(tr("Blocks"), this, 
 	[this](){
@@ -869,8 +872,8 @@ void QUaModbusClientTree::setupImportButton()
 		// NOTE : block signals to avoid calling currentRowChanged repetitively
 		//        it works with queued because it seems showing a dialog forces event processing
 		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
-		QString strError = m_listClients->setCsvBlocks(strContents);
-		this->displayCsvLoadResult(strError);
+		QQueue<QUaLog> errorLogs = m_listClients->setCsvBlocks(strContents);
+		this->displayCsvLoadResult(errorLogs);
 	});
 	importMenu->addAction(tr("Values"), this, 
 	[this](){
@@ -882,8 +885,8 @@ void QUaModbusClientTree::setupImportButton()
 		// NOTE : block signals to avoid calling currentRowChanged repetitively
 		//        it works with queued because it seems showing a dialog forces event processing
 		const QSignalBlocker blocker(ui->treeViewModbus->selectionModel());
-		QString strError = m_listClients->setCsvValues(strContents);
-		this->displayCsvLoadResult(strError);
+		QQueue<QUaLog> errorLogs = m_listClients->setCsvValues(strContents);
+		this->displayCsvLoadResult(errorLogs);
 	});
 	// set menu
 	ui->toolButtonImport->setMenu(importMenu);
@@ -1110,32 +1113,33 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	return QString();
 }
 
-void QUaModbusClientTree::displayCsvLoadResult(const QString & strError)
+void QUaModbusClientTree::displayCsvLoadResult(QQueue<QUaLog>& errorLogs)
 {
-	if (strError.contains("Warning", Qt::CaseInsensitive))
+	if (errorLogs.isEmpty())
 	{
-		QMessageBox::warning(
-			this,
-			tr("Warning"),
-			strError.left(600) + "..."
-		);
+		return;
 	}
-	else if (strError.contains("Error", Qt::CaseInsensitive))
+	// setup log widget
+	auto logWidget = new QUaLogWidget;
+	logWidget->setFilterVisible(false);
+	logWidget->setSettingsVisible(false);
+	logWidget->setClearVisible(false);
+	logWidget->setColumnVisible(QUaLogWidget::Columns::Timestamp, false);
+	logWidget->setColumnVisible(QUaLogWidget::Columns::Category, false);
+	logWidget->setLevelColor(QUaLogLevel::Error, QBrush(QColor("#8E2F1C")));
+	logWidget->setLevelColor(QUaLogLevel::Warning, QBrush(QColor("#766B0F")));
+	logWidget->setLevelColor(QUaLogLevel::Info, QBrush(QColor("#265EB6")));
+	while (errorLogs.count() > 0)
 	{
-		QMessageBox::critical(
-			this,
-			tr("Warning"),
-			strError.left(600) + "..."
-		);
+		logWidget->addLog(errorLogs.dequeue());
 	}
-	else
-	{
-		QMessageBox::information(
-			this,
-			tr("Finished"),
-			tr("Successfully import CSV data.")
-		);
-	}
+	// NOTE : dialog takes ownershit
+	QUaCommonDialog dialog(this);
+	dialog.setWindowTitle(tr("CSV Import Issues"));
+	dialog.setWidget(logWidget);
+	dialog.clearButtons();
+	dialog.addButton(tr("Close"), QDialogButtonBox::ButtonRole::AcceptRole);
+	dialog.exec();
 }
 
 void QUaModbusClientTree::exportAllCsv()

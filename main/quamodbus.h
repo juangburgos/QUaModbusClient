@@ -96,9 +96,9 @@ private:
 	bool setIsDockVisible(const QString& strDockName, const bool& visible);
 
 	// xml import / export
-	QByteArray  xmlConfig();
-	QString     setXmlConfig(const QByteArray& xmlConfig);
-	QDomElement toDomElement(QDomDocument& domDoc) const;
-	void        fromDomElement(QDomElement& domElem, QString& strError);
+	QByteArray     xmlConfig();
+	QQueue<QUaLog> setXmlConfig(const QByteArray& xmlConfig);
+	QDomElement    toDomElement(QDomDocument& domDoc) const;
+	void           fromDomElement(QDomElement& domElem, QQueue<QUaLog>& errorLogs);
 };
 #endif // QUAMODBUS_H

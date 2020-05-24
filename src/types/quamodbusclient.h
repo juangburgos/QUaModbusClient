@@ -119,7 +119,7 @@ protected:
 
 	// XML import / export
 	virtual QDomElement toDomElement  (QDomDocument & domDoc) const;
-	virtual void        fromDomElement(QDomElement  & domElem, QString &strError);
+	virtual void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 private slots:
 	void on_serverAddressChanged (const QVariant & value);

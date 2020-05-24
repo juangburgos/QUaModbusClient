@@ -188,12 +188,12 @@ QDomElement QUaModbusClient::toDomElement(QDomDocument & domDoc) const
 	return QDomElement();
 }
 
-void QUaModbusClient::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusClient::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	// must never reach here
 	Q_ASSERT(false);
 	Q_UNUSED(domElem);
-	Q_UNUSED(strError);
+	Q_UNUSED(errorLogs);
 }
 
 void QUaModbusClient::on_serverAddressChanged(const QVariant & value)

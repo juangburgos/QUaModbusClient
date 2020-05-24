@@ -137,7 +137,7 @@ private:
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
-	void        fromDomElement(QDomElement  & domElem, QString &strError);
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 	static quint32 m_minSamplingTime;
 	static QVector<quint16> variantToInt16Vect(const QVariant &value);
