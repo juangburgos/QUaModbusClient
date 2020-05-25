@@ -615,7 +615,7 @@ QQueue<QUaLog> QUaModbus::setXmlConfig(const QByteArray& xmlConfig)
 	if (!strError.isEmpty())
 	{
 		errorLogs << QUaLog(
-			tr("Invalid XML in Line %2 Column %3 Error %4.").arg(line).arg(col).arg(strError),
+			tr("Invalid XML in Line %1 Column %2 Error %3.").arg(line).arg(col).arg(strError),
 			QUaLogLevel::Error,
 			QUaLogCategory::Serialization
 		);
