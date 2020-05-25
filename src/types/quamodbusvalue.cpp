@@ -1,3 +1,4 @@
+#include "quamodbusclient.h"
 #include "quamodbusvalue.h"
 #include "quamodbusvaluelist.h"
 #include "quamodbusdatablock.h"
@@ -75,16 +76,19 @@ void QUaModbusValue::remove()
 	this->deleteLater();
 }
 
-void QUaModbusValue::on_typeChanged(const QVariant &value)
+void QUaModbusValue::on_typeChanged(const QVariant &value, const bool& networkChange)
 {
+	if (!networkChange)
+	{
+		return;
+	}
 	auto type = value.value<QModbusValueType>();
 	// convert to metatype to set as UA type
 	auto metaType = QUaModbusValue::typeToMeta(type);
 	this->value()->setDataType(metaType);
 	// update value is possible
-	auto blockVariant = this->block()->data()->value();
-	auto blockError   = this->block()->lastError()->value().value<QModbusError>();
-	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
+	auto blockError   = this->block()->getLastError();
+	auto blockData    = this->block()->getData();
 	this->setValue(blockData, blockError);
 	// update number of registers used
 	auto registersUsed = QUaModbusValue::typeBlockSize(type);
@@ -106,7 +110,7 @@ void QUaModbusValue::setType(const QModbusValueType & type)
 		return;
 	}
 	this->type()->setValue(type);
-	this->on_typeChanged(type);
+	this->on_typeChanged(type, true);
 }
 
 quint16 QUaModbusValue::getRegistersUsed() const
@@ -122,7 +126,7 @@ int QUaModbusValue::getAddressOffset() const
 void QUaModbusValue::setAddressOffset(const int & addressOffset)
 {
 	this->addressOffset()->setValue(addressOffset);
-	this->on_addressOffsetChanged(addressOffset);
+	this->on_addressOffsetChanged(addressOffset, true);
 }
 
 QVariant QUaModbusValue::getValue() const
@@ -156,12 +160,15 @@ bool QUaModbusValue::isWritable() const
 		   type == QModbusDataBlockType::HoldingRegisters;
 }
 
-void QUaModbusValue::on_addressOffsetChanged(const QVariant & value)
+void QUaModbusValue::on_addressOffsetChanged(const QVariant & value, const bool& networkChange)
 {
+	if (!networkChange)
+	{
+		return;
+	}
 	// update value is possible
-	auto blockVariant = this->block()->data()->value();
-	auto blockError   = this->block()->lastError()->value().value<QModbusError>();
-	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
+	auto blockError   = this->block()->getLastError();
+	auto blockData    = this->block()->getData();
 	this->setValue(blockData, blockError);
 	// emit
 	emit this->addressOffsetChanged(value.toInt());
@@ -176,11 +183,10 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 	}
 	// get block representation of value
 	auto type = this->type()->value().value<QModbusValueType>();
-	auto partBlockData = QUaModbusValue::valueToBlock(value, type);
+	auto data = QUaModbusValue::valueToBlock(value, type);
 	// get current block
-	auto blockVariant = this->block()->data()->value();
-	auto blockError   = this->block()->lastError()->value().value<QModbusError>();
-	auto blockData    = QUaModbusDataBlock::variantToInt16Vect(blockVariant);
+	auto blockError   = this->block()->getLastError();
+	auto blockSize    = this->block()->getSize();
 	// check if is connected
 	if (blockError == QModbusError::ConnectionError)
 	{
@@ -203,7 +209,7 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		return;
 	}
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
-	if (addressOffset + typeBlockSize > blockData.count())
+	if (addressOffset + typeBlockSize > blockSize)
 	{
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant()); // NOTE : avoid recursion
@@ -212,15 +218,74 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		emit this->valueChanged(QVariant());
 		return;
 	}
-	// replace part
-	for (int i = 0; i < partBlockData.count(); i++)
-	{
-		blockData.replace(addressOffset + i, partBlockData.at(i));
-	}
-	// update block (i.e. update OPC UA)
-	this->block()->on_dataChanged(QVariant::fromValue(blockData));
-	// emit
-	emit this->valueChanged(value);
+	// just write
+	auto client = this->client();
+	auto block  = this->block();
+	// exec write request in client thread
+	this->client()->m_workerThread.execInThread(
+	[this, data, client, block, addressOffset, typeBlockSize, value]() {
+		// copy from block
+		auto registerType = block->m_registerType;
+		auto startAddress = block->m_startAddress + addressOffset;
+		auto valueCount   = typeBlockSize;
+		// check if request is valid
+		if (registerType != QModbusDataBlockType::Coils &&
+			registerType != QModbusDataBlockType::HoldingRegisters)
+		{
+			return;
+		}
+		if (startAddress < 0)
+		{
+			emit this->updateLastError(QModbusError::ConfigurationError);
+			return;
+		}
+		if (valueCount == 0)
+		{
+			emit this->updateLastError(QModbusError::ConfigurationError);
+			return;
+		}
+		// check if connected
+		auto state = client->getState();
+		if (state != QModbusState::ConnectedState)
+		{
+			emit this->updateLastError(QModbusError::ConnectionError);
+			return;
+		}
+		// create data target 
+		QModbusDataUnit dataToWrite(
+			static_cast<QModbusDataUnit::RegisterType>(registerType),
+			startAddress, 
+			data
+		);
+		// create and send request
+		auto serverAddress = client->getServerAddress();
+		QModbusReply* p_reply = client->m_modbusClient->sendWriteRequest(dataToWrite, serverAddress);
+		if (!p_reply)
+		{
+			emit this->updateLastError(QModbusError::ReplyAbortedError);
+			return;
+		}
+		// subscribe to finished
+		QObject::connect(p_reply, &QModbusReply::finished, this,
+		[this, p_reply, value]() mutable {
+			// NOTE : exec'd in ua server thread (not in worker thread)
+			// check if reply still valid
+			if (!p_reply)
+			{
+				auto error = QModbusError::ReplyAbortedError;
+				this->setLastError(error);
+				return;
+			}
+			// handle error
+			auto error = p_reply->error();
+			this->setLastError(error);
+			// delete reply on next event loop exec
+			p_reply->deleteLater();
+			p_reply = nullptr;
+			// emit
+			emit this->valueChanged(value);
+		}, Qt::QueuedConnection);
+	});
 }
 
 void QUaModbusValue::on_updateLastError(const QModbusError & error)
@@ -786,4 +851,9 @@ QUaModbusValueList * QUaModbusValue::list() const
 QUaModbusDataBlock * QUaModbusValue::block() const
 {
 	return this->list()->block();
+}
+
+QUaModbusClient* QUaModbusValue::client() const
+{
+	return this->block()->client();
 }

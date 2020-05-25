@@ -15,6 +15,7 @@
 
 class QUaModbusDataBlock;
 class QUaModbusValueList;
+class QUaModbusClient;
 
 typedef QModbusDevice::Error QModbusError;
 
@@ -109,6 +110,8 @@ public:
 
 	QUaModbusDataBlock * block() const;
 
+	QUaModbusClient    * client() const;
+
 	static int              typeBlockSize(const QModbusValueType &type);
 	static QMetaType::Type  typeToMeta   (const QModbusValueType &type);
 	static QVariant         blockToValue (const QVector<quint16> &block, const QModbusValueType &type);
@@ -126,8 +129,8 @@ signals:
 	void updateLastError(const QModbusError &error);
 
 private slots:
-	void on_typeChanged         (const QVariant     &value);
-	void on_addressOffsetChanged(const QVariant     &value);
+	void on_typeChanged         (const QVariant     &value, const bool& networkChange);
+	void on_addressOffsetChanged(const QVariant     &value, const bool& networkChange);
 	void on_valueChanged        (const QVariant     &value, const bool& networkChange);
 	void on_updateLastError     (const QModbusError &error);
 

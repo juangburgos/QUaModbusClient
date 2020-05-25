@@ -39,6 +39,7 @@ class QUaModbusClient : public QUaBaseObjectProtected
 	friend class QUaModbusClientList;
 	friend class QUaModbusDataBlockList;
 	friend class QUaModbusDataBlock;
+	friend class QUaModbusValue;
 
     Q_OBJECT
 
@@ -106,7 +107,7 @@ public:
 
 signals:
 	// C++ API
-	void serverAddressChanged (const quint8 &serverAddress);
+	void serverAddressChanged (const quint8 &serverAddress );
 	void keepConnectingChanged(const bool   &keepConnecting);
 	void stateChanged    (const QModbusState &state);
 	void lastErrorChanged(const QModbusError &error);
@@ -122,8 +123,8 @@ protected:
 	virtual void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 private slots:
-	void on_serverAddressChanged (const QVariant & value);
-	void on_keepConnectingChanged(const QVariant & value);
+	void on_serverAddressChanged (const QVariant & value, const bool& networkChange);
+	void on_keepConnectingChanged(const QVariant & value, const bool& networkChange);
 	void on_stateChanged(QModbusState state);
 	void on_errorChanged(QModbusError error);
 

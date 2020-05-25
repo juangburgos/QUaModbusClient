@@ -117,7 +117,7 @@ void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
 {
 	QMutexLocker locker(&m_mutex);
 	this->serverAddress()->setValue(serverAddress);
-	this->on_serverAddressChanged(serverAddress);
+	this->on_serverAddressChanged(serverAddress, true);
 }
 
 bool QUaModbusClient::getKeepConnecting() const
@@ -130,7 +130,7 @@ void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
 {
 	QMutexLocker locker(&m_mutex);
 	this->keepConnecting()->setValue(keepConnecting);
-	this->on_keepConnectingChanged(keepConnecting);
+	this->on_keepConnectingChanged(keepConnecting, true);
 }
 
 QModbusError QUaModbusClient::getLastError() const
@@ -196,14 +196,24 @@ void QUaModbusClient::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& erro
 	Q_UNUSED(errorLogs);
 }
 
-void QUaModbusClient::on_serverAddressChanged(const QVariant & value)
+void QUaModbusClient::on_serverAddressChanged(const QVariant & value, const bool& networkChange)
 {
+
+	if (!networkChange)
+	{
+		return;
+	}
 	// emit
 	emit this->serverAddressChanged(value.value<quint8>());
 }
 
-void QUaModbusClient::on_keepConnectingChanged(const QVariant & value)
+void QUaModbusClient::on_keepConnectingChanged(const QVariant & value, const bool& networkChange)
 {
+
+	if (!networkChange)
+	{
+		return;
+	}
 	// emit
 	emit this->keepConnectingChanged(value.toBool());
 }

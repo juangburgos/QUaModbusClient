@@ -119,17 +119,20 @@ signals:
 
 private slots:
 	// handle UA change events (also reused in C++ API and triggers C++ API events)
-	void on_typeChanged        (const QVariant     &value);
-	void on_addressChanged     (const QVariant     &value);
-	void on_sizeChanged        (const QVariant     &value);
-	void on_samplingTimeChanged(const QVariant     &value);
-	void on_dataChanged        (const QVariant     &value);
+	void on_typeChanged        (const QVariant     &value, const bool &networkChange);
+	void on_addressChanged     (const QVariant     &value, const bool &networkChange);
+	void on_sizeChanged        (const QVariant     &value, const bool &networkChange);
+	void on_samplingTimeChanged(const QVariant     &value, const bool &networkChange);
+	void on_dataChanged        (const QVariant     &value, const bool &networkChange);
 	void on_updateLastError    (const QModbusError &error);
 
 private:
 	int m_loopHandle;
 	QModbusReply  * m_replyRead;
-	QModbusDataUnit m_modbusDataUnit; // NOTE : only modify and access in thread
+	// NOTE : only modify and access in thread
+	QModbusDataBlockType m_registerType;
+	int                  m_startAddress;
+	quint32              m_valueCount;
 
 	void startLoop();
 	bool loopRunning();
