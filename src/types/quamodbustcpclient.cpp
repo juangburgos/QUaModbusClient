@@ -104,7 +104,15 @@ void QUaModbusTcpClient::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& e
 	// load permissions if any
 	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
 	{
-		strError += this->setPermissions(domElem.attribute("Permissions"));
+		QString strError = this->setPermissions(domElem.attribute("Permissions"));
+		if (strError.contains("Error"))
+		{
+			errorLogs << QUaLog(
+				strError,
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
+		}
 	}
 #endif // QUA_ACCESS_CONTROL
 	bool bOK;

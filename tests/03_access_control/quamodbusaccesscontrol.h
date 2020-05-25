@@ -84,11 +84,11 @@ private:
 	void setupPermsModel();
 
 	// XML import / export
-	QByteArray xmlConfig();
-	QString    setXmlConfig(const QByteArray &xmlConfig);
+	QByteArray     xmlConfig();
+	QQueue<QUaLog> setXmlConfig(const QByteArray &xmlConfig);
 
 	QDomElement toDomElement(QDomDocument & domDoc) const;
-	void        fromDomElement(QDomElement  & domElem, QString &strError);
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 	static QString m_strAppName;
 	static QString m_strUntitiled;

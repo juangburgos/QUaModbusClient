@@ -74,31 +74,39 @@ QString QUaModbusClientList::xmlConfig()
 
 QString QUaModbusClientList::setXmlConfig(QString strXmlConfig)
 {
-	QString strError;
+	QQueue<QUaLog> errorLogs;
 	// set to dom doc
 	QDomDocument doc;
 	int line, col;
+	QString strError;
 	doc.setContent(strXmlConfig, &strError, &line, &col);
 	if (!strError.isEmpty())
 	{
-		strError = tr("%1 : Invalid XML in Line %2 Column %3 Error %4").arg("Error").arg(line).arg(col).arg(strError);
-		return strError;
+		errorLogs << QUaLog(
+			tr("Invalid XML in Line %1 Column %2 Error %3").arg(line).arg(col).arg(strError),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return QUaLog::toString(errorLogs);
 	}
 	// get list of clients
 	QDomElement elemClientList = doc.firstChildElement(QUaModbusClientList::staticMetaObject.className());
 	if (elemClientList.isNull())
 	{
-		strError = tr("%1 : No Modbus client list found in XML config.").arg("Error");
-		return strError;
+		errorLogs << QUaLog(
+			tr("No Modbus client list found in XML config."),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return QUaLog::toString(errorLogs);
 	}
 	// load config from xml
-	QQueue<QUaLog> errorLogs;
 	this->fromDomElement(elemClientList, errorLogs);
-	if (errorLogs.isEmpty())
+	if (!errorLogs.isEmpty())
 	{
-		strError = "Success.";
+		QUaLog::toString(errorLogs);
 	}
-	return strError;
+	return "Success.";
 }
 
 QString QUaModbusClientList::csvClients()
@@ -956,7 +964,15 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& 
 	// load permissions if any
 	if (domElem.hasAttribute("Permissions") && !domElem.attribute("Permissions").isEmpty())
 	{
-		strError += this->setPermissions(domElem.attribute("Permissions"));
+		QString strError = this->setPermissions(domElem.attribute("Permissions"));
+		if (strError.contains("Error"))
+		{
+			errorLogs << QUaLog(
+				strError,
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
+		}
 	}
 #endif // QUA_ACCESS_CONTROL
 	// add TCP clients

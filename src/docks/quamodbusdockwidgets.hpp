@@ -34,7 +34,7 @@ public:
 
 	// XML import / export
 	QDomElement toDomElement(QDomDocument & domDoc) const;
-	void        fromDomElement(QDomElement  & domElem, QString &strError);
+	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 
 	// CSV export
 	void exportAllCsv(const QString &strBaseName);
@@ -157,7 +157,7 @@ inline QDomElement QUaModbusDockWidgets<T>::toDomElement(QDomDocument & domDoc) 
 }
 
 template<class T>
-inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QString & strError)
+inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	QDomNodeList listNodesW = domElem.elementsByTagName(QUaAcDocking::m_strXmlDockName);
 	for (int i = 0; i < listNodesW.count(); i++)
@@ -175,17 +175,21 @@ inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QStri
 		QUaNode * node = m_thiz->accessControl()->server()->nodeById(strPermissionsNodeId);
 		if (!node)
 		{
-			strError += tr("%1 : Unexisting node with NodeId %2.")
-				.arg("Error")
-				.arg(strPermissionsNodeId);
+			errorLogs << QUaLog(
+				tr("Unexisting node with NodeId %1.").arg(strPermissionsNodeId),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QUaPermissions * permissions = qobject_cast<QUaPermissions*>(node);
 		if (!permissions)
 		{
-			strError += tr("%1 : Node with NodeId %2 is not a permissions instance.")
-				.arg("Error")
-				.arg(strPermissionsNodeId);
+			errorLogs << QUaLog(
+				tr("Node with NodeId %1 is not a permissions instance.").arg(strPermissionsNodeId),
+				QUaLogLevel::Error,
+				QUaLogCategory::Serialization
+			);
 			continue;
 		}
 		QString strWidgetName = elem.attribute("Name");

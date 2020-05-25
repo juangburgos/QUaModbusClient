@@ -16,6 +16,9 @@
 #include <QUaDockWidgetPerms>
 #include <QAdDockLayoutBar>
 
+#include <QUaCommonDialog>
+#include <QUaLogWidget>
+
 QString QUaModbusAccessControl::m_strAppName   = QObject::tr("Modbus Gateway");
 QString QUaModbusAccessControl::m_strUntitiled = QObject::tr("Untitled");
 QString QUaModbusAccessControl::m_strDefault   = QObject::tr("Default");
@@ -172,12 +175,37 @@ void QUaModbusAccessControl::on_openConfig()
 				return;
 			}
 			// try load config
-			auto strError = this->setXmlConfig(byteContents);
-			if (strError.contains("Error"))
+			auto errorLogs = this->setXmlConfig(byteContents);
+			if (!errorLogs.isEmpty())
 			{
-				msgBox.setText(strError);
-				msgBox.exec();
-				return;
+				// setup log widget
+				auto logWidget = new QUaLogWidget;
+				logWidget->setFilterVisible(false);
+				logWidget->setSettingsVisible(false);
+				logWidget->setClearVisible(false);
+				logWidget->setColumnVisible(QUaLogWidget::Columns::Timestamp, false);
+				logWidget->setColumnVisible(QUaLogWidget::Columns::Category, false);
+				logWidget->setLevelColor(QUaLogLevel::Error, QBrush(QColor("#8E2F1C")));
+				logWidget->setLevelColor(QUaLogLevel::Warning, QBrush(QColor("#766B0F")));
+				logWidget->setLevelColor(QUaLogLevel::Info, QBrush(QColor("#265EB6")));
+				bool hasError = false;
+				while (errorLogs.count() > 0)
+				{
+					auto errorLog = errorLogs.dequeue();
+					hasError = hasError || errorLog.level == QUaLogLevel::Error ? true : false;
+					logWidget->addLog(errorLog);
+				}
+				// NOTE : dialog takes ownershit
+				QUaCommonDialog dialog(this);
+				dialog.setWindowTitle(tr("Config Issues"));
+				dialog.setWidget(logWidget);
+				dialog.clearButtons();
+				dialog.addButton(tr("Close"), QDialogButtonBox::ButtonRole::AcceptRole);
+				dialog.exec();
+				if (hasError)
+				{
+					return;
+				}
 			}
 			// update title
 			this->setWindowTitle(m_strTitle.arg(strConfigFileName).arg(QUaModbusAccessControl::m_strAppName));
@@ -814,8 +842,9 @@ QByteArray QUaModbusAccessControl::xmlConfig()
 	return doc.toByteArray();
 }
 
-QString QUaModbusAccessControl::setXmlConfig(const QByteArray & xmlConfig)
+QQueue<QUaLog> QUaModbusAccessControl::setXmlConfig(const QByteArray & xmlConfig)
 {
+	QQueue<QUaLog> errorLogs;
 	QString strError;
 	// set to dom doc
 	QDomDocument doc;
@@ -823,23 +852,27 @@ QString QUaModbusAccessControl::setXmlConfig(const QByteArray & xmlConfig)
 	doc.setContent(xmlConfig, &strError, &line, &col);
 	if (!strError.isEmpty())
 	{
-		strError = tr("%1 : Invalid XML in Line %2 Column %3 Error %4.\n").arg("Error").arg(line).arg(col).arg(strError);
-		return strError;
+		errorLogs << QUaLog(
+			tr("Invalid XML in Line %1 Column %2 Error %3.").arg("Error").arg(line).arg(col).arg(strError),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return errorLogs;
 	}
 	// get list of params
 	QDomElement elemApp = doc.firstChildElement(QUaModbusAccessControl::staticMetaObject.className());
 	if (elemApp.isNull())
 	{
-		strError = tr("%1 : No Application %2 element found in XML config.\n").arg("Error").arg(QUaModbusAccessControl::staticMetaObject.className());
-		return strError;
+		errorLogs << QUaLog(
+			tr("No Application %1 element found in XML config.").arg(QUaModbusAccessControl::staticMetaObject.className()),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
+		return errorLogs;
 	}
 	// load config from xml
-	this->fromDomElement(elemApp, strError);
-	if (strError.isEmpty())
-	{
-		strError = "Success.\n";
-	}
-	return strError;
+	this->fromDomElement(elemApp, errorLogs);
+	return errorLogs;
 }
 
 QDomElement QUaModbusAccessControl::toDomElement(QDomDocument & domDoc) const
@@ -862,51 +895,71 @@ QDomElement QUaModbusAccessControl::toDomElement(QDomDocument & domDoc) const
 	return elemApp;
 }
 
-void QUaModbusAccessControl::fromDomElement(QDomElement & domElem, QString & strError)
+void QUaModbusAccessControl::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& errorLogs)
 {
 	// access control
 	QDomElement elemAc = domElem.firstChildElement(QUaAccessControl::staticMetaObject.className());
 	if (elemAc.isNull())
 	{
-		strError = tr("%1 : No Access Control %2 element found in XML config.\n").arg("Error").arg(QUaAccessControl::staticMetaObject.className());
+		errorLogs << QUaLog(
+			tr("No Access Control %1 element found in XML config.").arg(QUaAccessControl::staticMetaObject.className()),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
 		return;
 	}
 	// access control
 	QUaAccessControl * ac = this->accessControl();
-	ac->fromDomElement(elemAc, strError);
+	ac->fromDomElement(elemAc, errorLogs);
 	// access control widgets
 	QDomElement elemAcW = domElem.firstChildElement(QUaAcDockWidgets<QUaModbusAccessControl>::m_strXmlName);
 	if (elemAcW.isNull())
 	{
-		strError = tr("%1 : No Access Control Widgets %2 element found in XML config.\n").arg("Error").arg(QUaAcDockWidgets<QUaModbusAccessControl>::m_strXmlName);
+		errorLogs << QUaLog(
+			tr("No Access Control Widgets %1 element found in XML config.").arg(QUaAcDockWidgets<QUaModbusAccessControl>::m_strXmlName),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);		
 		return;
 	}
-	m_acWidgets->fromDomElement(elemAcW, strError);
+	m_acWidgets->fromDomElement(elemAcW, errorLogs);
 	// modbus
 	QDomElement elemMod = domElem.firstChildElement(QUaModbusClientList::staticMetaObject.className());
 	if (elemMod.isNull())
 	{
-		strError = tr("%1 : No Modbus Client List %2 element found in XML config.\n").arg("Error").arg(QUaModbusClientList::staticMetaObject.className());
+		errorLogs << QUaLog(
+			tr("No Modbus Client List %1 element found in XML config.").arg(QUaModbusClientList::staticMetaObject.className()),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
 		return;
 	}
 	QUaModbusClientList * mod = this->modbusClientList();
-	mod->fromDomElement(elemMod, strError);
+	mod->fromDomElement(elemMod, errorLogs);
 	// modbus widgets
 	QDomElement elemModW = domElem.firstChildElement(QUaModbusDockWidgets<QUaModbusAccessControl>::m_strXmlName);
 	if (elemModW.isNull())
 	{
-		strError = tr("%1 : No Modbus Widgets %2 element found in XML config.\n").arg("Error").arg(QUaModbusDockWidgets<QUaModbusAccessControl>::m_strXmlName);
+		errorLogs << QUaLog(
+			tr("No Modbus Widgets %1 element found in XML config.").arg(QUaModbusDockWidgets<QUaModbusAccessControl>::m_strXmlName),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
 		return;
 	}
-	m_modWidgets->fromDomElement(elemModW, strError);
+	m_modWidgets->fromDomElement(elemModW, errorLogs);
 	// layouts
 	QDomElement elemLayouts = domElem.firstChildElement(QUaAcDocking::m_strXmlName);
 	if (elemLayouts.isNull())
 	{
-		strError = tr("%1 : No Docking Layouts %2 element found in XML config.\n").arg("Error").arg(QUaAcDocking::m_strXmlName);
+		errorLogs << QUaLog(
+			tr("No Docking Layouts %1 element found in XML config.").arg(QUaAcDocking::m_strXmlName),
+			QUaLogLevel::Error,
+			QUaLogCategory::Serialization
+		);
 		return;
 	}
-	m_dockManager->fromDomElement(ac, elemLayouts, strError);
+	m_dockManager->fromDomElement(ac, elemLayouts, errorLogs);
 }
 
 
