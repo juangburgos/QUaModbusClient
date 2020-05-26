@@ -18,24 +18,26 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 #endif // !QUA_ACCESS_CONTROL
 {
 	// set defaults
-	type         ()->setDataTypeEnum(QMetaEnum::fromType<QModbusValueType>());
-	type         ()->setValue(QModbusValueType::Invalid);
-	registersUsed()->setDataType(QMetaType::UShort);
-	registersUsed()->setValue(0);
-	addressOffset()->setDataType(QMetaType::Int);
-	addressOffset()->setValue(-1);
-	lastError    ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
-	lastError    ()->setValue(QModbusError::ConfigurationError);
+	m_loopId = 0;
+	type             ()->setDataTypeEnum(QMetaEnum::fromType<QModbusValueType>());
+	type             ()->setValue(QModbusValueType::Invalid);
+	registersUsed    ()->setDataType(QMetaType::UShort);
+	registersUsed    ()->setValue(0);
+	addressOffset    ()->setDataType(QMetaType::Int);
+	addressOffset    ()->setValue(-1);
+	lastError        ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
+	lastError        ()->setValue(QModbusError::ConfigurationError);
 	// set initial conditions
-	type         ()->setWriteAccess(true);
-	addressOffset()->setWriteAccess(true);
-	value        ()->setWriteAccess(false); // set to true, when type != ValueType::Invalid
+	type             ()->setWriteAccess(true);
+	addressOffset    ()->setWriteAccess(true);
+	value            ()->setWriteAccess(false); // set to true, when type != ValueType::Invalid
 	// handle state changes
-	QObject::connect(type()         , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_typeChanged         , Qt::QueuedConnection);
-	QObject::connect(addressOffset(), &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_addressOffsetChanged, Qt::QueuedConnection);
-	QObject::connect(value()        , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_valueChanged        , Qt::QueuedConnection);
+	QObject::connect(type()             , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_typeChanged             , Qt::QueuedConnection);
+	QObject::connect(addressOffset()    , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_addressOffsetChanged    , Qt::QueuedConnection);
+	QObject::connect(value()            , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_valueChanged            , Qt::QueuedConnection);
 	// to safely update error in ua server thread
 	QObject::connect(this, &QUaModbusValue::updateLastError, this, &QUaModbusValue::on_updateLastError);
+
 	// set descriptions
 	/*
 	type()         ->setDescription(tr("Data type used to convert the registers to the value."));
@@ -44,6 +46,18 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 	value()        ->setDescription(tr("The value obtained by converting the registers to the selected type."));
 	lastError()    ->setDescription(tr("Last error obtained while converting registers to value."));
 	*/
+
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	cyclicWritePeriod()->setDataType(QMetaType::UInt);
+	cyclicWritePeriod()->setValue(0);
+	cyclicWriteMode()->setDataTypeEnum(QMetaEnum::fromType<QModbusCyclicWriteMode>());
+	cyclicWriteMode()->setValue(QModbusCyclicWriteMode::Current);
+	QObject::connect(cyclicWritePeriod(), &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_cyclicWritePeriodChanged, Qt::QueuedConnection);
+	QObject::connect(cyclicWriteMode()  , &QUaBaseVariable::valueChanged, this, &QUaModbusValue::on_cyclicWriteModeChanged  , Qt::QueuedConnection);
+	QObject::connect(this, &QUaModbusValue::cyclicWrite    , this, &QUaModbusValue::on_cyclicWrite    );
+	cyclicWritePeriod()->setWriteAccess(true);
+	cyclicWriteMode()->setWriteAccess(true);
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 }
 
 QUaProperty * QUaModbusValue::type() const
@@ -60,6 +74,109 @@ QUaProperty * QUaModbusValue::addressOffset() const
 {
 	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("AddressOffset");
 }
+
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+QUaProperty* QUaModbusValue::cyclicWritePeriod() const
+{
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("CyclicWritePeriod");
+}
+
+QUaProperty* QUaModbusValue::cyclicWriteMode() const
+{
+	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("CyclicWriteMode");
+}
+
+quint32 QUaModbusValue::getCyclicWritePeriod() const
+{
+	return this->cyclicWritePeriod()->value<quint32>();
+}
+
+void QUaModbusValue::setCyclicWritePeriod(const quint32& cyclicWritePeriod)
+{
+	this->cyclicWritePeriod()->setValue(cyclicWritePeriod);
+	this->on_cyclicWritePeriodChanged(cyclicWritePeriod, true);
+}
+
+QModbusCyclicWriteMode QUaModbusValue::getCyclicWriteMode() const
+{
+	return this->cyclicWriteMode()->value().value<QModbusCyclicWriteMode>();
+}
+
+void QUaModbusValue::setCyclicWriteMode(const QModbusCyclicWriteMode& cyclicWriteMode)
+{
+	this->cyclicWriteMode()->setValue(cyclicWriteMode);
+	this->on_cyclicWriteModeChanged(cyclicWriteMode, true);
+}
+
+void QUaModbusValue::on_cyclicWritePeriodChanged(const QVariant& value, const bool& networkChange)
+{
+	if (!networkChange)
+	{
+		return;
+	}
+	// stop previous loop
+	if (m_loopId != 0)
+	{
+		this->client()->m_workerThread.stopLoopInThread(m_loopId);
+	}
+	quint32 cyclePeriod = value.value<quint32>();
+	// emit
+	emit this->cyclicWritePeriodChanged(cyclePeriod);
+	// exit if no need to start another loop
+	if (cyclePeriod == 0)
+	{
+		return;
+	}
+	m_loopId = this->client()->m_workerThread.startLoopInThread(
+	[this]() {
+		emit this->cyclicWrite();
+	}, 
+	cyclePeriod);
+}
+
+void QUaModbusValue::on_cyclicWriteModeChanged(const QVariant& value, const bool& networkChange)
+{
+	if (!networkChange)
+	{
+		return;
+	}
+	emit this->cyclicWriteModeChanged(value.value<QModbusCyclicWriteMode>());
+}
+
+void QUaModbusValue::on_cyclicWrite()
+{
+	auto value = this->getValue();
+	// cyclic write logic
+	auto mode = this->getCyclicWriteMode();
+	switch (mode)
+	{
+	case QModbusCyclicWriteMode::Current:
+		break;
+	case QModbusCyclicWriteMode::Toggle:
+		{
+			bool val = value.value<bool>();
+			value.setValue(!val);
+		}
+		break;
+	case QModbusCyclicWriteMode::Increase:
+		{
+			int val = value.value<int>();
+			value.setValue(++val);
+		}
+		break;
+	case QModbusCyclicWriteMode::Decrease:
+		{
+			int val = value.value<int>();
+			value.setValue(--val);
+		}
+		break;
+	default:
+		break;
+	}
+	// actually write
+	this->on_valueChanged(value, true);
+}
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 
 QUaBaseDataVariable * QUaModbusValue::value() const
 {
@@ -182,7 +299,7 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		return;
 	}
 	// get block representation of value
-	auto type = this->type()->value().value<QModbusValueType>();
+	auto type = this->getType();
 	auto data = QUaModbusValue::valueToBlock(value, type);
 	// get current block
 	auto blockError   = this->block()->getLastError();
@@ -198,7 +315,7 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		return;
 	}
 	// check if fits in block
-	int addressOffset = this->addressOffset()->value().value<int>();
+	int addressOffset = this->getAddressOffset();
 	if (addressOffset < 0)
 	{
 		this->value()->setWriteAccess(false);
@@ -209,7 +326,7 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		return;
 	}
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
-	if (addressOffset + typeBlockSize > blockSize)
+	if (addressOffset + typeBlockSize > static_cast<int>(blockSize))
 	{
 		this->value()->setWriteAccess(false);
 		this->value()->setValue(QVariant()); // NOTE : avoid recursion
@@ -372,6 +489,10 @@ QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const
 	elemValue.setAttribute("BrowseName"   , this->browseName().name());
 	elemValue.setAttribute("Type"         , QMetaEnum::fromType<QModbusValueType>().valueToKey(this->getType()));
 	elemValue.setAttribute("AddressOffset", this->getAddressOffset());
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	elemValue.setAttribute("CyclicWriteMode"  , QMetaEnum::fromType<QModbusCyclicWriteMode>().valueToKey(this->getCyclicWriteMode()));
+	elemValue.setAttribute("CyclicWritePeriod", this->getCyclicWritePeriod());
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 	// return value element
 	return elemValue;
 }
@@ -425,6 +546,36 @@ void QUaModbusValue::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& error
 			QUaLogCategory::Serialization
 		);
 	}
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	// CyclicWriteMode
+	auto mode = (QModbusCyclicWriteMode)QMetaEnum::fromType<QModbusCyclicWriteMode>().keysToValue(domElem.attribute("CyclicWriteMode").toUtf8(), &bOK);
+	if (bOK)
+	{
+		this->setCyclicWriteMode(mode);
+	}
+	else
+	{
+		errorLogs << QUaLog(
+			tr("Invalid CyclicWriteMode attribute '%1' in Value %2. Default value set.").arg(mode).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
+	}
+	// CyclicWritePeriod
+	auto period = domElem.attribute("CyclicWritePeriod").toInt(&bOK);
+	if (bOK)
+	{
+		this->setCyclicWritePeriod(period);
+	}
+	else
+	{
+		errorLogs << QUaLog(
+			tr("Invalid CyclicWritePeriod attribute '%1' in Value %2. Default value set.").arg(period).arg(strBrowseName),
+			QUaLogLevel::Warning,
+			QUaLogCategory::Serialization
+		);
+	}
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 }
 
 int QUaModbusValue::typeBlockSize(const QModbusValueType & type)

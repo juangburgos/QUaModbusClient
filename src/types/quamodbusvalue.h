@@ -31,10 +31,13 @@ class QUaModbusValue : public QUaBaseObjectProtected
     Q_OBJECT
 
 	// UA properties
-	Q_PROPERTY(QUaProperty * Type          READ type         )
-	Q_PROPERTY(QUaProperty * RegistersUsed READ registersUsed)
-	Q_PROPERTY(QUaProperty * AddressOffset READ addressOffset)
-
+	Q_PROPERTY(QUaProperty * Type              READ type             )
+	Q_PROPERTY(QUaProperty * RegistersUsed     READ registersUsed    )
+	Q_PROPERTY(QUaProperty * AddressOffset     READ addressOffset    )
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	Q_PROPERTY(QUaProperty * CyclicWritePeriod READ cyclicWritePeriod)
+	Q_PROPERTY(QUaProperty * CyclicWriteMode   READ cyclicWriteMode  )
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 	// UA variables
 	Q_PROPERTY(QUaBaseDataVariable * Value     READ value    )
 	Q_PROPERTY(QUaBaseDataVariable * LastError READ lastError)
@@ -101,6 +104,27 @@ public:
 	QVariant getValue() const;
 	void     setValue(const QVariant &value);
 
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	enum CyclicWriteMode
+	{
+		Current   = 0, // most recent value
+		Toggle    = 1, // negate current value
+		Increase  = 2, // add one to current value
+		Decrease  = 3  // substract one from current value
+	};
+	Q_ENUM(CyclicWriteMode)
+	typedef QUaModbusValue::CyclicWriteMode QModbusCyclicWriteMode;
+
+	QUaProperty* cyclicWritePeriod() const;
+	QUaProperty* cyclicWriteMode() const;
+
+	quint32 getCyclicWritePeriod() const;
+	void setCyclicWritePeriod(const quint32& cyclicWritePeriod);
+
+	QModbusCyclicWriteMode getCyclicWriteMode() const;
+	void setCyclicWriteMode(const QModbusCyclicWriteMode& cyclicWriteMode);
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
+
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
@@ -124,17 +148,30 @@ signals:
 	void addressOffsetChanged(const int              &addressOffset);
 	void valueChanged        (const QVariant         &value        );
 	void lastErrorChanged    (const QModbusError     &error        );
-
 	// (internal) to safely update error in ua server thread
 	void updateLastError(const QModbusError &error);
 
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	void cyclicWritePeriodChanged(const quint32& cyclicWritePeriod);
+	void cyclicWriteModeChanged  (const QModbusCyclicWriteMode& cyclicWriteMode);
+	// (internal) used by cycle in thread
+	void cyclicWrite();
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
+
 private slots:
-	void on_typeChanged         (const QVariant     &value, const bool& networkChange);
-	void on_addressOffsetChanged(const QVariant     &value, const bool& networkChange);
-	void on_valueChanged        (const QVariant     &value, const bool& networkChange);
-	void on_updateLastError     (const QModbusError &error);
+	void on_typeChanged             (const QVariant     &value, const bool& networkChange);
+	void on_addressOffsetChanged    (const QVariant     &value, const bool& networkChange);
+	void on_valueChanged            (const QVariant     &value, const bool& networkChange);
+	void on_updateLastError         (const QModbusError &error);
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	void on_cyclicWritePeriodChanged(const QVariant     &value, const bool& networkChange);
+	void on_cyclicWriteModeChanged  (const QVariant     &value, const bool& networkChange);
+	// cyclic write with last value
+	void on_cyclicWrite();
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 
 private:
+	int m_loopId;
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
 
 	// XML import / export
@@ -144,5 +181,8 @@ private:
 };
 
 typedef QUaModbusValue::ValueType QModbusValueType;
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+typedef QUaModbusValue::CyclicWriteMode QModbusCyclicWriteMode;
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 
 #endif // QUAMODBUSVALUE_H

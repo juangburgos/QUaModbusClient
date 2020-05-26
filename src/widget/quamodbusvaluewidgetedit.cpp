@@ -17,6 +17,22 @@ QUaModbusValueWidgetEdit::QUaModbusValueWidgetEdit(QWidget *parent) :
 	// setup initial values
 	this->setType(QModbusValueType::Decimal);
 	this->setOffset(0);
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	// setup mode combo
+	auto metaCyclicMode = QMetaEnum::fromType<QModbusCyclicWriteMode>();
+	for (int i = 0; i < metaCyclicMode.keyCount(); i++)
+	{
+		auto enumValue = metaCyclicMode.value(i);
+		auto strValue = QString(metaCyclicMode.key(i));
+		ui->comboBoxCyclicMode->addItem(strValue, enumValue);
+	}
+	// setup initial values
+	this->setCyclicWriteMode(QModbusCyclicWriteMode::Current);
+	this->setCyclicWritePeriod(0);
+#else
+	ui->frameCyclic->setVisible(false);
+	ui->frameCyclic->setEnabled(false);
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 }
 
 QUaModbusValueWidgetEdit::~QUaModbusValueWidgetEdit()
@@ -85,3 +101,53 @@ void QUaModbusValueWidgetEdit::setOffset(const quint16 & size)
 {
 	ui->spinBoxOffset->setValue(size);
 }
+
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+void QUaModbusValueWidgetEdit::setWritable(const bool& writable)
+{
+	ui->frameCyclic->setVisible(writable);
+	ui->frameCyclic->setEnabled(writable);
+}
+
+bool QUaModbusValueWidgetEdit::isCyclicWritePeriodEditable() const
+{
+	return !ui->spinBoxCyclicPeriod->isReadOnly();
+}
+
+void QUaModbusValueWidgetEdit::setCyclicWritePeriodEditable(const bool& editable)
+{
+	ui->spinBoxCyclicPeriod->setReadOnly(!editable);
+}
+
+bool QUaModbusValueWidgetEdit::isCyclicWriteModeEditable() const
+{
+	return !ui->comboBoxCyclicMode->isReadOnly();
+}
+
+void QUaModbusValueWidgetEdit::setCyclicWriteModeEditable(const bool& editable)
+{
+	ui->spinBoxOffset->setReadOnly(!editable);
+}
+
+quint32 QUaModbusValueWidgetEdit::cyclicWritePeriod() const
+{
+	return ui->spinBoxCyclicPeriod->value();
+}
+
+void QUaModbusValueWidgetEdit::setCyclicWritePeriod(const quint32& cyclicWritePeriod)
+{
+	ui->spinBoxCyclicPeriod->setValue(cyclicWritePeriod);
+}
+
+QModbusCyclicWriteMode QUaModbusValueWidgetEdit::cyclicWriteMode() const
+{
+	return ui->comboBoxCyclicMode->currentData().value<QModbusCyclicWriteMode>();
+}
+
+void QUaModbusValueWidgetEdit::setCyclicWriteMode(const QModbusCyclicWriteMode& cyclicWriteMode)
+{
+	auto strMode = QString(QMetaEnum::fromType<QModbusCyclicWriteMode>().valueToKey(cyclicWriteMode));
+	Q_ASSERT(ui->comboBoxCyclicMode->findText(strMode) >= 0);
+	ui->comboBoxCyclicMode->setCurrentText(strMode);
+}
+#endif // !QUAMODBUS_NOCYCLIC_WRITE

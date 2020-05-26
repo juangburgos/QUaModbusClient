@@ -106,6 +106,10 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 		// input widgets
 		ui->widgetValueEdit ->setTypeEditable(canWrite);
 		ui->widgetValueEdit ->setOffsetEditable(canWrite);
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+		ui->widgetValueEdit ->setCyclicWritePeriodEditable(canWrite);
+		ui->widgetValueEdit ->setCyclicWriteModeEditable(canWrite);
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 		// action buttons
 		ui->pushButtonApply ->setEnabled(canWrite);
 		ui->pushButtonDelete->setEnabled(canWrite);
@@ -183,6 +187,25 @@ void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 	[this](const int &addressOffset) {
 		ui->widgetValueEdit->setOffset(addressOffset);
 	});
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	// writable
+	auto blkType = value->block()->getType();
+	ui->widgetValueEdit->setWritable(blkType == QModbusDataBlockType::Coils || blkType == QModbusDataBlockType::HoldingRegisters);
+	// cyclic mode
+	ui->widgetValueEdit->setCyclicWriteMode(value->getCyclicWriteMode());
+	m_connections <<
+	QObject::connect(value, &QUaModbusValue::cyclicWriteModeChanged, ui->widgetValueEdit,
+	[this](const QModbusCyclicWriteMode& cyclicWriteMode) {
+		ui->widgetValueEdit->setCyclicWriteMode(cyclicWriteMode);
+	});
+	// cyclic period
+	ui->widgetValueEdit->setCyclicWritePeriod(value->getCyclicWritePeriod());
+	m_connections <<
+	QObject::connect(value, &QUaModbusValue::cyclicWritePeriodChanged, ui->widgetValueEdit,
+	[this](const quint32& cyclicWritePeriod) {
+		ui->widgetValueEdit->setCyclicWritePeriod(cyclicWritePeriod);
+	});
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 	// on apply
 	m_connections <<
 	QObject::connect(ui->pushButtonApply, &QPushButton::clicked, ui->widgetValueEdit,
@@ -191,6 +214,10 @@ void QUaModbusValueWidget::bindValueWidgetEdit(QUaModbusValue * value)
 		value->setAddressOffset(ui->widgetValueEdit->offset());
 		// NOTE : do not change value on the fly, but only when user click apply
 		value->setValue(ui->widgetValueStatus->value());
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+		value->setCyclicWriteMode(ui->widgetValueEdit->cyclicWriteMode());
+		value->setCyclicWritePeriod(ui->widgetValueEdit->cyclicWritePeriod());
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
 	});
 }
 

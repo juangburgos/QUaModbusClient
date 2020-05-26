@@ -33,10 +33,10 @@ Run qmake *recursivelly* to create project files for the application and its dep
 
 ```bash
 # Windows
-qmake "CONFIG+=ua_events" -r -tp vc quamodbus.pro
+qmake "CONFIG+=ua_events ua_historizing" -r -tp vc quamodbus.pro
 
 # Linux
-qmake "CONFIG+=ua_events" -r quamodbus.pro
+qmake "CONFIG+=ua_events ua_historizing" -r quamodbus.pro
 ```
 
 Build using the generated VisualStudio solution (for Windows) or the generated Makefiles (for Linux).
