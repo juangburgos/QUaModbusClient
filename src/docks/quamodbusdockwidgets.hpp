@@ -193,6 +193,15 @@ inline void QUaModbusDockWidgets<T>::fromDomElement(QDomElement & domElem, QQueu
 			continue;
 		}
 		QString strWidgetName = elem.attribute("Name");
+		if (!this->getDockManager()->hasDock(strWidgetName))
+		{
+			errorLogs << QUaLog(
+				tr("Dock %1 does not exist for permissions instance with NodeId %2. Ignoring.").arg(strWidgetName).arg(strPermissionsNodeId),
+				QUaLogLevel::Warning,
+				QUaLogCategory::Serialization
+			);
+			continue;
+		}
 		this->getDockManager()->setDockPermissions(strWidgetName, permissions);
 	}
 }
