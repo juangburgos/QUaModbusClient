@@ -44,6 +44,10 @@ class QUaModbusClientTree : public QWidget
 	Q_PROPERTY(QIcon iconClear        READ iconClear        WRITE setIconClear       )
 	Q_PROPERTY(QIcon iconConnect      READ iconConnect      WRITE setIconConnect     )
 
+	Q_PROPERTY(QColor colorLogError READ colorLogError WRITE setColorLogError)
+	Q_PROPERTY(QColor colorLogWarn  READ colorLogWarn  WRITE setColorLogWarn )
+	Q_PROPERTY(QColor colorLogInfo  READ colorLogInfo  WRITE setColorLogInfo )
+
 public:
     explicit QUaModbusClientTree(QWidget *parent = nullptr);
     ~QUaModbusClientTree();
@@ -125,6 +129,13 @@ public:
 	QIcon iconConnect() const;
 	void  setIconConnect(const QIcon& icon);
 
+	QColor colorLogError() const;
+	void setColorLogError(const QColor& color);
+	QColor colorLogWarn() const;
+	void setColorLogWarn(const QColor& color);
+	QColor colorLogInfo() const;
+	void setColorLogInfo(const QColor& color);
+
 signals:
 	void nodeSelectionChanged(
 		QUaNode * nodePrev, 
@@ -174,6 +185,10 @@ private:
 	QIcon m_iconDelete;
 	QIcon m_iconClear;
 	QIcon m_iconConnect;
+
+	QColor m_colorLogError;
+	QColor m_colorLogWarn;
+	QColor m_colorLogInfo;
 
 	void setupTreeContextMenu();
 	void setupImportButton();

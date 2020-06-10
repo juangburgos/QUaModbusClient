@@ -180,6 +180,8 @@ QUaModelItemTraits::SetData<QUaNode*, 1>(
 	return true;
 }
 
+/******************************************************************************************************
+*/
 
 QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	QWidget(parent),
@@ -199,6 +201,9 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	));
 #endif // QUA_ACCESS_CONTROL
 	m_strLastPathUsed = QString();
+	m_colorLogError = QColor("#8E2F1C");
+	m_colorLogWarn = QColor("#766B0F");
+	m_colorLogInfo = QColor("#265EB6");
 	this->setupTreeContextMenu();
 	this->setupImportButton();
 	this->setupExportButton();
@@ -1126,9 +1131,9 @@ void QUaModbusClientTree::displayCsvLoadResult(QQueue<QUaLog>& errorLogs)
 	logWidget->setClearVisible(false);
 	logWidget->setColumnVisible(QUaLogWidget::Columns::Timestamp, false);
 	logWidget->setColumnVisible(QUaLogWidget::Columns::Category, false);
-	logWidget->setLevelColor(QUaLogLevel::Error, QBrush(QColor("#8E2F1C")));
-	logWidget->setLevelColor(QUaLogLevel::Warning, QBrush(QColor("#766B0F")));
-	logWidget->setLevelColor(QUaLogLevel::Info, QBrush(QColor("#265EB6")));
+	logWidget->setLevelColor(QUaLogLevel::Error, QBrush(m_colorLogError));
+	logWidget->setLevelColor(QUaLogLevel::Warning, QBrush(m_colorLogWarn));
+	logWidget->setLevelColor(QUaLogLevel::Info, QBrush(m_colorLogInfo));
 	while (errorLogs.count() > 0)
 	{
 		logWidget->addLog(errorLogs.dequeue());
@@ -1356,4 +1361,34 @@ QIcon QUaModbusClientTree::iconConnect() const
 void QUaModbusClientTree::setIconConnect(const QIcon& icon)
 {
 	m_iconConnect = icon;
+}
+
+QColor QUaModbusClientTree::colorLogError() const
+{
+	return m_colorLogError;
+}
+
+void QUaModbusClientTree::setColorLogError(const QColor& color)
+{
+	m_colorLogError = color;
+}
+
+QColor QUaModbusClientTree::colorLogWarn() const
+{
+	return m_colorLogWarn;
+}
+
+void QUaModbusClientTree::setColorLogWarn(const QColor& color)
+{
+	m_colorLogWarn = color;
+}
+
+QColor QUaModbusClientTree::colorLogInfo() const
+{
+	return m_colorLogInfo;
+}
+
+void QUaModbusClientTree::setColorLogInfo(const QColor& color)
+{
+	m_colorLogInfo = color;
 }
