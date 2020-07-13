@@ -9,6 +9,9 @@
 #include <QUaModbusTcpClient>
 #include <QUaModbusRtuSerialClient>
 
+#include <QUaModbusDataBlockList>
+#include <QUaModbusDataBlock>
+
 #ifdef QUA_ACCESS_CONTROL
 class QUaUser;
 #endif // QUA_ACCESS_CONTROL
@@ -17,6 +20,47 @@ class QUaUser;
 #include <QQmlContext>
 
 class QUaModbusQmlContext;
+
+/******************************************************************************************************
+*/
+
+class QUaModbusDataBlockQmlContext : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString blockId READ blockId CONSTANT)
+
+public:
+    explicit QUaModbusDataBlockQmlContext(QObject* parent = nullptr);
+
+    // QML API
+
+    // QUaModbusDataBlock
+    QString blockId() const;
+
+    // C++ API
+
+    void bindBlock(QUaModbusDataBlock* block);
+
+    void clear();
+
+signals:
+
+public slots:
+
+private:
+    QUaModbusDataBlock* m_block;
+#ifdef QUA_ACCESS_CONTROL
+    bool m_canWrite;
+    QUaUser* m_loggedUser;
+#endif // QUA_ACCESS_CONTROL
+    // QUaModbusValueList
+    QList<QMetaObject::Connection> m_connections;
+    //QVariantMap m_values;
+    //void bindValues(QUaModbusValueList* values);
+    //void bindValue(QUaModbusValue* value);
+    //void addValue(QUaModbusValue* value);
+    //void removeValue(QUaModbusValue* value);
+};
 
 /******************************************************************************************************
 */
@@ -43,6 +87,9 @@ class QUaModbusClientQmlContext : public QObject
     Q_PROPERTY(QBaudRate baudRate READ baudRate WRITE setBaudRate NOTIFY baudRateChanged)
     Q_PROPERTY(QDataBits dataBits READ dataBits WRITE setDataBits NOTIFY dataBitsChanged)
     Q_PROPERTY(QStopBits stopBits READ stopBits WRITE setStopBits NOTIFY stopBitsChanged)
+    // QUaModbusDataBlockList
+    Q_PROPERTY(QVariantMap blocks      READ blocks      NOTIFY blocksChanged     )
+    Q_PROPERTY(QVariant    blocksModel READ blocksModel NOTIFY blocksModelChanged)
 public:
     explicit QUaModbusClientQmlContext(QObject* parent = nullptr);
 
@@ -78,22 +125,30 @@ public:
     void      setComPort(const QString& strComPort);
 
     QParity   parity() const;
-    void      setParity(const QParity& parity);
+    void      setParity(const int& parity);
 
     QBaudRate baudRate() const;
-    void      setBaudRate(const QBaudRate& baudRate);
+    void      setBaudRate(const int& baudRate);
 
     QDataBits dataBits() const;
-    void      setDataBits(const QDataBits& dataBits);
+    void      setDataBits(const int& dataBits);
 
     QStopBits stopBits() const;
-    void      setStopBits(const QStopBits& stopBits);
+    void      setStopBits(const int& stopBits);
+
+    // QUaModbusDataBlockList
+    QVariantMap blocks();
+    QVariant    blocksModel();
 
     // C++ API
 
     void bindClient(QUaModbusClient * client);
 
     void clear();
+
+#ifdef QUA_ACCESS_CONTROL
+    QUaUser* loggedUser() const;
+#endif // QUA_ACCESS_CONTROL
 
 signals:
     // QUaModbusClient
@@ -113,8 +168,18 @@ signals:
     void baudRateChanged();
     void dataBitsChanged();
     void stopBitsChanged();
+    // QUaModbusDataBlockList
+    void blocksChanged();
+    void blocksModelChanged();
 
+#ifdef QUA_ACCESS_CONTROL
+    // NOTE : internal signal
+    void loggedUserChanged(QPrivateSignal);
 public slots:
+    void on_loggedUserChanged(QUaUser* user);
+#else
+public slots:
+#endif // QUA_ACCESS_CONTROL
     void connect();
     void disconnect();
 
@@ -124,8 +189,13 @@ private:
     bool m_canWrite;
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
-
+    // QUaModbusDataBlockList
     QList<QMetaObject::Connection> m_connections;
+    QVariantMap m_blocks;
+    void bindBlocks(QUaModbusDataBlockList* blocks);
+    void bindBlock(QUaModbusDataBlock* block);
+    void addBlock(QUaModbusDataBlock* block);
+    void removeBlock(QUaModbusDataBlock* block);
 };
 
 /******************************************************************************************************

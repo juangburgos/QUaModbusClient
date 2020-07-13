@@ -8,8 +8,70 @@
 /******************************************************************************************************
 */
 
+QUaModbusDataBlockQmlContext::QUaModbusDataBlockQmlContext(QObject* parent) : QObject(parent)
+{
+	// forward signal
+	//QObject::connect(this, &QUaModbusDataBlockQmlContext::valuesChanged, this, &QUaModbusDataBlockQmlContext::valuesModelChanged);
+#ifdef QUA_ACCESS_CONTROL
+	m_canWrite = true;
+	auto context = qobject_cast<QUaModbusClientQmlContext*>(parent);
+	Q_ASSERT(context);
+	m_loggedUser = context->loggedUser();
+#endif // QUA_ACCESS_CONTROL
+}
+
+QString QUaModbusDataBlockQmlContext::blockId() const
+{
+	Q_ASSERT(m_block);
+	return m_block->browseName().name();
+}
+
+void QUaModbusDataBlockQmlContext::bindBlock(QUaModbusDataBlock* block)
+{
+	// check valid arg
+	Q_ASSERT(block);
+	if (!block) { return; }
+	// copy reference
+	m_block = block;
+#ifdef QUA_ACCESS_CONTROL
+	auto perms = m_block->permissionsObject();
+	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
+	QObject::connect(m_block, &QUaModbusClient::permissionsObjectChanged, this,
+		[this]() {
+			auto perms = m_block->permissionsObject();
+			m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
+			//emit this->canWriteChanged();
+		});
+#endif // QUA_ACCESS_CONTROL
+	// susbcribe to changes
+	// QUaModbusDataBlock
+	//QObject::connect(m_block, &QUaModbusDataBlock::, this, &QUaModbusDataBlockQmlContext::);
+}
+
+void QUaModbusDataBlockQmlContext::clear()
+{
+	// unsubscribe
+	while (!m_connections.isEmpty())
+	{
+		QObject::disconnect(m_connections.takeFirst());
+	}
+	//// delete children contexts
+	//while (!m_values.isEmpty())
+	//{
+	//	auto context = m_blocks.take(m_blocks.firstKey()).value<QUaModbusValueQmlContext*>();
+	//	delete context;
+	//}
+}
+
+
+
+/******************************************************************************************************
+*/
+
 QUaModbusClientQmlContext::QUaModbusClientQmlContext(QObject* parent) : QObject(parent)
 {
+	// forward signal
+	QObject::connect(this, &QUaModbusClientQmlContext::blocksChanged, this, &QUaModbusClientQmlContext::blocksModelChanged);
 #ifdef QUA_ACCESS_CONTROL
 	m_canWrite = true;
 	auto context = qobject_cast<QUaModbusQmlContext*>(parent);
@@ -180,7 +242,7 @@ QParity QUaModbusClientQmlContext::parity() const
 	return serial->getParity();
 }
 
-void QUaModbusClientQmlContext::setParity(const QParity& parity)
+void QUaModbusClientQmlContext::setParity(const int& parity)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
@@ -194,7 +256,7 @@ void QUaModbusClientQmlContext::setParity(const QParity& parity)
 	{
 		return;
 	}
-	return serial->setParity(parity);
+	return serial->setParity(static_cast<QParity>(parity));
 }
 
 QBaudRate QUaModbusClientQmlContext::baudRate() const
@@ -208,7 +270,7 @@ QBaudRate QUaModbusClientQmlContext::baudRate() const
 	return serial->getBaudRate();
 }
 
-void QUaModbusClientQmlContext::setBaudRate(const QBaudRate& baudRate)
+void QUaModbusClientQmlContext::setBaudRate(const int& baudRate)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
@@ -222,7 +284,7 @@ void QUaModbusClientQmlContext::setBaudRate(const QBaudRate& baudRate)
 	{
 		return;
 	}
-	return serial->setBaudRate(baudRate);
+	return serial->setBaudRate(static_cast<QBaudRate>(baudRate));
 }
 
 QDataBits QUaModbusClientQmlContext::dataBits() const
@@ -236,7 +298,7 @@ QDataBits QUaModbusClientQmlContext::dataBits() const
 	return serial->getDataBits();
 }
 
-void QUaModbusClientQmlContext::setDataBits(const QDataBits& dataBits)
+void QUaModbusClientQmlContext::setDataBits(const int& dataBits)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
@@ -250,7 +312,7 @@ void QUaModbusClientQmlContext::setDataBits(const QDataBits& dataBits)
 	{
 		return;
 	}
-	return serial->setDataBits(dataBits);
+	return serial->setDataBits(static_cast<QDataBits>(dataBits));
 }
 
 QStopBits QUaModbusClientQmlContext::stopBits() const
@@ -264,7 +326,7 @@ QStopBits QUaModbusClientQmlContext::stopBits() const
 	return serial->getStopBits();
 }
 
-void QUaModbusClientQmlContext::setStopBits(const QStopBits& stopBits)
+void QUaModbusClientQmlContext::setStopBits(const int& stopBits)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
@@ -278,7 +340,22 @@ void QUaModbusClientQmlContext::setStopBits(const QStopBits& stopBits)
 	{
 		return;
 	}
-	return serial->setStopBits(stopBits);
+	return serial->setStopBits(static_cast<QStopBits>(stopBits));
+}
+
+QVariantMap QUaModbusClientQmlContext::blocks()
+{
+	return m_blocks;
+}
+
+QVariant QUaModbusClientQmlContext::blocksModel()
+{
+	QList<QObject*> retList;
+	for (auto blockVariant : m_blocks)
+	{
+		retList << blockVariant.value<QUaModbusDataBlockQmlContext*>();
+	}
+	return QVariant::fromValue(retList);
 }
 
 void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
@@ -304,9 +381,8 @@ void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
 	QObject::connect(m_client, &QUaModbusClient::keepConnectingChanged, this, &QUaModbusClientQmlContext::keepConnectingChanged);
 	QObject::connect(m_client, &QUaModbusClient::stateChanged         , this, &QUaModbusClientQmlContext::stateChanged         );
 	QObject::connect(m_client, &QUaModbusClient::lastErrorChanged     , this, &QUaModbusClientQmlContext::lastErrorChanged     );
-	
-	// TODO : blocks
-	
+	// QUaModbusDataBlockList
+	this->bindBlocks(m_client->dataBlocks());
 	// QUaModbusTcpClient
 	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
 	if (tcp)
@@ -335,16 +411,27 @@ void QUaModbusClientQmlContext::clear()
 	{
 		QObject::disconnect(m_connections.takeFirst());
 	}
-	//// delete children contexts
-
-	// TODO
-
-	//while (!m_alarms.isEmpty())
-	//{
-	//	auto context = m_alarms.take(m_alarms.firstKey()).value<VrAlarmQmlContext*>();
-	//	delete context;
-	//}
+	// delete children contexts
+	while (!m_blocks.isEmpty())
+	{
+		auto context = m_blocks.take(m_blocks.firstKey()).value<QUaModbusDataBlockQmlContext*>();
+		delete context;
+	}
 }
+
+#ifdef QUA_ACCESS_CONTROL
+QUaUser* QUaModbusClientQmlContext::loggedUser() const
+{
+	return m_loggedUser;
+}
+
+void QUaModbusClientQmlContext::on_loggedUserChanged(QUaUser* user)
+{
+	m_loggedUser = user;
+	emit this->loggedUserChanged(QPrivateSignal());
+	// TODO : reset models
+}
+#endif
 
 void QUaModbusClientQmlContext::connect()
 {
@@ -370,6 +457,93 @@ void QUaModbusClientQmlContext::disconnect()
 	m_client->disconnectDevice();
 }
 
+void QUaModbusClientQmlContext::bindBlocks(QUaModbusDataBlockList* blocks)
+{
+	// check valid arg
+	Q_ASSERT(blocks);
+	if (!blocks) { return; }
+	// bind existing
+	for (auto block : blocks->blocks())
+	{
+		// bind existing block
+		this->bindBlock(block);
+	}
+	// bind block added
+	m_connections << QObject::connect(blocks, &QUaNode::childAdded, this,
+		[this](QUaNode* node) {
+			// bind new block
+			auto block = qobject_cast<QUaModbusDataBlock*>(node);
+			Q_ASSERT(block);
+			this->bindBlock(block);
+		}/*, Qt::QueuedConnection // NOTE : do not queue or blocks will not be available on view load */);
+#ifdef QUA_ACCESS_CONTROL
+	m_connections << QObject::connect(this, &QUaModbusClientQmlContext::loggedUserChanged, blocks,
+		[this, blocks]() {
+			this->clear();
+			this->bindBlocks(blocks);
+		});
+#endif // QUA_ACCESS_CONTROL
+}
+
+void QUaModbusClientQmlContext::bindBlock(QUaModbusDataBlock* block)
+{
+	Q_ASSERT(block);
+	// NOTE : access control must be checked before anything due to early exit condition
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+		QObject::connect(block, &QUaModbusClient::permissionsObjectChanged, this,
+			[this, block]() {
+				auto perms = block->permissionsObject();
+				auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
+				// add or remove block to/from exposed list
+				if (canRead)
+				{
+					this->addBlock(block);
+				}
+				else
+				{
+					this->removeBlock(block);
+				}
+			});
+	auto perms = block->permissionsObject();
+	auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
+	if (!canRead)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	// add block to exposed list
+	this->addBlock(block);
+}
+
+void QUaModbusClientQmlContext::addBlock(QUaModbusDataBlock* block)
+{
+	// get param id
+	QString strId = block->browseName().name();
+	Q_ASSERT(!strId.isEmpty() && !strId.isNull());
+	// add param context to map
+	auto context = new QUaModbusDataBlockQmlContext(this);
+	context->bindBlock(block);
+	Q_ASSERT(!m_blocks.contains(strId));
+	m_blocks[strId] = QVariant::fromValue(context);
+	// subscribe to destroyed
+	m_connections <<
+		QObject::connect(block, &QObject::destroyed, context,
+			[this, block]() {
+				this->removeBlock(block);
+			});
+	// notify changes
+	emit this->blocksChanged();
+}
+
+void QUaModbusClientQmlContext::removeBlock(QUaModbusDataBlock* block)
+{
+	QString strId = block->browseName().name();
+	Q_ASSERT(m_blocks.contains(strId));
+	delete m_blocks.take(strId).value<QUaModbusDataBlockQmlContext*>();
+	// notify changes
+	emit this->blocksChanged();
+}
 
 /******************************************************************************************************
 */
@@ -549,3 +723,4 @@ void QUaModbusQmlContext::removeClient(QUaModbusClient* client)
 	// notify changes
 	emit this->clientsChanged();
 }
+
