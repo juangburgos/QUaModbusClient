@@ -5,8 +5,6 @@
 #include <QUaPermissions>
 #endif // QUA_ACCESS_CONTROL
 
-
-
 /******************************************************************************************************
 */
 
@@ -18,18 +16,6 @@ QUaModbusClientQmlContext::QUaModbusClientQmlContext(QObject* parent) : QObject(
 	Q_ASSERT(context);
 	m_loggedUser = context->loggedUser();
 #endif // QUA_ACCESS_CONTROL
-	if (QMetaType::type("QModbusClientType") == QMetaType::UnknownType)
-	{
-		qRegisterMetaType<QModbusClientType>("QModbusClientType");
-	}
-	if (QMetaType::type("QModbusState") == QMetaType::UnknownType)
-	{
-		qRegisterMetaType<QModbusState>("QModbusState");
-	}
-	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
-	{
-		qRegisterMetaType<QModbusError>("QModbusError");
-	}
 }
 
 QString QUaModbusClientQmlContext::clientId() const
@@ -99,6 +85,202 @@ bool QUaModbusClientQmlContext::canWrite() const
 }
 #endif // QUA_ACCESS_CONTROL
 
+QString QUaModbusClientQmlContext::networkAddress() const
+{
+	Q_ASSERT(m_client);
+	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
+	if (!tcp)
+	{
+		return "";
+	}
+	return tcp->getNetworkAddress();
+}
+
+void QUaModbusClientQmlContext::setNetworkAddress(const QString& networkAddress)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
+	if (!tcp)
+	{
+		return;
+	}
+	tcp->setNetworkAddress(networkAddress);
+}
+
+quint16 QUaModbusClientQmlContext::networkPort() const
+{
+	Q_ASSERT(m_client);
+	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
+	if (!tcp)
+	{
+		return 0;
+	}
+	return tcp->getNetworkPort();
+}
+
+void QUaModbusClientQmlContext::setNetworkPort(const quint16& networkPort)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
+	if (!tcp)
+	{
+		return;
+	}
+	tcp->setNetworkPort(networkPort);
+}
+
+QString QUaModbusClientQmlContext::comPort() const
+{
+	Q_ASSERT(m_client);
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return "";
+	}
+	return serial->getComPort();
+}
+
+void QUaModbusClientQmlContext::setComPort(const QString& strComPort)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return;
+	}
+	return serial->setComPort(strComPort);
+}
+
+QParity QUaModbusClientQmlContext::parity() const
+{
+	Q_ASSERT(m_client);
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return QParity::UnknownParity;
+	}
+	return serial->getParity();
+}
+
+void QUaModbusClientQmlContext::setParity(const QParity& parity)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return;
+	}
+	return serial->setParity(parity);
+}
+
+QBaudRate QUaModbusClientQmlContext::baudRate() const
+{
+	Q_ASSERT(m_client);
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return QBaudRate::UnknownBaud;
+	}
+	return serial->getBaudRate();
+}
+
+void QUaModbusClientQmlContext::setBaudRate(const QBaudRate& baudRate)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return;
+	}
+	return serial->setBaudRate(baudRate);
+}
+
+QDataBits QUaModbusClientQmlContext::dataBits() const
+{
+	Q_ASSERT(m_client);
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return QDataBits::UnknownDataBits;
+	}
+	return serial->getDataBits();
+}
+
+void QUaModbusClientQmlContext::setDataBits(const QDataBits& dataBits)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return;
+	}
+	return serial->setDataBits(dataBits);
+}
+
+QStopBits QUaModbusClientQmlContext::stopBits() const
+{
+	Q_ASSERT(m_client);
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return QStopBits::UnknownStopBits;
+	}
+	return serial->getStopBits();
+}
+
+void QUaModbusClientQmlContext::setStopBits(const QStopBits& stopBits)
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (!serial)
+	{
+		return;
+	}
+	return serial->setStopBits(stopBits);
+}
+
 void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
 {
 	// check valid arg
@@ -122,8 +304,28 @@ void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
 	QObject::connect(m_client, &QUaModbusClient::keepConnectingChanged, this, &QUaModbusClientQmlContext::keepConnectingChanged);
 	QObject::connect(m_client, &QUaModbusClient::stateChanged         , this, &QUaModbusClientQmlContext::stateChanged         );
 	QObject::connect(m_client, &QUaModbusClient::lastErrorChanged     , this, &QUaModbusClientQmlContext::lastErrorChanged     );
-	// TODO : tcp, serial
-
+	
+	// TODO : blocks
+	
+	// QUaModbusTcpClient
+	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
+	if (tcp)
+	{
+		QObject::connect(tcp, &QUaModbusTcpClient::networkAddressChanged, this, &QUaModbusClientQmlContext::networkAddressChanged);
+		QObject::connect(tcp, &QUaModbusTcpClient::networkPortChanged   , this, &QUaModbusClientQmlContext::networkPortChanged);
+		return;
+	}
+	// QUaModbusRtuSerialClient
+	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
+	if (serial)
+	{
+		QObject::connect(serial, &QUaModbusRtuSerialClient::comPortChanged , this, &QUaModbusClientQmlContext::comPortChanged );
+		QObject::connect(serial, &QUaModbusRtuSerialClient::parityChanged  , this, &QUaModbusClientQmlContext::parityChanged  );
+		QObject::connect(serial, &QUaModbusRtuSerialClient::baudRateChanged, this, &QUaModbusClientQmlContext::baudRateChanged);
+		QObject::connect(serial, &QUaModbusRtuSerialClient::dataBitsChanged, this, &QUaModbusClientQmlContext::dataBitsChanged);
+		QObject::connect(serial, &QUaModbusRtuSerialClient::stopBitsChanged, this, &QUaModbusClientQmlContext::stopBitsChanged);
+		return;
+	}
 }
 
 void QUaModbusClientQmlContext::clear()
@@ -144,6 +346,29 @@ void QUaModbusClientQmlContext::clear()
 	//}
 }
 
+void QUaModbusClientQmlContext::connect()
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	m_client->connectDevice();
+}
+
+void QUaModbusClientQmlContext::disconnect()
+{
+	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	m_client->disconnectDevice();
+}
 
 
 /******************************************************************************************************
@@ -156,6 +381,34 @@ QUaModbusQmlContext::QUaModbusQmlContext(QObject *parent) : QObject(parent)
 #endif // QUA_ACCESS_CONTROL
 	// forward signal
 	QObject::connect(this, &QUaModbusQmlContext::clientsChanged, this, &QUaModbusQmlContext::clientsModelChanged);
+	if (QMetaType::type("QModbusClientType") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusClientType>("QModbusClientType");
+	}
+	if (QMetaType::type("QModbusState") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusState>("QModbusState");
+	}
+	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusError>("QModbusError");
+	}
+	if (QMetaType::type("QParity") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QParity>("QParity");
+	}
+	if (QMetaType::type("QBaudRate") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QBaudRate>("QBaudRate");
+	}
+	if (QMetaType::type("QDataBits") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QDataBits>("QDataBits");
+	}
+	if (QMetaType::type("QStopBits") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QStopBits>("QStopBits");
+	}
 }
 
 

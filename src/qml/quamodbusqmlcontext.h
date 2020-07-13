@@ -6,6 +6,8 @@
 // TODO : modbus includes
 #include <QUaModbusClientList>
 #include <QUaModbusClient>
+#include <QUaModbusTcpClient>
+#include <QUaModbusRtuSerialClient>
 
 #ifdef QUA_ACCESS_CONTROL
 class QUaUser;
@@ -13,7 +15,6 @@ class QUaUser;
 
 #include <QQmlEngine>
 #include <QQmlContext>
-
 
 class QUaModbusQmlContext;
 
@@ -23,7 +24,7 @@ class QUaModbusQmlContext;
 class QUaModbusClientQmlContext : public QObject
 {
     Q_OBJECT
-
+    // QUaModbusClient
     Q_PROPERTY(QString           clientId       READ clientId       CONSTANT)
     Q_PROPERTY(QModbusClientType type           READ type           CONSTANT)
     Q_PROPERTY(quint8            serverAddress  READ serverAddress  WRITE setServerAddress  NOTIFY serverAddressChanged )
@@ -33,6 +34,15 @@ class QUaModbusClientQmlContext : public QObject
 #ifdef QUA_ACCESS_CONTROL                                                                                    
     Q_PROPERTY(bool              canWrite       READ canWrite       NOTIFY canWriteChanged)
 #endif // QUA_ACCESS_CONTROL
+    // QUaModbusTcpClient
+    Q_PROPERTY(QString networkAddress  READ networkAddress WRITE setNetworkAddress NOTIFY networkAddressChanged)
+    Q_PROPERTY(quint16 networkPort     READ networkPort    WRITE setNetworkPort    NOTIFY networkPortChanged   )
+    // QUaModbusRtuSerialClient
+    Q_PROPERTY(QString   comPort  READ comPort  WRITE setComPort  NOTIFY comPortChanged )
+    Q_PROPERTY(QParity   parity   READ parity   WRITE setParity   NOTIFY parityChanged  )
+    Q_PROPERTY(QBaudRate baudRate READ baudRate WRITE setBaudRate NOTIFY baudRateChanged)
+    Q_PROPERTY(QDataBits dataBits READ dataBits WRITE setDataBits NOTIFY dataBitsChanged)
+    Q_PROPERTY(QStopBits stopBits READ stopBits WRITE setStopBits NOTIFY stopBitsChanged)
 public:
     explicit QUaModbusClientQmlContext(QObject* parent = nullptr);
 
@@ -41,7 +51,6 @@ public:
     // QUaModbusClient
     QString           clientId() const;
     QModbusClientType type() const;
-
 
     quint8 serverAddress() const;
     void   setServerAddress(const quint8& serverAddress);
@@ -56,9 +65,29 @@ public:
     bool canWrite() const;
 #endif // QUA_ACCESS_CONTROL
 
-    // TODO : tcp, serial
+    // QUaModbusTcpClient
+    QString networkAddress() const;
+    void    setNetworkAddress(const QString& networkAddress);
 
-    // TODO : blocks, blocksModel
+    quint16 networkPort   () const;
+    void    setNetworkPort(const quint16& networkPort);
+
+    // QUaModbusRtuSerialClient
+
+    QString   comPort() const;
+    void      setComPort(const QString& strComPort);
+
+    QParity   parity() const;
+    void      setParity(const QParity& parity);
+
+    QBaudRate baudRate() const;
+    void      setBaudRate(const QBaudRate& baudRate);
+
+    QDataBits dataBits() const;
+    void      setDataBits(const QDataBits& dataBits);
+
+    QStopBits stopBits() const;
+    void      setStopBits(const QStopBits& stopBits);
 
     // C++ API
 
@@ -67,6 +96,7 @@ public:
     void clear();
 
 signals:
+    // QUaModbusClient
     void serverAddressChanged();
     void keepConnectingChanged();
     void stateChanged();
@@ -74,6 +104,19 @@ signals:
 #ifdef QUA_ACCESS_CONTROL
     void canWriteChanged();
 #endif // QUA_ACCESS_CONTROL
+    // QUaModbusTcpClient
+    void networkAddressChanged();
+    void networkPortChanged   ();
+    // QUaModbusRtuSerialClient
+    void comPortChanged ();
+    void parityChanged  ();
+    void baudRateChanged();
+    void dataBitsChanged();
+    void stopBitsChanged();
+
+public slots:
+    void connect();
+    void disconnect();
 
 private:
     QUaModbusClient* m_client;
