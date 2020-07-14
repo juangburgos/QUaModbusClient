@@ -29,9 +29,14 @@ class QUaModbusQmlContext;
 class QUaModbusValueQmlContext : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString valueId READ valueId CONSTANT)
+    Q_PROPERTY(QString          valueId       READ valueId CONSTANT)
+    Q_PROPERTY(QModbusValueType type          READ type          WRITE setType          NOTIFY typeChanged)
+    Q_PROPERTY(quint16          registersUsed READ registersUsed                        NOTIFY registersUsedChanged)
+    Q_PROPERTY(int              addressOffset READ addressOffset WRITE setAddressOffset NOTIFY addressOffsetChanged)
+    Q_PROPERTY(QVariant         value         READ value         WRITE setValue         NOTIFY valueChanged)
+    Q_PROPERTY(QModbusError     lastError     READ lastError                            NOTIFY lastErrorChanged)
 #ifdef QUA_ACCESS_CONTROL                                                                                    
-     Q_PROPERTY(bool canWrite READ canWrite NOTIFY canWriteChanged)
+    Q_PROPERTY(bool             canWrite      READ canWrite                             NOTIFY canWriteChanged)
 #endif // QUA_ACCESS_CONTROL
 public:
     explicit QUaModbusValueQmlContext(QObject* parent = nullptr);
@@ -41,6 +46,19 @@ public:
     // QUaModbusValue
     QString valueId() const;
 
+    QModbusValueType type() const;
+    void             setType(const int& type);
+
+    quint16          registersUsed() const;
+
+    int              addressOffset() const;
+    void             setAddressOffset(const int& addressOffset);
+
+    QVariant         value() const;
+    void             setValue(const QVariant& value);
+
+    QModbusError     lastError() const;
+
 #ifdef QUA_ACCESS_CONTROL
     bool canWrite() const;
 #endif // QUA_ACCESS_CONTROL
@@ -49,14 +67,17 @@ public:
 
     void bindValue(QUaModbusValue* value);
 
-    void clear();
+    // N/A void clear();
 
 signals:
-
+    void typeChanged();
+    void registersUsedChanged();
+    void addressOffsetChanged();
+    void valueChanged();
+    void lastErrorChanged();
 #ifdef QUA_ACCESS_CONTROL
     void canWriteChanged();
 #endif // QUA_ACCESS_CONTROL
-
 
 public slots:
 

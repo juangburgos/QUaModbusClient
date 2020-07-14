@@ -25,6 +25,71 @@ QString QUaModbusValueQmlContext::valueId() const
 	return m_value->browseName().name();
 }
 
+QModbusValueType QUaModbusValueQmlContext::type() const
+{
+	Q_ASSERT(m_value);
+	return m_value->getType();
+}
+
+void QUaModbusValueQmlContext::setType(const int& type)
+{
+	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	m_value->setType(static_cast<QModbusValueType>(type));
+}
+
+quint16 QUaModbusValueQmlContext::registersUsed() const
+{
+	Q_ASSERT(m_value);
+	return m_value->getRegistersUsed();
+}
+
+int QUaModbusValueQmlContext::addressOffset() const
+{
+	Q_ASSERT(m_value);
+	return m_value->getAddressOffset();
+}
+
+void QUaModbusValueQmlContext::setAddressOffset(const int& addressOffset)
+{
+	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	m_value->setAddressOffset(addressOffset);
+}
+
+QVariant QUaModbusValueQmlContext::value() const
+{
+	Q_ASSERT(m_value);
+	return m_value->getValue();
+}
+
+void QUaModbusValueQmlContext::setValue(const QVariant& value)
+{
+	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canWrite)
+	{
+		return;
+	}
+#endif // QUA_ACCESS_CONTROL
+	m_value->setValue(value);
+}
+
+QModbusError QUaModbusValueQmlContext::lastError() const
+{
+	Q_ASSERT(m_value);
+	return m_value->getLastError();
+}
 
 #ifdef QUA_ACCESS_CONTROL
 bool QUaModbusValueQmlContext::canWrite() const
@@ -51,15 +116,17 @@ void QUaModbusValueQmlContext::bindValue(QUaModbusValue* value)
 		});
 #endif // QUA_ACCESS_CONTROL
 	// susbcribe to changes
-
-	// TODO
-
+	QObject::connect(m_value, &QUaModbusValue::typeChanged         , this, &QUaModbusValueQmlContext::typeChanged);
+	QObject::connect(m_value, &QUaModbusValue::registersUsedChanged, this, &QUaModbusValueQmlContext::registersUsedChanged);
+	QObject::connect(m_value, &QUaModbusValue::addressOffsetChanged, this, &QUaModbusValueQmlContext::addressOffsetChanged);
+	QObject::connect(m_value, &QUaModbusValue::valueChanged        , this, &QUaModbusValueQmlContext::valueChanged);
+	QObject::connect(m_value, &QUaModbusValue::lastErrorChanged    , this, &QUaModbusValueQmlContext::lastErrorChanged);
 }
 
-void QUaModbusValueQmlContext::clear()
-{
-	// TODO
-}
+//void QUaModbusValueQmlContext::clear()
+//{
+//	// N/A
+//}
 
 /******************************************************************************************************
 */
@@ -225,7 +292,7 @@ void QUaModbusDataBlockQmlContext::clear()
 	while (!m_values.isEmpty())
 	{
 		auto context = m_values.take(m_values.firstKey()).value<QUaModbusValueQmlContext*>();
-		context->clear();
+		// N/A : context->clear();
 		delete context;
 	}
 	// clear block qml refs
@@ -832,6 +899,10 @@ QUaModbusQmlContext::QUaModbusQmlContext(QObject *parent) : QObject(parent)
 	if (QMetaType::type("QModbusDataBlockType") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusDataBlockType>("QModbusDataBlockType");
+	}
+	if (QMetaType::type("QModbusValueType") == QMetaType::UnknownType)
+	{
+		qRegisterMetaType<QModbusValueType>("QModbusValueType");
 	}
 }
 
