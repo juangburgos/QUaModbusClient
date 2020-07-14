@@ -3,7 +3,6 @@
 
 #include <QUaServer>
 
-// TODO : modbus includes
 #include <QUaModbusClientList>
 #include <QUaModbusClient>
 #include <QUaModbusTcpClient>
@@ -11,6 +10,9 @@
 
 #include <QUaModbusDataBlockList>
 #include <QUaModbusDataBlock>
+
+#include <QUaModbusValueList>
+#include <QUaModbusValue>
 
 #ifdef QUA_ACCESS_CONTROL
 class QUaUser;
@@ -24,10 +26,68 @@ class QUaModbusQmlContext;
 /******************************************************************************************************
 */
 
+class QUaModbusValueQmlContext : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString valueId READ valueId CONSTANT)
+#ifdef QUA_ACCESS_CONTROL                                                                                    
+     Q_PROPERTY(bool canWrite READ canWrite NOTIFY canWriteChanged)
+#endif // QUA_ACCESS_CONTROL
+public:
+    explicit QUaModbusValueQmlContext(QObject* parent = nullptr);
+
+    // QML API
+
+    // QUaModbusValue
+    QString valueId() const;
+
+#ifdef QUA_ACCESS_CONTROL
+    bool canWrite() const;
+#endif // QUA_ACCESS_CONTROL
+
+    // C++ API
+
+    void bindValue(QUaModbusValue* value);
+
+    void clear();
+
+signals:
+
+#ifdef QUA_ACCESS_CONTROL
+    void canWriteChanged();
+#endif // QUA_ACCESS_CONTROL
+
+
+public slots:
+
+private:
+    QUaModbusValue* m_value;
+#ifdef QUA_ACCESS_CONTROL
+    bool m_canWrite;
+    QUaUser* m_loggedUser;
+#endif // QUA_ACCESS_CONTROL
+
+};
+
+/******************************************************************************************************
+*/
+
 class QUaModbusDataBlockQmlContext : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString blockId READ blockId CONSTANT)
+    Q_PROPERTY(QString              blockId      READ blockId      CONSTANT)
+    Q_PROPERTY(QModbusDataBlockType type         READ type         WRITE setType         NOTIFY typeChanged)
+    Q_PROPERTY(int                  address      READ address      WRITE setAddress      NOTIFY addressChanged)
+    Q_PROPERTY(quint32              size         READ size         WRITE setSize         NOTIFY sizeChanged)
+    Q_PROPERTY(quint32              samplingTime READ samplingTime WRITE setSamplingTime NOTIFY samplingTimeChanged)
+    //Q_PROPERTY(QVector<quint16>     data         READ data         NOTIFY dataChanged)
+    Q_PROPERTY(QModbusError         lastError    READ lastError    NOTIFY lastErrorChanged)
+#ifdef QUA_ACCESS_CONTROL                                                                                    
+    Q_PROPERTY(bool                 canWrite     READ canWrite     NOTIFY canWriteChanged)
+#endif // QUA_ACCESS_CONTROL
+    // QUaModbusValueList
+    Q_PROPERTY(QVariantMap values      READ values      NOTIFY valuesChanged     )
+    Q_PROPERTY(QVariant    valuesModel READ valuesModel NOTIFY valuesModelChanged)
 
 public:
     explicit QUaModbusDataBlockQmlContext(QObject* parent = nullptr);
@@ -37,13 +97,53 @@ public:
     // QUaModbusDataBlock
     QString blockId() const;
 
+    QModbusDataBlockType type() const;
+    void                 setType(const int& type);
+
+    int  address() const;
+    void setAddress(const int& address);
+
+    quint32 size() const;
+    void    setSize(const quint32& size);
+
+    quint32 samplingTime() const;
+    void    setSamplingTime(const quint32& samplingTime);
+
+    //QVector<quint16> data() const;
+
+    QModbusError lastError() const;
+
+#ifdef QUA_ACCESS_CONTROL
+    bool canWrite() const;
+#endif // QUA_ACCESS_CONTROL
+
+    // QUaModbusValueList
+    QVariantMap values();
+    QVariant    valuesModel();
+
     // C++ API
 
     void bindBlock(QUaModbusDataBlock* block);
 
     void clear();
 
+#ifdef QUA_ACCESS_CONTROL
+    QUaUser* loggedUser() const;
+#endif // QUA_ACCESS_CONTROL
+
 signals:
+    void typeChanged();
+    void addressChanged();
+    void sizeChanged();
+    void samplingTimeChanged();
+    //void dataChanged();
+    void lastErrorChanged();
+#ifdef QUA_ACCESS_CONTROL
+    void canWriteChanged();
+#endif // QUA_ACCESS_CONTROL
+    // QUaModbusValueList
+    void valuesChanged();
+    void valuesModelChanged();
 
 public slots:
 
@@ -55,11 +155,11 @@ private:
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusValueList
     QList<QMetaObject::Connection> m_connections;
-    //QVariantMap m_values;
-    //void bindValues(QUaModbusValueList* values);
-    //void bindValue(QUaModbusValue* value);
-    //void addValue(QUaModbusValue* value);
-    //void removeValue(QUaModbusValue* value);
+    QVariantMap m_values;
+    void bindValues(QUaModbusValueList* values);
+    void bindValue(QUaModbusValue* value);
+    void addValue(QUaModbusValue* value);
+    void removeValue(QUaModbusValue* value);
 };
 
 /******************************************************************************************************
@@ -172,14 +272,7 @@ signals:
     void blocksChanged();
     void blocksModelChanged();
 
-#ifdef QUA_ACCESS_CONTROL
-    // NOTE : internal signal
-    void loggedUserChanged(QPrivateSignal);
 public slots:
-    void on_loggedUserChanged(QUaUser* user);
-#else
-public slots:
-#endif // QUA_ACCESS_CONTROL
     void connect();
     void disconnect();
 
