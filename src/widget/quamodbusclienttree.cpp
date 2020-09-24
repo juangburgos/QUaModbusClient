@@ -34,7 +34,7 @@
 #include <QUaDockWidgetPerms>
 #endif // QUA_ACCESS_CONTROL
 
-template<> static
+template<>
 inline QMetaObject::Connection
 QUaModelItemTraits::DestroyCallback<QUaNode*, 1>(
 	QUaNode* node,
@@ -50,7 +50,7 @@ QUaModelItemTraits::DestroyCallback<QUaNode*, 1>(
 		});
 }
 
-template<> static
+template<>
 inline QMetaObject::Connection
 QUaModelItemTraits::NewChildCallback<QUaNode*, 1>(
 	QUaNode* node,
@@ -111,7 +111,7 @@ QUaModelItemTraits::NewChildCallback<QUaNode*, 1>(
 	return QMetaObject::Connection();
 }
 
-template<> static
+template<>
 inline QList<QUaNode*>
 QUaModelItemTraits::GetChildren<QUaNode*, 1>(QUaNode* node)
 {
@@ -159,7 +159,7 @@ QUaModelItemTraits::GetChildren<QUaNode*, 1>(QUaNode* node)
 // overload to support default editor (QStyledItemDelegate::setEditorData)
 // implement either this or ui->myview->setColumnEditor
 // setColumnEditor has preference in case both implemented
-template<> static
+template<>
 inline bool
 QUaModelItemTraits::SetData<QUaNode*, 1>(
 	QUaNode* node,
