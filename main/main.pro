@@ -27,6 +27,8 @@ include($$PWD/../libs/QDeferred.git/src/qlambdathreadworker.pri)
 include($$PWD/../libs/QUaServer.git/src/wrapper/quaserver.pri)
 include($$PWD/../libs/qadvanceddocking.pri)
 
+DEFINES += QUAMODBUS_NOCYCLIC_WRITE
+
 SOURCES += \
 main.cpp \
 quamodbus.cpp

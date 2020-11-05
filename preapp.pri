@@ -5,6 +5,18 @@ win32 {
 	} else {
 	    OS_VER = win64
 	}
+
+	# Fix error [*tried to link win x86 libs to x64 target] in VS2017 (corrupted paths)
+	INC_FIX = "$$(INCLUDE)"
+	INC_FIX = $$split(INC_FIX, ;)
+	INCLUDEPATH += $$PWD $$INC_FIX
+
+	LIB_FIX = "$$(LIB)"
+	LIB_FIX = $$split(LIB_FIX, ;)
+	for(LIB_FIX_PATH, LIB_FIX) {
+		LIBS += -L$$LIB_FIX_PATH
+	}
+
 }
 
 linux-g++ {

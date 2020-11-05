@@ -31,6 +31,16 @@ echo "[INFO] bits is ${bitness}."
 if [[ $machine == "Win" ]]; then
 	PATH="${PATH}:/c/Program Files/Git/bin"
 	if [[ $bits == "64" ]]; then
+		PATH="/c/Qt/Qt5.12.0/5.12.0/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.1/5.12.1/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.2/5.12.2/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.3/5.12.3/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.4/5.12.4/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.5/5.12.5/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.6/5.12.6/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.7/5.12.7/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.8/5.12.8/msvc2017_64/bin:${PATH}"
+		PATH="/c/Qt/Qt5.12.9/5.12.9/msvc2017_64/bin:${PATH}"
 		PATH="${PATH}:/c/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin"
 		path_source_app="${dirname}/../build/win64/bin/release/"
 		path_source_lib="${dirname}/../libs/QAdvancedDocking.git/lib/qtadvanceddocking.dll"
@@ -42,6 +52,7 @@ if [[ $machine == "Win" ]]; then
 	fi
 	PATH="${PATH}:/c/Qt/QtIFW-2.0.5/bin"
 	PATH="${PATH}:/c/Qt/QtIFW-3.1.1/bin"
+	PATH="${PATH}:/c/Qt/QtIFW-3.2.2/bin"
 else
 	if [[ $bits == "64" ]]; then
 		PATH="/opt/Qt5.12.1/5.12.1/gcc_64/bin:${PATH}"
@@ -56,8 +67,10 @@ else
 	fi
 	PATH="${PATH}:/home/${USER}/Qt/QtIFW-2.0.5/bin"
 	PATH="${PATH}:/home/${USER}/Qt/QtIFW-3.1.1/bin"
+	PATH="${PATH}:/home/${USER}/Qt/QtIFW-3.2.2/bin"
 	PATH="${PATH}:/root/Qt/QtIFW-3.1.1/bin"
 	PATH="${PATH}:/opt/QtIFW-3.1.1/bin"
+	PATH="${PATH}:/opt/QtIFW-3.2.2/bin"
 fi
 echo "[INFO] will copy binaries from ${path_source_app}"
 
