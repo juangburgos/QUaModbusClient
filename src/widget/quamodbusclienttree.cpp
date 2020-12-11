@@ -1004,10 +1004,14 @@ void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
 		cliTcp->setNetworkAddress(widgetNewClient->ipAddress());
 		cliTcp->setNetworkPort(widgetNewClient->networkPort());
 		// start connecting to client if keepConnecting was set to true
+		// NOTE : removed, because is not the same "keep connecting after failure" than
+		//        "auto connect at startup", which should be handled at higher level in the app
+		/*
 		if (cliTcp->getKeepConnecting())
 		{
 			cliTcp->connectDevice();
 		}
+		*/
 	}
 	break;
 	case QModbusClientType::Serial:
@@ -1033,10 +1037,14 @@ void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
 		cliSerial->setDataBits(widgetNewClient->dataBits());
 		cliSerial->setStopBits(widgetNewClient->stopBits());
 		// start connecting to client if keepConnecting was set to true
+		// NOTE : removed, because is not the same "keep connecting after failure" than
+		//        "auto connect at startup", which should be handled at higher level in the app
+		/*
 		if (cliSerial->getKeepConnecting())
 		{
 			cliSerial->connectDevice();
 		}
+		*/
 	}
 	break;
 	case QModbusClientType::Invalid:
