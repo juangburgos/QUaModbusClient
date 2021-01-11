@@ -89,6 +89,13 @@
       <item>
        <widget class="QLineEdit" name="lineEditFilterText"/>
       </item>
+      <item>
+       <widget class="QCheckBox" name="checkBoxCase">
+        <property name="text">
+         <string>Case Sensitive</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

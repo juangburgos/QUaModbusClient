@@ -230,6 +230,7 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			QModbusSelectType::Invalid;
 
 		// filter type
+		Qt::CaseSensitivity sensitive = ui->checkBoxCase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive;
 		bool show = false;
 		ComboOpts typeFilter = ui->comboBoxFilterType->currentData().value<ComboOpts>();
 		switch (typeFilter)
@@ -238,21 +239,21 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 			show = true;
 			if (type == QModbusSelectType::QUaModbusClient)
 			{
-				show = index.data().toString().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+				show = index.data().toString().contains(ui->lineEditFilterText->text(), sensitive);
 			}
 			break;
 		case QUaModbusClientTree::ComboOpts::Blocks:
 			show = true;
 			if (type == QModbusSelectType::QUaModbusDataBlock)
 			{
-				show = index.data().toString().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+				show = index.data().toString().contains(ui->lineEditFilterText->text(), sensitive);
 			}
 			break;
 		case QUaModbusClientTree::ComboOpts::Values:
 			show = true;
 			if (type == QModbusSelectType::QUaModbusValue)
 			{
-				show = index.data().toString().contains(ui->lineEditFilterText->text(), Qt::CaseInsensitive);
+				show = index.data().toString().contains(ui->lineEditFilterText->text(), sensitive);
 			}
 			break;
 		default:
@@ -1399,4 +1400,10 @@ QColor QUaModbusClientTree::colorLogInfo() const
 void QUaModbusClientTree::setColorLogInfo(const QColor& color)
 {
 	m_colorLogInfo = color;
+}
+
+void QUaModbusClientTree::on_checkBoxCase_toggled(bool checked)
+{
+	Q_UNUSED(checked);
+	m_proxyModbus.resetFilter();
 }

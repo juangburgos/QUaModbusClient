@@ -164,6 +164,8 @@ private slots:
 
     void on_lineEditFilterText_textChanged(const QString &arg1);
 
+    void on_checkBoxCase_toggled(bool checked);
+
 private:
     Ui::QUaModbusClientTree  * ui;
 	QUaModbusClientList      * m_listClients;
