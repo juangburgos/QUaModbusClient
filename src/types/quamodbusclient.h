@@ -113,6 +113,7 @@ signals:
 	void lastErrorChanged(const QModbusError &error);
 
 protected:
+	QMutex m_mutex;
 	QLambdaThreadWorker           m_workerThread;
 	QSharedPointer<QModbusClient> m_modbusClient;
 
@@ -129,7 +130,7 @@ private slots:
 	void on_errorChanged(QModbusError error);
 
 private:
-	QMutex m_mutex;
+	bool m_disconnectRequested;
 };
 
 typedef QUaModbusClient::ClientType QModbusClientType;

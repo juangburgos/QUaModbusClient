@@ -41,32 +41,38 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 
 QUaProperty * QUaModbusTcpClient::networkAddress() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusTcpClient*>(this)->m_mutex));
 	return const_cast<QUaModbusTcpClient*>(this)->browseChild<QUaProperty>("NetworkAddress");
 }
 
 QUaProperty * QUaModbusTcpClient::networkPort() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusTcpClient*>(this)->m_mutex));
 	return const_cast<QUaModbusTcpClient*>(this)->browseChild<QUaProperty>("NetworkPort");
 }
 
 QString QUaModbusTcpClient::getNetworkAddress() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusTcpClient*>(this)->m_mutex));
 	return this->networkAddress()->value().toString();
 }
 
 void QUaModbusTcpClient::setNetworkAddress(const QString & strNetworkAddress)
 {
+	QMutexLocker locker(&m_mutex);
 	this->networkAddress()->setValue(strNetworkAddress);
 	this->on_networkAddressChanged(strNetworkAddress);
 }
 
 quint16 QUaModbusTcpClient::getNetworkPort() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusTcpClient*>(this)->m_mutex));
 	return this->networkPort()->value().value<quint16>();
 }
 
 void QUaModbusTcpClient::setNetworkPort(const quint16 & networkPort)
 {
+	QMutexLocker locker(&m_mutex);
 	this->networkPort()->setValue(networkPort);
 	this->on_networkPortChanged(networkPort);
 }

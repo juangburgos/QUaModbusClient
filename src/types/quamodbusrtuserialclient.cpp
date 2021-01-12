@@ -62,26 +62,31 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 
 QUaProperty * QUaModbusRtuSerialClient::comPort() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return const_cast<QUaModbusRtuSerialClient*>(this)->browseChild<QUaProperty>("ComPort");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::parity() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return const_cast<QUaModbusRtuSerialClient*>(this)->browseChild<QUaProperty>("Parity");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::baudRate() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return const_cast<QUaModbusRtuSerialClient*>(this)->browseChild<QUaProperty>("BaudRate");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::dataBits() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return const_cast<QUaModbusRtuSerialClient*>(this)->browseChild<QUaProperty>("DataBits");
 }
 
 QUaProperty * QUaModbusRtuSerialClient::stopBits() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return const_cast<QUaModbusRtuSerialClient*>(this)->browseChild<QUaProperty>("StopBits");
 }
 
@@ -357,12 +362,14 @@ void QUaModbusRtuSerialClient::on_stopBitsChanged(const QVariant & value)
 
 QString QUaModbusRtuSerialClient::getComPort() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	auto key = this->comPort()->value().toInt();
 	return QUaModbusRtuSerialClient::EnumComPorts().value(key).displayName.text();
 }
 
 void QUaModbusRtuSerialClient::setComPort(const QString & strComPort)
 {
+	QMutexLocker locker(&m_mutex);
 	auto comPort = QUaModbusRtuSerialClient::EnumComPorts().key(
 		{ 
 			{ "", strComPort.toUtf8() },
@@ -374,55 +381,65 @@ void QUaModbusRtuSerialClient::setComPort(const QString & strComPort)
 
 int QUaModbusRtuSerialClient::getComPortKey() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return this->comPort()->value().toInt();
 }
 
 void QUaModbusRtuSerialClient::setComPortKey(const int & comPort)
 {
+	QMutexLocker locker(&m_mutex);
 	this->comPort()->setValue(comPort);
 	this->on_comPortChanged(comPort);
 }
 
 QParity QUaModbusRtuSerialClient::getParity() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return this->parity()->value().value<QParity>();
 }
 
 void QUaModbusRtuSerialClient::setParity(const QParity & parity)
 {
+	QMutexLocker locker(&m_mutex);
 	this->parity()->setValue(parity);
 	this->on_parityChanged(parity);
 }
 
 QBaudRate QUaModbusRtuSerialClient::getBaudRate() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return this->baudRate()->value().value<QBaudRate>();
 }
 
 void QUaModbusRtuSerialClient::setBaudRate(const QBaudRate & baudRate)
 {
+	QMutexLocker locker(&m_mutex);
 	this->baudRate()->setValue(baudRate);
 	this->on_baudRateChanged(baudRate);
 }
 
 QDataBits QUaModbusRtuSerialClient::getDataBits() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return this->dataBits()->value().value<QDataBits>();
 }
 
 void QUaModbusRtuSerialClient::setDataBits(const QDataBits & dataBits)
 {
+	QMutexLocker locker(&m_mutex);
 	this->dataBits()->setValue(dataBits);
 	this->on_dataBitsChanged(dataBits);
 }
 
 QStopBits QUaModbusRtuSerialClient::getStopBits() const
 {
+	QMutexLocker locker(&(const_cast<QUaModbusRtuSerialClient*>(this)->m_mutex));
 	return this->stopBits()->value().value<QStopBits>();
 }
 
 void QUaModbusRtuSerialClient::setStopBits(const QStopBits & stopBits)
 {
+	QMutexLocker locker(&m_mutex);
 	this->stopBits()->setValue(stopBits);
 	this->on_stopBitsChanged(stopBits);
 }

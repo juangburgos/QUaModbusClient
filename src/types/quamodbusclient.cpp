@@ -13,6 +13,7 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 #endif // !QUA_ACCESS_CONTROL
 	, m_mutex(QMutex::Recursive)
 {
+	m_disconnectRequested = false;
 	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusError>("QModbusError");
@@ -92,6 +93,11 @@ void QUaModbusClient::remove()
 void QUaModbusClient::connectDevice()
 {
 	QMutexLocker locker(&m_mutex);
+	// check if same
+	if (this->getState() == QModbusState::ConnectedState)
+	{
+		return;
+	}
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
 		m_modbusClient->connectDevice();
@@ -101,9 +107,17 @@ void QUaModbusClient::connectDevice()
 void QUaModbusClient::disconnectDevice()
 {
 	QMutexLocker locker(&m_mutex);
+	// check if same
+	if (this->getState() == QModbusState::UnconnectedState)
+	{
+		return;
+	}
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
+		m_disconnectRequested = true;
 		m_modbusClient->disconnectDevice();
+		// TODO : reset pointer in order to reduce "ClosingState" large timeouts 
+		//        for requested disconnections on unexisting servers
 	});
 }
 
@@ -232,10 +246,11 @@ void QUaModbusClient::on_stateChanged(QModbusState state)
 		this->serverAddress()->setWriteAccess(true);
 		// keep connecting if desired
 		bool keepConnecting = this->keepConnecting()->value().toBool();
-		if (keepConnecting)
+		if (keepConnecting && !m_disconnectRequested)
 		{
 			this->connectDevice();
 		}
+		m_disconnectRequested = false;
 	}
 	else
 	{
