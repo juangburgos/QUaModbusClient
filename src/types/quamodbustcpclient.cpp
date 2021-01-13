@@ -68,7 +68,7 @@ void QUaModbusTcpClient::setNetworkPort(const quint16 & networkPort)
 
 void QUaModbusTcpClient::resetModbusClient()
 {
-	m_workerThread.execInThread([this]() {
+    m_workerThread.execInThread([this]() {
 		// instantiate in thread so it runs on the thread
 		m_modbusClient.reset(new QModbusTcpClient(nullptr), [](QObject* client) {
 			client->deleteLater();
@@ -77,7 +77,7 @@ void QUaModbusTcpClient::resetModbusClient()
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, this->getNetworkAddress());
 		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter   , this->getNetworkPort   ());
 		// setup client (call base class method)
-		this->QUaModbusClient::resetModbusClient();
+        this->QUaModbusClient::resetModbusClient();
 		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusTcpClient::on_stateChanged, Qt::QueuedConnection);
 	});
 }

@@ -105,6 +105,9 @@ public:
 
 	QUaModbusClientList * list() const;
 
+    // Fix for GCC : cannot be protected or "virtual is protected within this context" error
+    virtual void resetModbusClient();
+
 signals:
 	// C++ API
 	void serverAddressChanged (const quint8 &serverAddress );
@@ -116,8 +119,6 @@ protected:
 	QMutex m_mutex;
 	QLambdaThreadWorker           m_workerThread;
 	QSharedPointer<QModbusClient> m_modbusClient;
-
-	virtual void resetModbusClient();
 
 	// XML import / export
 	// NOTE : cannot be pure virtual, else moc fails
