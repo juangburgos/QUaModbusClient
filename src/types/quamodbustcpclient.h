@@ -37,6 +37,7 @@ signals:
 	void networkPortChanged(const quint16 &networkPort);
 
 protected:
+	void resetModbusClient() override;
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;
 	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs) override;

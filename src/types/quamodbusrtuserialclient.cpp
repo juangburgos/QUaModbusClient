@@ -29,21 +29,7 @@ QUaModbusRtuSerialClient::QUaModbusRtuSerialClient(QUaServer *server)
 	dataBits()->setWriteAccess(true);
 	stopBits()->setWriteAccess(true);
 	// instantiate client
-	m_workerThread.execInThread([this]() {
-		// instantiate in thread so it runs on the thread
-		m_modbusClient.reset(new QModbusRtuSerialMaster(nullptr), [](QObject * client) {
-			client->deleteLater();
-		});
-		// defaults
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, QString(QUaModbusRtuSerialClient::EnumComPorts().value(0).displayName.text()));
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialParityParameter  , QSerialPort::EvenParity);
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, QSerialPort::Baud19200 );
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, QSerialPort::Data8     );
-		m_modbusClient->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, QSerialPort::OneStop   );
-		// setup client (call base class method)
-		this->setupModbusClient();
-		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusRtuSerialClient::on_stateChanged, Qt::QueuedConnection);
-	});
+	this->resetModbusClient();
 	// handle state changes
 	QObject::connect(comPort (), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_comPortChanged , Qt::QueuedConnection);
 	QObject::connect(parity  (), &QUaBaseVariable::valueChanged, this, &QUaModbusRtuSerialClient::on_parityChanged  , Qt::QueuedConnection);
@@ -107,6 +93,25 @@ QUaEnumMap QUaModbusRtuSerialClient::EnumComPorts()
 		);
 	}
 	return mapPorts;
+}
+
+void QUaModbusRtuSerialClient::resetModbusClient()
+{
+	m_workerThread.execInThread([this]() {
+		// instantiate in thread so it runs on the thread
+		m_modbusClient.reset(new QModbusRtuSerialMaster(nullptr), [](QObject* client) {
+			client->deleteLater();
+		});
+		// defaults
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialPortNameParameter, this->getComPort ());
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialParityParameter  , this->getParity  ());
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialBaudRateParameter, this->getBaudRate());
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, this->getDataBits());
+		m_modbusClient->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, this->getStopBits());
+		// setup client (call base class method)
+		this->QUaModbusClient::resetModbusClient();
+		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusRtuSerialClient::on_stateChanged, Qt::QueuedConnection);
+	});
 }
 
 QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const

@@ -68,6 +68,7 @@ signals:
 	void stopBitsChanged(const QStopBits &stopBits  );
 
 protected:
+	void resetModbusClient() override;
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const override;
 	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs) override;

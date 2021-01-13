@@ -117,9 +117,10 @@ protected:
 	QLambdaThreadWorker           m_workerThread;
 	QSharedPointer<QModbusClient> m_modbusClient;
 
-	void setupModbusClient();
+	virtual void resetModbusClient();
 
 	// XML import / export
+	// NOTE : cannot be pure virtual, else moc fails
 	virtual QDomElement toDomElement  (QDomDocument & domDoc) const;
 	virtual void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
 

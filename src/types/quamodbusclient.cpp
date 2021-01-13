@@ -111,13 +111,18 @@ void QUaModbusClient::disconnectDevice()
 	if (this->getState() == QModbusState::UnconnectedState)
 	{
 		return;
-	}
+	}	
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
-		m_disconnectRequested = true;
-		m_modbusClient->disconnectDevice();
-		// TODO : reset pointer in order to reduce "ClosingState" large timeouts 
+		// NOTE : reset pointer in order to reduce "ClosingState" large timeouts 
 		//        for requested disconnections on unexisting servers
+		m_disconnectRequested = true;
+		emit m_modbusClient.data()->stateChanged(QModbusState::UnconnectedState);
+		QObject::disconnect(m_modbusClient.data());
+		QObject::disconnect(m_modbusClient.data(), &QModbusClient::stateChanged , this, &QUaModbusClient::on_stateChanged);
+		QObject::disconnect(m_modbusClient.data(), &QModbusClient::errorOccurred, this, &QUaModbusClient::on_errorChanged);			
+		m_modbusClient->disconnectDevice();	
+		this->resetModbusClient();
 	});
 }
 
@@ -187,7 +192,7 @@ void QUaModbusClient::setState(const QModbusState & state)
 	emit this->stateChanged(state);
 }
 
-void QUaModbusClient::setupModbusClient()
+void QUaModbusClient::resetModbusClient()
 {
 	// subscribe to events
 	QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged , this, &QUaModbusClient::on_stateChanged, Qt::QueuedConnection);

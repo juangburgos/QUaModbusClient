@@ -17,18 +17,7 @@ QUaModbusTcpClient::QUaModbusTcpClient(QUaServer *server)
 	networkAddress()->setWriteAccess(true);
 	networkPort   ()->setWriteAccess(true);
 	// instantiate client
-	m_workerThread.execInThread([this]() {
-		// instantiate in thread so it runs on the thread
-		m_modbusClient.reset(new QModbusTcpClient(nullptr), [](QObject * client) {
-			client->deleteLater();
-		});
-		// defaults
-		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, "127.0.0.1");
-		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter   , 502);
-		// setup client (call base class method)
-		this->setupModbusClient();
-		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusTcpClient::on_stateChanged, Qt::QueuedConnection);
-	});
+	this->resetModbusClient();
 	// handle changes
 	QObject::connect(networkAddress(), &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkAddressChanged, Qt::QueuedConnection);
 	QObject::connect(networkPort()   , &QUaBaseVariable::valueChanged, this, &QUaModbusTcpClient::on_networkPortChanged   , Qt::QueuedConnection);
@@ -75,6 +64,22 @@ void QUaModbusTcpClient::setNetworkPort(const quint16 & networkPort)
 	QMutexLocker locker(&m_mutex);
 	this->networkPort()->setValue(networkPort);
 	this->on_networkPortChanged(networkPort);
+}
+
+void QUaModbusTcpClient::resetModbusClient()
+{
+	m_workerThread.execInThread([this]() {
+		// instantiate in thread so it runs on the thread
+		m_modbusClient.reset(new QModbusTcpClient(nullptr), [](QObject* client) {
+			client->deleteLater();
+		});
+		// defaults
+		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkAddressParameter, this->getNetworkAddress());
+		m_modbusClient->setConnectionParameter(QModbusDevice::NetworkPortParameter   , this->getNetworkPort   ());
+		// setup client (call base class method)
+		this->QUaModbusClient::resetModbusClient();
+		QObject::connect(m_modbusClient.data(), &QModbusClient::stateChanged, this, &QUaModbusTcpClient::on_stateChanged, Qt::QueuedConnection);
+	});
 }
 
 QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
