@@ -2,7 +2,20 @@
 
 Modbus client to OPC UA Server Gateway.
 
-**Download** :
+**Easy to Configure**
+
+<p align="center">
+  <img src="./res/gifs/modbus01.gif">
+</p>
+
+**Maps Values to OPC UA**
+
+<p align="center">
+  <img src="./res/gifs/modbus02.gif">
+</p>
+
+
+# Download
 
 * [Windows Installer](https://github.com/juangburgos/QUaModbusClient/releases/tag/latest)
 
