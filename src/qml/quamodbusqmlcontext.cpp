@@ -12,6 +12,7 @@ QUaModbusValueQmlContext::QUaModbusValueQmlContext(QObject* parent) : QObject(pa
 {
 	m_value = nullptr;
 #ifdef QUA_ACCESS_CONTROL
+	m_canRead  = true;
 	m_canWrite = true;
 	auto context = qobject_cast<QUaModbusDataBlockQmlContext*>(parent);
 	Q_ASSERT(context);
@@ -22,12 +23,25 @@ QUaModbusValueQmlContext::QUaModbusValueQmlContext(QObject* parent) : QObject(pa
 QString QUaModbusValueQmlContext::valueId() const
 {
 	Q_ASSERT(m_value);
+	// NOTE : no need for AC because id can be read by js object key anyways
+//#ifdef QUA_ACCESS_CONTROL
+//	if (!m_canRead)
+//	{
+//		return QString();
+//	}
+//#endif // QUA_ACCESS_CONTROL
 	return m_value->browseName().name();
 }
 
 QModbusValueType QUaModbusValueQmlContext::type() const
 {
 	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusValueType::Invalid;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_value->getType();
 }
 
@@ -35,7 +49,7 @@ void QUaModbusValueQmlContext::setType(const int& type)
 {
 	Q_ASSERT(m_value);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -46,12 +60,24 @@ void QUaModbusValueQmlContext::setType(const int& type)
 quint16 QUaModbusValueQmlContext::registersUsed() const
 {
 	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return 0;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_value->getRegistersUsed();
 }
 
 int QUaModbusValueQmlContext::addressOffset() const
 {
 	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return -1;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_value->getAddressOffset();
 }
 
@@ -59,7 +85,7 @@ void QUaModbusValueQmlContext::setAddressOffset(const int& addressOffset)
 {
 	Q_ASSERT(m_value);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -70,6 +96,12 @@ void QUaModbusValueQmlContext::setAddressOffset(const int& addressOffset)
 QVariant QUaModbusValueQmlContext::value() const
 {
 	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QVariant();
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_value->getValue();
 }
 
@@ -77,7 +109,7 @@ void QUaModbusValueQmlContext::setValue(const QVariant& value)
 {
 	Q_ASSERT(m_value);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -88,10 +120,21 @@ void QUaModbusValueQmlContext::setValue(const QVariant& value)
 QModbusError QUaModbusValueQmlContext::lastError() const
 {
 	Q_ASSERT(m_value);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusError::UnknownError;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_value->getLastError();
 }
 
 #ifdef QUA_ACCESS_CONTROL
+bool QUaModbusValueQmlContext::canRead() const
+{
+	return m_canRead;
+}
+
 bool QUaModbusValueQmlContext::canWrite() const
 {
 	return m_canWrite;
@@ -106,13 +149,9 @@ void QUaModbusValueQmlContext::bindValue(QUaModbusValue* value)
 	// copy reference
 	m_value = value;
 #ifdef QUA_ACCESS_CONTROL
-	auto perms = m_value->permissionsObject();
-	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
 	QObject::connect(m_value, &QUaModbusClient::permissionsObjectChanged, this,
 		[this]() {
-			auto perms = m_value->permissionsObject();
-			m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
-			emit this->canWriteChanged();
+			this->updatePermissions();
 		});
 #endif // QUA_ACCESS_CONTROL
 	// susbcribe to changes
@@ -123,10 +162,25 @@ void QUaModbusValueQmlContext::bindValue(QUaModbusValue* value)
 	QObject::connect(m_value, &QUaModbusValue::lastErrorChanged    , this, &QUaModbusValueQmlContext::lastErrorChanged);
 }
 
-//void QUaModbusValueQmlContext::clear()
-//{
-//	// N/A
-//}
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusValueQmlContext::updateLoggedUser(QUaUser* loggedUser)
+{
+	// notify downstream
+	m_loggedUser = loggedUser;
+	emit this->userChanged();
+	// update members
+	this->updatePermissions();
+}
+
+void QUaModbusValueQmlContext::updatePermissions()
+{
+	auto perms = m_value->permissionsObject();
+	m_canRead = !perms ? true : perms->canUserRead(m_loggedUser);
+	emit this->canReadChanged();
+	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
+	emit this->canWriteChanged();
+}
+#endif // QUA_ACCESS_CONTROL
 
 /******************************************************************************************************
 */
@@ -137,6 +191,7 @@ QUaModbusDataBlockQmlContext::QUaModbusDataBlockQmlContext(QObject* parent) : QO
 	// forward signal
 	QObject::connect(this, &QUaModbusDataBlockQmlContext::valuesChanged, this, &QUaModbusDataBlockQmlContext::valuesModelChanged);
 #ifdef QUA_ACCESS_CONTROL
+	m_canRead  = true;
 	m_canWrite = true;
 	auto context = qobject_cast<QUaModbusClientQmlContext*>(parent);
 	Q_ASSERT(context);
@@ -147,12 +202,25 @@ QUaModbusDataBlockQmlContext::QUaModbusDataBlockQmlContext(QObject* parent) : QO
 QString QUaModbusDataBlockQmlContext::blockId() const
 {
 	Q_ASSERT(m_block);
+	// NOTE : no need for AC because id can be read by js object key anyways
+//#ifdef QUA_ACCESS_CONTROL
+//	if (!m_canRead)
+//	{
+//		return QString();
+//	}
+//#endif // QUA_ACCESS_CONTROL
 	return m_block->browseName().name();
 }
 
 QModbusDataBlockType QUaModbusDataBlockQmlContext::type() const
 {
 	Q_ASSERT(m_block);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusDataBlockType::Invalid;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_block->getType();
 }
 
@@ -161,7 +229,7 @@ void QUaModbusDataBlockQmlContext::setType(const int& type)
 
 	Q_ASSERT(m_block);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -172,6 +240,12 @@ void QUaModbusDataBlockQmlContext::setType(const int& type)
 int QUaModbusDataBlockQmlContext::address() const
 {
 	Q_ASSERT(m_block);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return -1;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_block->getAddress();
 }
 
@@ -180,7 +254,7 @@ void QUaModbusDataBlockQmlContext::setAddress(const int& address)
 
 	Q_ASSERT(m_block);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -191,6 +265,12 @@ void QUaModbusDataBlockQmlContext::setAddress(const int& address)
 quint32 QUaModbusDataBlockQmlContext::size() const
 {
 	Q_ASSERT(m_block);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return 0;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_block->getSize();
 }
 
@@ -198,7 +278,7 @@ void QUaModbusDataBlockQmlContext::setSize(const quint32& size)
 {
 	Q_ASSERT(m_block);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -209,6 +289,12 @@ void QUaModbusDataBlockQmlContext::setSize(const quint32& size)
 quint32 QUaModbusDataBlockQmlContext::samplingTime() const
 {
 	Q_ASSERT(m_block);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return 0;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_block->getSamplingTime();
 }
 
@@ -216,7 +302,7 @@ void QUaModbusDataBlockQmlContext::setSamplingTime(const quint32& samplingTime)
 {
 	Q_ASSERT(m_block);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -227,10 +313,21 @@ void QUaModbusDataBlockQmlContext::setSamplingTime(const quint32& samplingTime)
 QModbusError QUaModbusDataBlockQmlContext::lastError() const
 {
 	Q_ASSERT(m_block);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusError::UnknownError;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_block->getLastError();
 }
 
 #ifdef QUA_ACCESS_CONTROL
+bool QUaModbusDataBlockQmlContext::canRead() const
+{
+	return m_canRead;
+}
+
 bool QUaModbusDataBlockQmlContext::canWrite() const
 {
 	return m_canWrite;
@@ -244,10 +341,23 @@ QVariantMap QUaModbusDataBlockQmlContext::values()
 
 QVariant QUaModbusDataBlockQmlContext::valuesModel()
 {
-	QList<QObject*> retList;
-	for (auto valueVariant : m_values)
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
 	{
-		retList << valueVariant.value<QUaModbusValueQmlContext*>();
+		return QVariant();
+	}
+#endif // QUA_ACCESS_CONTROL
+	QList<QObject*> retList;
+	for (auto &valueVariant : m_values)
+	{
+		auto context = valueVariant.value<QUaModbusValueQmlContext*>();
+#ifdef QUA_ACCESS_CONTROL
+		if (!context->canRead())
+		{
+			continue;
+		}
+#endif // QUA_ACCESS_CONTROL
+		retList << context;
 	}
 	return QVariant::fromValue(retList);
 }
@@ -260,13 +370,9 @@ void QUaModbusDataBlockQmlContext::bindBlock(QUaModbusDataBlock* block)
 	// copy reference
 	m_block = block;
 #ifdef QUA_ACCESS_CONTROL
-	auto perms = m_block->permissionsObject();
-	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
 	QObject::connect(m_block, &QUaModbusClient::permissionsObjectChanged, this,
 		[this]() {
-			auto perms = m_block->permissionsObject();
-			m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
-			emit this->canWriteChanged();
+			this->updatePermissions();
 		});
 #endif // QUA_ACCESS_CONTROL
 	// susbcribe to changes
@@ -305,6 +411,27 @@ QUaUser* QUaModbusDataBlockQmlContext::loggedUser() const
 {
 	return m_loggedUser;
 }
+
+void QUaModbusDataBlockQmlContext::updateLoggedUser(QUaUser* loggedUser)
+{
+	// notify downstream
+	m_loggedUser = loggedUser;
+	emit this->userChanged();
+	// update members
+	this->updatePermissions();
+}
+
+void QUaModbusDataBlockQmlContext::updatePermissions()
+{
+	auto perms = m_block->permissionsObject();
+	m_canRead = !perms ? true : perms->canUserRead(m_loggedUser);
+	emit this->canReadChanged();
+	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
+	emit this->canWriteChanged();
+	// update models
+	// NOTE : also triggers valuesModelChanged
+	emit this->valuesChanged();
+}
 #endif // QUA_ACCESS_CONTROL
 
 void QUaModbusDataBlockQmlContext::bindValues(QUaModbusValueList* values)
@@ -330,37 +457,6 @@ void QUaModbusDataBlockQmlContext::bindValues(QUaModbusValueList* values)
 
 void QUaModbusDataBlockQmlContext::bindValue(QUaModbusValue* value)
 {
-	Q_ASSERT(value);
-	// NOTE : access control must be checked before anything due to early exit condition
-#ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-		QObject::connect(value, &QUaModbusClient::permissionsObjectChanged, this,
-			[this, value]() {
-				auto perms = value->permissionsObject();
-				auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-				// add or remove to/from exposed list
-				if (canRead)
-				{
-					this->addValue(value);
-				}
-				else
-				{
-					this->removeValue(value);
-				}
-			});
-	auto perms = value->permissionsObject();
-	auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-	if (!canRead)
-	{
-		return;
-	}
-#endif // QUA_ACCESS_CONTROL
-	// add to exposed list
-	this->addValue(value);
-}
-
-void QUaModbusDataBlockQmlContext::addValue(QUaModbusValue* value)
-{
 	// get id
 	QString strId = value->browseName().name();
 	Q_ASSERT(!strId.isEmpty() && !strId.isNull());
@@ -369,6 +465,12 @@ void QUaModbusDataBlockQmlContext::addValue(QUaModbusValue* value)
 	context->bindValue(value);
 	Q_ASSERT(!m_values.contains(strId));
 	m_values[strId] = QVariant::fromValue(context);
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+		QObject::connect(this, &QUaModbusDataBlockQmlContext::userChanged, context, [this, context]() {
+			context->updateLoggedUser(m_loggedUser);
+		});
+#endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
 	m_connections <<
 		QObject::connect(value, &QObject::destroyed, context,
@@ -396,6 +498,7 @@ QUaModbusClientQmlContext::QUaModbusClientQmlContext(QObject* parent) : QObject(
 	// forward signal
 	QObject::connect(this, &QUaModbusClientQmlContext::blocksChanged, this, &QUaModbusClientQmlContext::blocksModelChanged);
 #ifdef QUA_ACCESS_CONTROL
+	m_canRead  = true;
 	m_canWrite = true;
 	auto context = qobject_cast<QUaModbusQmlContext*>(parent);
 	Q_ASSERT(context);
@@ -406,18 +509,37 @@ QUaModbusClientQmlContext::QUaModbusClientQmlContext(QObject* parent) : QObject(
 QString QUaModbusClientQmlContext::clientId() const
 {
 	Q_ASSERT(m_client);
+	// NOTE : no need for AC because id can be read by js object key anyways
+//#ifdef QUA_ACCESS_CONTROL
+//	if (!m_canRead)
+//	{
+//		return QString();
+//	}
+//#endif // QUA_ACCESS_CONTROL
 	return m_client->browseName().name();
 }
 
 QModbusClientType QUaModbusClientQmlContext::type() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusClientType::Invalid;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_client->getType();
 }
 
 quint8 QUaModbusClientQmlContext::serverAddress() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return 0;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_client->getServerAddress();
 }
 
@@ -425,7 +547,7 @@ void QUaModbusClientQmlContext::setServerAddress(const quint8& serverAddress)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -436,6 +558,12 @@ void QUaModbusClientQmlContext::setServerAddress(const quint8& serverAddress)
 bool QUaModbusClientQmlContext::keepConnecting() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return false;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_client->getKeepConnecting();
 }
 
@@ -443,7 +571,7 @@ void QUaModbusClientQmlContext::setKeepConnecting(const bool& keepConnecting)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -454,16 +582,33 @@ void QUaModbusClientQmlContext::setKeepConnecting(const bool& keepConnecting)
 QModbusState QUaModbusClientQmlContext::state() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusState::UnconnectedState;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_client->getState();
 }
 
 QModbusError QUaModbusClientQmlContext::lastError() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QModbusError::UnknownError;
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_client->getLastError();
 }
 
 #ifdef QUA_ACCESS_CONTROL
+bool QUaModbusClientQmlContext::canRead() const
+{
+	return m_canRead;
+}
+
 bool QUaModbusClientQmlContext::canWrite() const
 {
 	return m_canWrite;
@@ -473,10 +618,16 @@ bool QUaModbusClientQmlContext::canWrite() const
 QString QUaModbusClientQmlContext::networkAddress() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QString();
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
 	if (!tcp)
 	{
-		return "";
+		return QString();
 	}
 	return tcp->getNetworkAddress();
 }
@@ -485,7 +636,7 @@ void QUaModbusClientQmlContext::setNetworkAddress(const QString& networkAddress)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -501,6 +652,12 @@ void QUaModbusClientQmlContext::setNetworkAddress(const QString& networkAddress)
 quint16 QUaModbusClientQmlContext::networkPort() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return 0;
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto tcp = qobject_cast<QUaModbusTcpClient*>(m_client);
 	if (!tcp)
 	{
@@ -513,7 +670,7 @@ void QUaModbusClientQmlContext::setNetworkPort(const quint16& networkPort)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -529,10 +686,16 @@ void QUaModbusClientQmlContext::setNetworkPort(const quint16& networkPort)
 QString QUaModbusClientQmlContext::comPort() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QString();
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
 	if (!serial)
 	{
-		return "";
+		return QString();
 	}
 	return serial->getComPort();
 }
@@ -541,7 +704,7 @@ void QUaModbusClientQmlContext::setComPort(const QString& strComPort)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -556,6 +719,12 @@ void QUaModbusClientQmlContext::setComPort(const QString& strComPort)
 
 QParity QUaModbusClientQmlContext::parity() const
 {
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QParity::UnknownParity;
+	}
+#endif // QUA_ACCESS_CONTROL
 	Q_ASSERT(m_client);
 	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
 	if (!serial)
@@ -569,7 +738,7 @@ void QUaModbusClientQmlContext::setParity(const int& parity)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -585,6 +754,12 @@ void QUaModbusClientQmlContext::setParity(const int& parity)
 QBaudRate QUaModbusClientQmlContext::baudRate() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QBaudRate::UnknownBaud;
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
 	if (!serial)
 	{
@@ -597,7 +772,7 @@ void QUaModbusClientQmlContext::setBaudRate(const int& baudRate)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -613,6 +788,12 @@ void QUaModbusClientQmlContext::setBaudRate(const int& baudRate)
 QDataBits QUaModbusClientQmlContext::dataBits() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QDataBits::UnknownDataBits;
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
 	if (!serial)
 	{
@@ -625,7 +806,7 @@ void QUaModbusClientQmlContext::setDataBits(const int& dataBits)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -641,6 +822,12 @@ void QUaModbusClientQmlContext::setDataBits(const int& dataBits)
 QStopBits QUaModbusClientQmlContext::stopBits() const
 {
 	Q_ASSERT(m_client);
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QStopBits::UnknownStopBits;
+	}
+#endif // QUA_ACCESS_CONTROL
 	auto serial = qobject_cast<QUaModbusRtuSerialClient*>(m_client);
 	if (!serial)
 	{
@@ -653,7 +840,7 @@ void QUaModbusClientQmlContext::setStopBits(const int& stopBits)
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -668,15 +855,34 @@ void QUaModbusClientQmlContext::setStopBits(const int& stopBits)
 
 QVariantMap QUaModbusClientQmlContext::blocks()
 {
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
+	{
+		return QVariantMap();
+	}
+#endif // QUA_ACCESS_CONTROL
 	return m_blocks;
 }
 
 QVariant QUaModbusClientQmlContext::blocksModel()
 {
-	QList<QObject*> retList;
-	for (auto blockVariant : m_blocks)
+#ifdef QUA_ACCESS_CONTROL
+	if (!m_canRead)
 	{
-		retList << blockVariant.value<QUaModbusDataBlockQmlContext*>();
+		return QVariant();
+	}
+#endif // QUA_ACCESS_CONTROL
+	QList<QObject*> retList;
+	for (auto &blockVariant : m_blocks)
+	{
+		auto context = blockVariant.value<QUaModbusDataBlockQmlContext*>();
+#ifdef QUA_ACCESS_CONTROL
+		if (!context->canRead())
+		{
+			continue;
+		}
+#endif // QUA_ACCESS_CONTROL
+		retList << context;
 	}
 	return QVariant::fromValue(retList);
 }
@@ -689,13 +895,9 @@ void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
 	// copy reference
 	m_client = client;
 #ifdef QUA_ACCESS_CONTROL
-	auto perms = m_client->permissionsObject();
-	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
 	QObject::connect(m_client, &QUaModbusClient::permissionsObjectChanged, this,
 		[this]() {
-			auto perms = m_client->permissionsObject();
-			m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);			
-			emit this->canWriteChanged();
+			this->updatePermissions();
 		});
 #endif // QUA_ACCESS_CONTROL
 	// susbcribe to changes
@@ -757,7 +959,7 @@ void QUaModbusClientQmlContext::connect()
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
@@ -769,13 +971,36 @@ void QUaModbusClientQmlContext::disconnect()
 {
 	Q_ASSERT(m_client);
 #ifdef QUA_ACCESS_CONTROL
-	if (!m_canWrite)
+	if (!m_canRead || !m_canWrite)
 	{
 		return;
 	}
 #endif // QUA_ACCESS_CONTROL
 	m_client->disconnectDevice();
 }
+
+#ifdef QUA_ACCESS_CONTROL
+void QUaModbusClientQmlContext::updateLoggedUser(QUaUser* loggedUser)
+{
+	// notify downstream
+	m_loggedUser = loggedUser;
+	emit this->userChanged();
+	// update members
+	this->updatePermissions();
+}
+
+void QUaModbusClientQmlContext::updatePermissions()
+{
+	auto perms = m_client->permissionsObject();
+	m_canRead = !perms ? true : perms->canUserRead(m_loggedUser);
+	emit this->canReadChanged();
+	m_canWrite = !perms ? true : perms->canUserWrite(m_loggedUser);
+	emit this->canWriteChanged();
+	// update models
+	// NOTE : also triggers blocksModelChanged
+	emit this->blocksChanged();
+}
+#endif // QUA_ACCESS_CONTROL
 
 void QUaModbusClientQmlContext::bindBlocks(QUaModbusDataBlockList* blocks)
 {
@@ -800,37 +1025,6 @@ void QUaModbusClientQmlContext::bindBlocks(QUaModbusDataBlockList* blocks)
 
 void QUaModbusClientQmlContext::bindBlock(QUaModbusDataBlock* block)
 {
-	Q_ASSERT(block);
-	// NOTE : access control must be checked before anything due to early exit condition
-#ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-		QObject::connect(block, &QUaModbusClient::permissionsObjectChanged, this,
-			[this, block]() {
-				auto perms = block->permissionsObject();
-				auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-				// add or remove block to/from exposed list
-				if (canRead)
-				{
-					this->addBlock(block);
-				}
-				else
-				{
-					this->removeBlock(block);
-				}
-			});
-	auto perms = block->permissionsObject();
-	auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-	if (!canRead)
-	{
-		return;
-	}
-#endif // QUA_ACCESS_CONTROL
-	// add block to exposed list
-	this->addBlock(block);
-}
-
-void QUaModbusClientQmlContext::addBlock(QUaModbusDataBlock* block)
-{
 	// get id
 	QString strId = block->browseName().name();
 	Q_ASSERT(!strId.isEmpty() && !strId.isNull());
@@ -839,6 +1033,12 @@ void QUaModbusClientQmlContext::addBlock(QUaModbusDataBlock* block)
 	context->bindBlock(block);
 	Q_ASSERT(!m_blocks.contains(strId));
 	m_blocks[strId] = QVariant::fromValue(context);
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+		QObject::connect(this, &QUaModbusClientQmlContext::userChanged, context, [this, context]() {
+			context->updateLoggedUser(m_loggedUser);
+		});
+#endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
 	m_connections <<
 		QObject::connect(block, &QObject::destroyed, context,
@@ -920,7 +1120,7 @@ QVariantMap QUaModbusQmlContext::clients()
 QVariant QUaModbusQmlContext::clientsModel()
 {
 	QList<QObject*> retList;
-	for (auto clientVariant : m_clients)
+	for (auto &clientVariant : m_clients)
 	{
 		retList << clientVariant.value<QUaModbusClientQmlContext*>();
 	}
@@ -946,13 +1146,6 @@ void QUaModbusQmlContext::bindClients(QUaModbusClientList* clients)
 			Q_ASSERT(client);
 			this->bindClient(client);
 		}/*, Qt::QueuedConnection // NOTE : do not queue or clients will not be available on view load */);
-#ifdef QUA_ACCESS_CONTROL
-	m_connections << QObject::connect(this, &QUaModbusQmlContext::loggedUserChanged, clients,
-		[this, clients]() {
-			this->clear();
-			this->bindClients(clients);
-		});
-#endif // QUA_ACCESS_CONTROL
 }
 
 void QUaModbusQmlContext::clear()
@@ -982,43 +1175,13 @@ QUaUser* QUaModbusQmlContext::loggedUser() const
 
 void QUaModbusQmlContext::on_loggedUserChanged(QUaUser* user)
 {
+	// notify downstream
 	m_loggedUser = user;
-	emit this->loggedUserChanged(QPrivateSignal());
+	emit this->userChanged();
 }
 #endif
 
 void QUaModbusQmlContext::bindClient(QUaModbusClient* client)
-{
-	Q_ASSERT(client);
-	// NOTE : access control must be checked before anything due to early exit condition
-#ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-	QObject::connect(client, &QUaModbusClient::permissionsObjectChanged, this,
-		[this, client]() {
-			auto perms = client->permissionsObject();
-			auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-			// add or remove client to/from exposed list
-			if (canRead)
-			{
-				this->addClient(client);
-			}
-			else
-			{
-				this->removeClient(client);
-			}
-		});
-	auto perms = client->permissionsObject();
-	auto canRead = !perms ? true : perms->canUserRead(m_loggedUser);
-	if (!canRead)
-	{
-		return;
-	}
-#endif // QUA_ACCESS_CONTROL
-	// add client to exposed list
-	this->addClient(client);
-}
-
-void QUaModbusQmlContext::addClient(QUaModbusClient* client)
 {
 	// get client id
 	QString strId = client->browseName().name();
@@ -1028,6 +1191,12 @@ void QUaModbusQmlContext::addClient(QUaModbusClient* client)
 	context->bindClient(client);
 	Q_ASSERT(!m_clients.contains(strId));
 	m_clients[strId] = QVariant::fromValue(context);
+#ifdef QUA_ACCESS_CONTROL
+	m_connections <<
+		QObject::connect(this, &QUaModbusQmlContext::userChanged, context, [this, context]() {
+			context->updateLoggedUser(m_loggedUser);
+		});
+#endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
 	m_connections <<
 		QObject::connect(client, &QObject::destroyed, context,

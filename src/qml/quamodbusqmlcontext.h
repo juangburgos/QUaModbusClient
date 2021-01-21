@@ -36,6 +36,7 @@ class QUaModbusValueQmlContext : public QObject
     Q_PROPERTY(QVariant         value         READ value         WRITE setValue         NOTIFY valueChanged)
     Q_PROPERTY(QModbusError     lastError     READ lastError                            NOTIFY lastErrorChanged)
 #ifdef QUA_ACCESS_CONTROL                                                                                    
+    Q_PROPERTY(bool             canRead       READ canRead                              NOTIFY canReadChanged)
     Q_PROPERTY(bool             canWrite      READ canWrite                             NOTIFY canWriteChanged)
 #endif // QUA_ACCESS_CONTROL
 public:
@@ -60,6 +61,7 @@ public:
     QModbusError     lastError() const;
 
 #ifdef QUA_ACCESS_CONTROL
+    bool canRead() const;
     bool canWrite() const;
 #endif // QUA_ACCESS_CONTROL
 
@@ -76,14 +78,20 @@ signals:
     void valueChanged();
     void lastErrorChanged();
 #ifdef QUA_ACCESS_CONTROL
+    void canReadChanged();
     void canWriteChanged();
-#endif // QUA_ACCESS_CONTROL
-
+    void userChanged();
 public slots:
+    void updateLoggedUser(QUaUser* loggedUser);
+    void updatePermissions();
+#else
+public slots:
+#endif // QUA_ACCESS_CONTROL
 
 private:
     QUaModbusValue* m_value;
 #ifdef QUA_ACCESS_CONTROL
+    bool m_canRead;
     bool m_canWrite;
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
@@ -103,7 +111,8 @@ class QUaModbusDataBlockQmlContext : public QObject
     Q_PROPERTY(quint32              samplingTime READ samplingTime WRITE setSamplingTime NOTIFY samplingTimeChanged)
     //Q_PROPERTY(QVector<quint16>     data         READ data         NOTIFY dataChanged)
     Q_PROPERTY(QModbusError         lastError    READ lastError    NOTIFY lastErrorChanged)
-#ifdef QUA_ACCESS_CONTROL                                                                                    
+#ifdef QUA_ACCESS_CONTROL                         
+    Q_PROPERTY(bool                 canRead      READ canRead      NOTIFY canReadChanged)
     Q_PROPERTY(bool                 canWrite     READ canWrite     NOTIFY canWriteChanged)
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusValueList
@@ -135,6 +144,7 @@ public:
     QModbusError lastError() const;
 
 #ifdef QUA_ACCESS_CONTROL
+    bool canRead() const;
     bool canWrite() const;
 #endif // QUA_ACCESS_CONTROL
 
@@ -160,17 +170,26 @@ signals:
     //void dataChanged();
     void lastErrorChanged();
 #ifdef QUA_ACCESS_CONTROL
+    void canReadChanged();
     void canWriteChanged();
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusValueList
     void valuesChanged();
     void valuesModelChanged();
 
+#ifdef QUA_ACCESS_CONTROL
+    void userChanged();
 public slots:
+    void updateLoggedUser(QUaUser* loggedUser);
+    void updatePermissions();
+#else
+public slots:
+#endif // QUA_ACCESS_CONTROL
 
 private:
     QUaModbusDataBlock* m_block;
 #ifdef QUA_ACCESS_CONTROL
+    bool m_canRead;
     bool m_canWrite;
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
@@ -179,7 +198,6 @@ private:
     QVariantMap m_values;
     void bindValues(QUaModbusValueList* values);
     void bindValue(QUaModbusValue* value);
-    void addValue(QUaModbusValue* value);
     void removeValue(QUaModbusValue* value);
 };
 
@@ -196,7 +214,8 @@ class QUaModbusClientQmlContext : public QObject
     Q_PROPERTY(bool              keepConnecting READ keepConnecting WRITE setKeepConnecting NOTIFY keepConnectingChanged)
     Q_PROPERTY(QModbusState      state          READ state          NOTIFY stateChanged)
     Q_PROPERTY(QModbusError      lastError      READ lastError      NOTIFY lastErrorChanged)
-#ifdef QUA_ACCESS_CONTROL                                                                                    
+#ifdef QUA_ACCESS_CONTROL
+    Q_PROPERTY(bool              canRead        READ canRead        NOTIFY canReadChanged)
     Q_PROPERTY(bool              canWrite       READ canWrite       NOTIFY canWriteChanged)
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusTcpClient
@@ -230,6 +249,7 @@ public:
     QModbusError lastError() const;
 
 #ifdef QUA_ACCESS_CONTROL
+    bool canRead() const;
     bool canWrite() const;
 #endif // QUA_ACCESS_CONTROL
 
@@ -278,6 +298,7 @@ signals:
     void stateChanged();
     void lastErrorChanged();
 #ifdef QUA_ACCESS_CONTROL
+    void canReadChanged();
     void canWriteChanged();
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusTcpClient
@@ -293,13 +314,21 @@ signals:
     void blocksChanged();
     void blocksModelChanged();
 
+#ifdef QUA_ACCESS_CONTROL
+    void userChanged();
 public slots:
+    void updateLoggedUser(QUaUser* loggedUser);
+    void updatePermissions();
+#else
+public slots:
+#endif // QUA_ACCESS_CONTROL
     void connect();
     void disconnect();
 
 private:
     QUaModbusClient* m_client;
 #ifdef QUA_ACCESS_CONTROL
+    bool m_canRead;
     bool m_canWrite;
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
@@ -308,7 +337,6 @@ private:
     QVariantMap m_blocks;
     void bindBlocks(QUaModbusDataBlockList* blocks);
     void bindBlock(QUaModbusDataBlock* block);
-    void addBlock(QUaModbusDataBlock* block);
     void removeBlock(QUaModbusDataBlock* block);
 };
 
@@ -346,8 +374,7 @@ signals:
     void clientsModelChanged();
 
 #ifdef QUA_ACCESS_CONTROL
-    // NOTE : internal signal
-    void loggedUserChanged(QPrivateSignal);
+    void userChanged();
 public slots:
     void on_loggedUserChanged(QUaUser* user);
 #else
@@ -359,7 +386,6 @@ private:
     QList<QMetaObject::Connection> m_connections;
 
     void bindClient(QUaModbusClient* client);
-    void addClient(QUaModbusClient* client);
     void removeClient(QUaModbusClient* client);
 
 #ifdef QUA_ACCESS_CONTROL
