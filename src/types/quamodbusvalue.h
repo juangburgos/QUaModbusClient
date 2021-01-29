@@ -172,6 +172,10 @@ private slots:
 
 private:
 	int m_loopId;
+	bool m_wellConfigured;
+	QModbusValueType m_typeCache;
+	int m_addressOffsetCache;
+	QModbusError m_lastErrorCache;
 	QUaProperty* m_type;
 	QUaProperty* m_registersUsed;
 	QUaProperty* m_addressOffset;
@@ -183,6 +187,8 @@ private:
 	QUaBaseDataVariable* m_lastError;
 
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
+
+	void updateWellConfigured(const QModbusValueType& type, const int& addressOffset);
 
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;

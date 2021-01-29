@@ -28,14 +28,17 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 #endif // !QUAMODBUS_NOCYCLIC_WRITE
 	m_value = nullptr;
 	m_lastError = nullptr;
+	m_typeCache = QModbusValueType::Invalid;
+	m_addressOffsetCache = -1; 
+	m_lastErrorCache = QModbusError::ConfigurationError;
 	type             ()->setDataTypeEnum(QMetaEnum::fromType<QModbusValueType>());
-	type             ()->setValue(QModbusValueType::Invalid);
+	type             ()->setValue(m_typeCache);
 	registersUsed    ()->setDataType(QMetaType::UShort);
 	registersUsed    ()->setValue(0);
 	addressOffset    ()->setDataType(QMetaType::Int);
-	addressOffset    ()->setValue(-1);
+	addressOffset    ()->setValue(m_addressOffsetCache);
 	lastError        ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
-	lastError        ()->setValue(QModbusError::ConfigurationError);
+	lastError        ()->setValue(m_lastErrorCache);
 	// set initial conditions
 	type             ()->setWriteAccess(true);
 	addressOffset    ()->setWriteAccess(true);
@@ -237,11 +240,14 @@ void QUaModbusValue::remove()
 
 void QUaModbusValue::on_typeChanged(const QVariant &value, const bool& networkChange)
 {
+	auto type = value.value<QModbusValueType>();
+	m_typeCache = type;
+	// update well configured
+	this->updateWellConfigured(type, this->getAddressOffset());
 	if (!networkChange)
 	{
 		return;
 	}
-	auto type = value.value<QModbusValueType>();
 	// convert to metatype to set as UA type
 	auto metaType = QUaModbusValue::typeToMeta(type);
 	this->value()->setDataType(metaType);
@@ -259,7 +265,7 @@ void QUaModbusValue::on_typeChanged(const QVariant &value, const bool& networkCh
 
 QModbusValueType QUaModbusValue::getType() const
 {
-	return const_cast<QUaModbusValue*>(this)->type()->value().value<QModbusValueType>();
+	return m_typeCache;
 }
 
 void QUaModbusValue::setType(const QModbusValueType & type)
@@ -267,7 +273,7 @@ void QUaModbusValue::setType(const QModbusValueType & type)
 	if (this->getType() == type)
 	{
 		return;
-	}
+	}	
 	this->type()->setValue(type);
 	this->on_typeChanged(type, true);
 }
@@ -279,7 +285,7 @@ quint16 QUaModbusValue::getRegistersUsed() const
 
 int QUaModbusValue::getAddressOffset() const
 {
-	return const_cast<QUaModbusValue*>(this)->addressOffset()->value().toInt();
+	return m_addressOffsetCache;
 }
 
 void QUaModbusValue::setAddressOffset(const int & addressOffset)
@@ -302,7 +308,7 @@ void QUaModbusValue::setValue(const QVariant & value)
 
 QModbusError QUaModbusValue::getLastError() const
 {
-	return const_cast<QUaModbusValue*>(this)->lastError()->value().value<QModbusError>();
+	return m_lastErrorCache;
 }
 
 void QUaModbusValue::setLastError(const QModbusError & error)
@@ -321,6 +327,10 @@ bool QUaModbusValue::isWritable() const
 
 void QUaModbusValue::on_addressOffsetChanged(const QVariant & value, const bool& networkChange)
 {
+	auto offset = value.toInt();
+	m_addressOffsetCache = offset;
+	// update well configured
+	this->updateWellConfigured(this->getType(), offset);
 	if (!networkChange)
 	{
 		return;
@@ -330,7 +340,7 @@ void QUaModbusValue::on_addressOffsetChanged(const QVariant & value, const bool&
 	auto blockData    = this->block()->getData();
 	this->setValue(blockData, blockError);
 	// emit
-	emit this->addressOffsetChanged(value.toInt());
+	emit this->addressOffsetChanged(offset);
 }
 
 // OPC UA network change
@@ -455,11 +465,12 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 
 void QUaModbusValue::on_updateLastError(const QModbusError & error)
 {
-	// avoid update or emit if no change, improves performance
-	if (error == this->getLastError())
+	// avoid update or emit if no change, improves performance	
+	if (error == m_lastErrorCache)
 	{
 		return;
 	}
+	m_lastErrorCache = error;
 	// update
 	this->lastError()->setValue(error);
 	// emit
@@ -470,32 +481,13 @@ void QUaModbusValue::on_updateLastError(const QModbusError & error)
 void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError &blockError)
 {
 	// check configuration
-	auto type = this->getType(); // TODO : change to event-based with flag
-	if (type == QModbusValueType::Invalid)
+	if (!m_wellConfigured)
 	{
-		this->value()->setWriteAccess(false);
-		this->setLastError(QModbusError::ConfigurationError);
 		return;
-	}
-	int addressOffset = this->getAddressOffset(); // TODO : change to event-based with flag
-	if (addressOffset < 0)
-	{
-		this->value()->setWriteAccess(false);
-		this->setLastError(QModbusError::ConfigurationError);
-		return;
-	}
-	// set writable if block type allows it
-	auto blockType = this->block()->getType(); // TODO : change to event-based with flag
-	if (blockType == QUaModbusDataBlock::RegisterType::Coils ||
-		blockType == QUaModbusDataBlock::RegisterType::HoldingRegisters)
-	{
-		this->value()->setWriteAccess(true);
-	}
-	else
-	{
-		this->value()->setWriteAccess(false);
 	}
 	// check if fits in block
+	auto type = this->getType();
+	int addressOffset = this->getAddressOffset();
 	int typeBlockSize = QUaModbusValue::typeBlockSize(type);
 	if (addressOffset + typeBlockSize > block.count())
 	{
@@ -503,13 +495,16 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 		this->setLastError(newError);
 		return;
 	}
-	// convert value and set it, but leave block error code
-	this->setLastError(blockError); // TODO : change to event-based
 	// do not update value if error
 	if (blockError != QModbusError::NoError)
 	{
 		return;
 	}
+	if (this->getLastError() != QModbusError::NoError)
+	{
+		this->setLastError(QModbusError::NoError);
+	}
+	// convert to value
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	// avoid update or emit if no change, improves performance
 	if (this->getValue() == value)
@@ -520,6 +515,26 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	this->value()->setValue(value);
 	// emit
 	emit this->valueChanged(value);
+}
+
+void QUaModbusValue::updateWellConfigured(const QModbusValueType& type, const int& addressOffset)
+{
+	if (type == QModbusValueType::Invalid || addressOffset < 0)
+	{
+		this->value()->setWriteAccess(false);
+		this->setLastError(QModbusError::ConfigurationError);
+		m_wellConfigured = false;
+	}
+	else
+	{
+		auto blkType = this->block()->getType();
+		this->value()->setWriteAccess(
+			blkType == QUaModbusDataBlock::RegisterType::Coils ||
+			blkType == QUaModbusDataBlock::RegisterType::HoldingRegisters
+		);
+		this->setLastError(QModbusError::ConnectionError);
+		m_wellConfigured = true;
+	}
 }
 
 QDomElement QUaModbusValue::toDomElement(QDomDocument & domDoc) const

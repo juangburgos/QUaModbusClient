@@ -161,6 +161,20 @@ void QUaModbusDataBlock::on_typeChanged(const QVariant &value, const bool& netwo
 	}
 	// emit
 	emit this->typeChanged(type);
+	// update permissions in values
+	auto values = this->values()->values();
+	for (auto value : values)
+	{
+		if (type == QUaModbusDataBlock::RegisterType::Coils ||
+			type == QUaModbusDataBlock::RegisterType::HoldingRegisters)
+		{
+			value->value()->setWriteAccess(true);
+		}
+		else
+		{
+			value->value()->setWriteAccess(false);
+		}
+	}
 }
 
 void QUaModbusDataBlock::on_addressChanged(const QVariant & value, const bool& networkChange)
