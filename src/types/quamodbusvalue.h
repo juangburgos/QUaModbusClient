@@ -79,14 +79,14 @@ public:
 
 	// UA properties
 
-	QUaProperty * type() const;
-	QUaProperty * registersUsed() const;
-	QUaProperty * addressOffset() const;
+	QUaProperty * type();
+	QUaProperty * registersUsed();
+	QUaProperty * addressOffset();
 
 	// UA variables
 
-	QUaBaseDataVariable * value() const;
-	QUaBaseDataVariable * lastError() const;
+	QUaBaseDataVariable * value();
+	QUaBaseDataVariable * lastError();
 
 	// UA methods
 
@@ -115,8 +115,8 @@ public:
 	Q_ENUM(CyclicWriteMode)
 	typedef QUaModbusValue::CyclicWriteMode QModbusCyclicWriteMode;
 
-	QUaProperty* cyclicWritePeriod() const;
-	QUaProperty* cyclicWriteMode() const;
+	QUaProperty* cyclicWritePeriod();
+	QUaProperty* cyclicWriteMode();
 
 	quint32 getCyclicWritePeriod() const;
 	void setCyclicWritePeriod(const quint32& cyclicWritePeriod);
@@ -172,6 +172,16 @@ private slots:
 
 private:
 	int m_loopId;
+	QUaProperty* m_type;
+	QUaProperty* m_registersUsed;
+	QUaProperty* m_addressOffset;
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	QUaProperty* m_cyclicWritePeriod;
+	QUaProperty* m_cyclicWriteMode;
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
+	QUaBaseDataVariable* m_value;
+	QUaBaseDataVariable* m_lastError;
+
 	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
 
 	// XML import / export

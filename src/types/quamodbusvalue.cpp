@@ -19,6 +19,15 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 {
 	// set defaults
 	m_loopId = 0;
+	m_type = nullptr;
+	m_registersUsed = nullptr;
+	m_addressOffset = nullptr;
+#ifndef QUAMODBUS_NOCYCLIC_WRITE
+	m_cyclicWritePeriod = nullptr;
+	m_cyclicWriteMode = nullptr;
+#endif // !QUAMODBUS_NOCYCLIC_WRITE
+	m_value = nullptr;
+	m_lastError = nullptr;
 	type             ()->setDataTypeEnum(QMetaEnum::fromType<QModbusValueType>());
 	type             ()->setValue(QModbusValueType::Invalid);
 	registersUsed    ()->setDataType(QMetaType::UShort);
@@ -60,35 +69,55 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 #endif // !QUAMODBUS_NOCYCLIC_WRITE
 }
 
-QUaProperty * QUaModbusValue::type() const
+QUaProperty * QUaModbusValue::type()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("Type");
+	if (!m_type)
+	{
+		m_type = this->browseChild<QUaProperty>("Type");
+	}
+	return m_type;
 }
 
-QUaProperty * QUaModbusValue::registersUsed() const
+QUaProperty * QUaModbusValue::registersUsed()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("RegistersUsed");
+	if (!m_registersUsed)
+	{
+		m_registersUsed = this->browseChild<QUaProperty>("RegistersUsed");
+	}
+	return m_registersUsed;
 }
 
-QUaProperty * QUaModbusValue::addressOffset() const
+QUaProperty * QUaModbusValue::addressOffset()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("AddressOffset");
+	if (!m_addressOffset)
+	{
+		m_addressOffset = this->browseChild<QUaProperty>("AddressOffset");
+	}
+	return m_addressOffset;
 }
 
 #ifndef QUAMODBUS_NOCYCLIC_WRITE
-QUaProperty* QUaModbusValue::cyclicWritePeriod() const
+QUaProperty* QUaModbusValue::cyclicWritePeriod()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("CyclicWritePeriod");
+	if (!m_cyclicWritePeriod)
+	{
+		m_cyclicWritePeriod = this->browseChild<QUaProperty>("CyclicWritePeriod");
+	}
+	return m_cyclicWritePeriod;
 }
 
-QUaProperty* QUaModbusValue::cyclicWriteMode() const
+QUaProperty* QUaModbusValue::cyclicWriteMode()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaProperty>("CyclicWriteMode");
+	if (!m_cyclicWriteMode)
+	{
+		m_cyclicWriteMode = this->browseChild<QUaProperty>("CyclicWriteMode");
+	}
+	return m_cyclicWriteMode;
 }
 
 quint32 QUaModbusValue::getCyclicWritePeriod() const
 {
-	return this->cyclicWritePeriod()->value<quint32>();
+	return const_cast<QUaModbusValue*>(this)->cyclicWritePeriod()->value<quint32>();
 }
 
 void QUaModbusValue::setCyclicWritePeriod(const quint32& cyclicWritePeriod)
@@ -99,7 +128,7 @@ void QUaModbusValue::setCyclicWritePeriod(const quint32& cyclicWritePeriod)
 
 QModbusCyclicWriteMode QUaModbusValue::getCyclicWriteMode() const
 {
-	return this->cyclicWriteMode()->value().value<QModbusCyclicWriteMode>();
+	return const_cast<QUaModbusValue*>(this)->cyclicWriteMode()->value().value<QModbusCyclicWriteMode>();
 }
 
 void QUaModbusValue::setCyclicWriteMode(const QModbusCyclicWriteMode& cyclicWriteMode)
@@ -129,6 +158,11 @@ void QUaModbusValue::on_cyclicWritePeriodChanged(const QVariant& value, const bo
 	}
 	m_loopId = this->client()->m_workerThread.startLoopInThread(
 	[this]() {
+		auto state = this->client()->getState();
+		if (state != QModbusState::ConnectedState)
+		{
+			return;
+		}
 		emit this->cyclicWrite();
 	}, 
 	cyclePeriod);
@@ -178,14 +212,22 @@ void QUaModbusValue::on_cyclicWrite()
 }
 #endif // !QUAMODBUS_NOCYCLIC_WRITE
 
-QUaBaseDataVariable * QUaModbusValue::value() const
+QUaBaseDataVariable * QUaModbusValue::value()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaBaseDataVariable>("Value");
+	if (!m_value)
+	{
+		m_value = this->browseChild<QUaBaseDataVariable>("Value");
+	}
+	return m_value;
 }
 
-QUaBaseDataVariable * QUaModbusValue::lastError() const
+QUaBaseDataVariable * QUaModbusValue::lastError()
 {
-	return const_cast<QUaModbusValue*>(this)->browseChild<QUaBaseDataVariable>("LastError");
+	if (!m_lastError)
+	{
+		m_lastError = this->browseChild<QUaBaseDataVariable>("LastError");
+	}
+	return m_lastError;
 }
 
 void QUaModbusValue::remove()
@@ -217,7 +259,7 @@ void QUaModbusValue::on_typeChanged(const QVariant &value, const bool& networkCh
 
 QModbusValueType QUaModbusValue::getType() const
 {
-	return this->type()->value().value<QModbusValueType>();
+	return const_cast<QUaModbusValue*>(this)->type()->value().value<QModbusValueType>();
 }
 
 void QUaModbusValue::setType(const QModbusValueType & type)
@@ -232,12 +274,12 @@ void QUaModbusValue::setType(const QModbusValueType & type)
 
 quint16 QUaModbusValue::getRegistersUsed() const
 {
-	return this->registersUsed()->value().value<quint16>();
+	return const_cast<QUaModbusValue*>(this)->registersUsed()->value().value<quint16>();
 }
 
 int QUaModbusValue::getAddressOffset() const
 {
-	return this->addressOffset()->value().toInt();
+	return const_cast<QUaModbusValue*>(this)->addressOffset()->value().toInt();
 }
 
 void QUaModbusValue::setAddressOffset(const int & addressOffset)
@@ -248,7 +290,7 @@ void QUaModbusValue::setAddressOffset(const int & addressOffset)
 
 QVariant QUaModbusValue::getValue() const
 {
-	return this->value()->value();
+	return const_cast<QUaModbusValue*>(this)->value()->value();
 }
 
 // programmatic change from C++ API
@@ -260,7 +302,7 @@ void QUaModbusValue::setValue(const QVariant & value)
 
 QModbusError QUaModbusValue::getLastError() const
 {
-	return this->lastError()->value().value<QModbusError>();
+	return const_cast<QUaModbusValue*>(this)->lastError()->value().value<QModbusError>();
 }
 
 void QUaModbusValue::setLastError(const QModbusError & error)
@@ -386,6 +428,12 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		QObject::connect(p_reply, &QModbusReply::finished, this,
 		[this, p_reply, value]() mutable {
 			// NOTE : exec'd in ua server thread (not in worker thread)
+			if (this->client()->m_disconnectRequested || this->client()->getState() != QModbusState::ConnectedState)
+			{
+				auto error = QModbusError::ReplyAbortedError;
+				this->setLastError(error);
+				return;
+			}
 			// check if reply still valid
 			if (!p_reply)
 			{

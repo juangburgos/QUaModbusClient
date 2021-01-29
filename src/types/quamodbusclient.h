@@ -68,18 +68,18 @@ public:
 
 	// UA properties
 
-	QUaProperty * type() const;
-	QUaProperty * serverAddress() const;
-	QUaProperty * keepConnecting() const;
+	QUaProperty * type();
+	QUaProperty * serverAddress();
+	QUaProperty * keepConnecting();
 
 	// UA variables
 
-	QUaBaseDataVariable * state() const;
-	QUaBaseDataVariable * lastError() const;
+	QUaBaseDataVariable * state();
+	QUaBaseDataVariable * lastError();
 
 	// UA objects
 
-	QUaModbusDataBlockList * dataBlocks() const;
+	QUaModbusDataBlockList * dataBlocks();
 
 	// UA methods
 
@@ -133,6 +133,12 @@ private slots:
 
 private:
 	bool m_disconnectRequested;
+	QUaProperty* m_type;
+	QUaProperty* m_serverAddress;
+	QUaProperty* m_keepConnecting;
+	QUaBaseDataVariable* m_state;
+	QUaBaseDataVariable* m_lastError;
+	QUaModbusDataBlockList* m_dataBlocks;
 };
 
 typedef QUaModbusClient::ClientType QModbusClientType;

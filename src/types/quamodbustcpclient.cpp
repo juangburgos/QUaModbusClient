@@ -100,7 +100,7 @@ QDomElement QUaModbusTcpClient::toDomElement(QDomDocument & domDoc) const
 	elemTcpClient.setAttribute("NetworkAddress", getNetworkAddress());
 	elemTcpClient.setAttribute("NetworkPort"   , getNetworkPort   ());
 	// add block list element
-	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
+	auto elemBlockList = const_cast<QUaModbusTcpClient*>(this)->dataBlocks()->toDomElement(domDoc);
 	elemTcpClient.appendChild(elemBlockList);
 	// return client element
 	return elemTcpClient;

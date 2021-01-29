@@ -17,6 +17,13 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 {
 	m_loopHandle = -1;
 	m_replyRead  = nullptr;
+	m_type = nullptr;
+	m_address = nullptr;
+	m_size = nullptr;
+	m_samplingTime = nullptr;
+	m_data = nullptr;
+	m_lastError = nullptr;
+	m_values = nullptr;
 	// NOTE : QObject parent might not be yet available in constructor
 	type   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusDataBlockType>());
 	type   ()->setValue(QModbusDataBlockType::Invalid);
@@ -54,39 +61,67 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	*/
 }
 
-QUaProperty * QUaModbusDataBlock::type() const
+QUaProperty * QUaModbusDataBlock::type()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Type");
+	if (!m_type)
+	{
+		m_type = this->browseChild<QUaProperty>("Type");
+	}
+	return m_type;
 }
 
-QUaProperty * QUaModbusDataBlock::address() const
+QUaProperty * QUaModbusDataBlock::address()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Address");
+	if (!m_address)
+	{
+		m_address = this->browseChild<QUaProperty>("Address");
+	}
+	return m_address;
 }
 
-QUaProperty * QUaModbusDataBlock::size() const
+QUaProperty * QUaModbusDataBlock::size()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("Size");
+	if (!m_size)
+	{
+		m_size = this->browseChild<QUaProperty>("Size");
+	}
+	return m_size;
 }
 
-QUaProperty * QUaModbusDataBlock::samplingTime() const
+QUaProperty * QUaModbusDataBlock::samplingTime()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaProperty>("SamplingTime");
+	if (!m_samplingTime)
+	{
+		m_samplingTime = this->browseChild<QUaProperty>("SamplingTime");
+	}
+	return m_samplingTime;
 }
 
-QUaBaseDataVariable * QUaModbusDataBlock::data() const
+QUaBaseDataVariable * QUaModbusDataBlock::data()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaBaseDataVariable>("Data");
+	if (!m_data)
+	{
+		m_data = this->browseChild<QUaBaseDataVariable>("Data");
+	}
+	return m_data;
 }
 
-QUaBaseDataVariable * QUaModbusDataBlock::lastError() const
+QUaBaseDataVariable * QUaModbusDataBlock::lastError()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaBaseDataVariable>("LastError");
+	if (!m_lastError)
+	{
+		m_lastError = this->browseChild<QUaBaseDataVariable>("LastError");
+	}
+	return m_lastError;
 }
 
-QUaModbusValueList * QUaModbusDataBlock::values() const
+QUaModbusValueList * QUaModbusDataBlock::values()
 {
-	return const_cast<QUaModbusDataBlock*>(this)->browseChild<QUaModbusValueList>("Values");
+	if (!m_values)
+	{
+		m_values = this->browseChild<QUaModbusValueList>("Values");
+	}
+	return m_values;
 }
 
 void QUaModbusDataBlock::remove()
@@ -315,6 +350,12 @@ void QUaModbusDataBlock::startLoop()
 		QObject::connect(m_replyRead, &QModbusReply::finished, this,
 			[this]() {
 				// NOTE : exec'd in ua server thread (not in worker thread)
+				if (this->client()->m_disconnectRequested || this->client()->getState() != QModbusState::ConnectedState)
+				{
+					m_replyRead = nullptr;
+					this->setLastError(QModbusError::ReplyAbortedError);
+					return;
+				}
 				// check if reply still valid
 				if (!m_replyRead)
 				{
@@ -433,7 +474,7 @@ QDomElement QUaModbusDataBlock::toDomElement(QDomDocument & domDoc) const
 	elemBlock.setAttribute("Size"        , getSize());
 	elemBlock.setAttribute("SamplingTime", getSamplingTime());
 	// add value list element
-	auto elemValueList = values()->toDomElement(domDoc);
+	auto elemValueList = const_cast<QUaModbusDataBlock*>(this)->values()->toDomElement(domDoc);
 	elemBlock.appendChild(elemValueList);
 	// return block element
 	return elemBlock;
@@ -555,7 +596,7 @@ QVector<quint16> QUaModbusDataBlock::variantToInt16Vect(const QVariant & value)
 
 QModbusDataBlockType QUaModbusDataBlock::getType() const
 {
-	return this->type()->value().value<QModbusDataBlockType>();
+	return const_cast<QUaModbusDataBlock*>(this)->type()->value().value<QModbusDataBlockType>();
 }
 
 void QUaModbusDataBlock::setType(const QModbusDataBlockType & type)
@@ -566,7 +607,7 @@ void QUaModbusDataBlock::setType(const QModbusDataBlockType & type)
 
 int QUaModbusDataBlock::getAddress() const
 {
-	return this->address()->value().toInt();
+	return const_cast<QUaModbusDataBlock*>(this)->address()->value().toInt();
 }
 
 void QUaModbusDataBlock::setAddress(const int & address)
@@ -577,7 +618,7 @@ void QUaModbusDataBlock::setAddress(const int & address)
 
 quint32 QUaModbusDataBlock::getSize() const
 {
-	return this->size()->value().value<quint32>();
+	return const_cast<QUaModbusDataBlock*>(this)->size()->value().value<quint32>();
 }
 
 void QUaModbusDataBlock::setSize(const quint32 & size)
@@ -588,7 +629,7 @@ void QUaModbusDataBlock::setSize(const quint32 & size)
 
 quint32 QUaModbusDataBlock::getSamplingTime() const
 {
-	return this->samplingTime()->value().value<quint32>();
+	return const_cast<QUaModbusDataBlock*>(this)->samplingTime()->value().value<quint32>();
 }
 
 void QUaModbusDataBlock::setSamplingTime(const quint32 & samplingTime)
@@ -599,7 +640,7 @@ void QUaModbusDataBlock::setSamplingTime(const quint32 & samplingTime)
 
 QVector<quint16> QUaModbusDataBlock::getData() const
 {
-	return QUaModbusDataBlock::variantToInt16Vect(this->data()->value());
+	return QUaModbusDataBlock::variantToInt16Vect(const_cast<QUaModbusDataBlock*>(this)->data()->value());
 }
 
 void QUaModbusDataBlock::setData(const QVector<quint16>& data, const bool &writeModbus/* = true*/)
@@ -620,7 +661,7 @@ void QUaModbusDataBlock::setData(const QVector<quint16>& data, const bool &write
 
 QModbusError QUaModbusDataBlock::getLastError() const
 {
-	return this->lastError()->value().value<QModbusError>();
+	return const_cast<QUaModbusDataBlock*>(this)->lastError()->value().value<QModbusError>();
 }
 
 void QUaModbusDataBlock::setLastError(const QModbusError & error)

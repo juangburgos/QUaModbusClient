@@ -135,7 +135,7 @@ QDomElement QUaModbusRtuSerialClient::toDomElement(QDomDocument & domDoc) const
 	elemSerialClient.setAttribute("DataBits"      , QMetaEnum::fromType<QDataBits>().valueToKey(getDataBits() ));
 	elemSerialClient.setAttribute("StopBits"      , QMetaEnum::fromType<QStopBits>().valueToKey(getStopBits() ));
 	// add block list element
-	auto elemBlockList = dataBlocks()->toDomElement(domDoc);
+	auto elemBlockList = const_cast<QUaModbusRtuSerialClient*>(this)->dataBlocks()->toDomElement(domDoc);
 	elemSerialClient.appendChild(elemBlockList);
 	// return list element
 	return elemSerialClient;

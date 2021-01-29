@@ -63,19 +63,19 @@ public:
 
 	// UA properties
 
-	QUaProperty * type        () const;
-	QUaProperty * address     () const;
-	QUaProperty * size        () const;
-	QUaProperty * samplingTime() const;
+	QUaProperty * type        ();
+	QUaProperty * address     ();
+	QUaProperty * size        ();
+	QUaProperty * samplingTime();
 
 	// UA variables
 
-	QUaBaseDataVariable * data() const;
-	QUaBaseDataVariable * lastError() const;
+	QUaBaseDataVariable * data();
+	QUaBaseDataVariable * lastError();
 
 	// UA objects
 
-	QUaModbusValueList * values() const;
+	QUaModbusValueList * values();
 
 	// UA methods
 
@@ -144,6 +144,14 @@ private:
 
 	static quint32 m_minSamplingTime;
 	static QVector<quint16> variantToInt16Vect(const QVariant &value);
+
+	QUaProperty* m_type;
+	QUaProperty* m_address;
+	QUaProperty* m_size;
+	QUaProperty* m_samplingTime;
+	QUaBaseDataVariable* m_data;
+	QUaBaseDataVariable* m_lastError;
+	QUaModbusValueList* m_values;
 };
 
 typedef QUaModbusDataBlock::RegisterType QModbusDataBlockType;

@@ -14,6 +14,12 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	, m_mutex(QMutex::Recursive)
 {
 	m_disconnectRequested = false;
+	m_type = nullptr;
+	m_serverAddress = nullptr;
+	m_keepConnecting = nullptr;
+	m_state = nullptr;
+	m_lastError = nullptr;
+	m_dataBlocks = nullptr;
 	if (QMetaType::type("QModbusError") == QMetaType::UnknownType)
 	{
 		qRegisterMetaType<QModbusError>("QModbusError");
@@ -47,40 +53,64 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	QObject::connect(keepConnecting(), &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_keepConnectingChanged, Qt::QueuedConnection);
 }
 
-QUaProperty * QUaModbusClient::type() const
+QUaProperty * QUaModbusClient::type()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaProperty>("Type");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_type)
+	{
+		m_type = this->browseChild<QUaProperty>("Type");
+	}
+	return m_type;
 }
 
-QUaProperty * QUaModbusClient::serverAddress() const
+QUaProperty * QUaModbusClient::serverAddress()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaProperty>("ServerAddress");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_serverAddress)
+	{
+		m_serverAddress = this->browseChild<QUaProperty>("ServerAddress");
+	}
+	return m_serverAddress;
 }
 
-QUaProperty * QUaModbusClient::keepConnecting() const
+QUaProperty * QUaModbusClient::keepConnecting()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaProperty>("KeepConnecting");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_keepConnecting)
+	{
+		m_keepConnecting = this->browseChild<QUaProperty>("KeepConnecting");
+	}
+	return m_keepConnecting;
 }
 
-QUaBaseDataVariable * QUaModbusClient::state() const
+QUaBaseDataVariable * QUaModbusClient::state()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaBaseDataVariable>("State");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_state)
+	{
+		m_state = this->browseChild<QUaBaseDataVariable>("State");
+	}
+	return m_state;
 }
 
-QUaBaseDataVariable * QUaModbusClient::lastError() const
+QUaBaseDataVariable * QUaModbusClient::lastError()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaBaseDataVariable>("LastError");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_lastError)
+	{
+		m_lastError = this->browseChild<QUaBaseDataVariable>("LastError");
+	}
+	return m_lastError;
 }
 
-QUaModbusDataBlockList * QUaModbusClient::dataBlocks() const
+QUaModbusDataBlockList * QUaModbusClient::dataBlocks()
 {
-	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return const_cast<QUaModbusClient*>(this)->browseChild<QUaModbusDataBlockList>("DataBlocks");
+	QMutexLocker locker(&this->m_mutex);
+	if (!m_dataBlocks)
+	{
+		m_dataBlocks = this->browseChild<QUaModbusDataBlockList>("DataBlocks");
+	}
+	return m_dataBlocks;
 }
 
 void QUaModbusClient::remove()
@@ -111,7 +141,7 @@ void QUaModbusClient::disconnectDevice()
 	if (this->getState() == QModbusState::UnconnectedState)
 	{
 		return;
-	}	
+	}
 	// exec in thread, for thread-safety
 	m_workerThread.execInThread([this]() {
 		// NOTE : reset pointer in order to reduce "ClosingState" large timeouts 
@@ -129,7 +159,7 @@ void QUaModbusClient::disconnectDevice()
 quint8 QUaModbusClient::getServerAddress() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return this->serverAddress()->value().value<quint8>();
+	return const_cast<QUaModbusClient*>(this)->serverAddress()->value().value<quint8>();
 }
 
 void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
@@ -142,7 +172,7 @@ void QUaModbusClient::setServerAddress(const quint8 & serverAddress)
 bool QUaModbusClient::getKeepConnecting() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return this->keepConnecting()->value().toBool();
+	return const_cast<QUaModbusClient*>(this)->keepConnecting()->value().toBool();
 }
 
 void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
@@ -155,7 +185,7 @@ void QUaModbusClient::setKeepConnecting(const bool & keepConnecting)
 QModbusError QUaModbusClient::getLastError() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return this->lastError()->value().value<QModbusError>();
+	return const_cast<QUaModbusClient*>(this)->lastError()->value().value<QModbusError>();
 }
 
 void QUaModbusClient::setLastError(const QModbusError & error)
@@ -173,13 +203,13 @@ QUaModbusClientList * QUaModbusClient::list() const
 QModbusClientType QUaModbusClient::getType() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return this->type()->value().value<QModbusClientType>();
+	return const_cast<QUaModbusClient*>(this)->type()->value().value<QModbusClientType>();
 }
 
 QModbusState QUaModbusClient::getState() const
 {
 	QMutexLocker locker(&(const_cast<QUaModbusClient*>(this)->m_mutex));
-	return this->state()->value().value<QModbusState>();
+	return const_cast<QUaModbusClient*>(this)->state()->value().value<QModbusState>();
 }
 
 void QUaModbusClient::setState(const QModbusState & state)
