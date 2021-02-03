@@ -53,6 +53,17 @@ QUaModbusClient::QUaModbusClient(QUaServer *server)
 	QObject::connect(keepConnecting(), &QUaBaseVariable::valueChanged, this, &QUaModbusClient::on_keepConnectingChanged, Qt::QueuedConnection);
 }
 
+QUaModbusClient::~QUaModbusClient()
+{
+	emit this->aboutToDestroy();
+	emit m_dataBlocks->aboutToClear();
+	// delete while client still valid, because in views blocks reference parent client
+	for (auto block : m_dataBlocks->blocks())
+	{
+		delete block;
+	}
+}
+
 QUaProperty * QUaModbusClient::type()
 {
 	QMutexLocker locker(&this->m_mutex);

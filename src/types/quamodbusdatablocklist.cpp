@@ -68,6 +68,7 @@ QString QUaModbusDataBlockList::addDataBlock(const QUaQualifiedName& blockId)
 
 void QUaModbusDataBlockList::clear()
 {
+	emit this->aboutToClear();
 	for (auto &block : this->blocks())
 	{
 		block->remove();

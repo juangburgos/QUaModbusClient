@@ -61,6 +61,24 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	*/
 }
 
+QUaModbusDataBlock::~QUaModbusDataBlock()
+{
+	emit this->aboutToDestroy();
+	emit m_values->aboutToClear();
+	// stop loop
+	if (m_loopHandle > 0)
+	{
+		this->client()->m_workerThread.stopLoopInThread(m_loopHandle);
+	}	
+	// make handle invalid **after** stopping loop in thread
+	m_loopHandle = -1;
+	// delete while block still valid, because in views values reference parent block
+	for (auto value : m_values->values())
+	{
+		delete value;
+	}
+}
+
 QUaProperty * QUaModbusDataBlock::type()
 {
 	if (!m_type)

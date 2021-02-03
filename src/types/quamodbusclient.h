@@ -57,6 +57,7 @@ class QUaModbusClient : public QUaBaseObjectProtected
 
 public:
 	Q_INVOKABLE explicit QUaModbusClient(QUaServer *server);
+	~QUaModbusClient();
 
 	enum ClientType {
 		Tcp     = 0,
@@ -114,6 +115,7 @@ signals:
 	void keepConnectingChanged(const bool   &keepConnecting);
 	void stateChanged    (const QModbusState &state);
 	void lastErrorChanged(const QModbusError &error);
+	void aboutToDestroy();
 
 protected:
 	QMutex m_mutex;

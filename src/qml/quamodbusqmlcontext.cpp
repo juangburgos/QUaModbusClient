@@ -389,11 +389,6 @@ void QUaModbusDataBlockQmlContext::bindBlock(QUaModbusDataBlock* block)
 
 void QUaModbusDataBlockQmlContext::clear()
 {
-	// unsubscribe
-	while (!m_connections.isEmpty())
-	{
-		QObject::disconnect(m_connections.takeFirst());
-	}
 	// delete children contexts
 	while (!m_values.isEmpty())
 	{
@@ -439,6 +434,11 @@ void QUaModbusDataBlockQmlContext::bindValues(QUaModbusValueList* values)
 	// check valid arg
 	Q_ASSERT(values);
 	if (!values) { return; }
+	// bind about to clear
+	QObject::connect(values, &QUaModbusValueList::aboutToClear, this,
+	[this]() {
+		this->clear();
+	});
 	// bind existing
 	for (auto value : values->values())
 	{
@@ -446,13 +446,13 @@ void QUaModbusDataBlockQmlContext::bindValues(QUaModbusValueList* values)
 		this->bindValue(value);
 	}
 	// bind new added
-	m_connections << QObject::connect(values, &QUaNode::childAdded, this,
-		[this](QUaNode* node) {
-			// bind new
-			auto value = qobject_cast<QUaModbusValue*>(node);
-			Q_ASSERT(value);
-			this->bindValue(value);
-		}/*, Qt::QueuedConnection // NOTE : do not queue or will not be available on view load */);
+	QObject::connect(values, &QUaNode::childAdded, this,
+	[this](QUaNode* node) {
+		// bind new
+		auto value = qobject_cast<QUaModbusValue*>(node);
+		Q_ASSERT(value);
+		this->bindValue(value);
+	}/*, Qt::QueuedConnection // NOTE : do not queue or will not be available on view load */);
 }
 
 void QUaModbusDataBlockQmlContext::bindValue(QUaModbusValue* value)
@@ -466,17 +466,15 @@ void QUaModbusDataBlockQmlContext::bindValue(QUaModbusValue* value)
 	Q_ASSERT(!m_values.contains(strId));
 	m_values[strId] = QVariant::fromValue(context);
 #ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-		QObject::connect(this, &QUaModbusDataBlockQmlContext::userChanged, context, [this, context]() {
-			context->updateLoggedUser(m_loggedUser);
-		});
+	QObject::connect(this, &QUaModbusDataBlockQmlContext::userChanged, context, [this, context]() {
+		context->updateLoggedUser(m_loggedUser);
+	});
 #endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
-	m_connections <<
-		QObject::connect(value, &QObject::destroyed, context,
-			[this, value]() {
-				this->removeValue(value);
-			});
+	QObject::connect(value, &QObject::destroyed, context,
+	[this, value]() {
+		this->removeValue(value);
+	});
 	// notify changes
 	emit this->valuesChanged();
 }
@@ -931,11 +929,6 @@ void QUaModbusClientQmlContext::bindClient(QUaModbusClient* client)
 
 void QUaModbusClientQmlContext::clear()
 {
-	// unsubscribe
-	while (!m_connections.isEmpty())
-	{
-		QObject::disconnect(m_connections.takeFirst());
-	}
 	// delete children contexts
 	while (!m_blocks.isEmpty())
 	{
@@ -1007,6 +1000,11 @@ void QUaModbusClientQmlContext::bindBlocks(QUaModbusDataBlockList* blocks)
 	// check valid arg
 	Q_ASSERT(blocks);
 	if (!blocks) { return; }
+	// bind about to clear
+	QObject::connect(blocks, &QUaModbusDataBlockList::aboutToClear, this,
+	[this]() {
+		this->clear();
+	});
 	// bind existing
 	for (auto block : blocks->blocks())
 	{
@@ -1014,13 +1012,13 @@ void QUaModbusClientQmlContext::bindBlocks(QUaModbusDataBlockList* blocks)
 		this->bindBlock(block);
 	}
 	// bind block added
-	m_connections << QObject::connect(blocks, &QUaNode::childAdded, this,
-		[this](QUaNode* node) {
-			// bind new block
-			auto block = qobject_cast<QUaModbusDataBlock*>(node);
-			Q_ASSERT(block);
-			this->bindBlock(block);
-		}/*, Qt::QueuedConnection // NOTE : do not queue or blocks will not be available on view load */);
+	QObject::connect(blocks, &QUaNode::childAdded, this,
+	[this](QUaNode* node) {
+		// bind new block
+		auto block = qobject_cast<QUaModbusDataBlock*>(node);
+		Q_ASSERT(block);
+		this->bindBlock(block);
+	}/*, Qt::QueuedConnection // NOTE : do not queue or blocks will not be available on view load */);
 }
 
 void QUaModbusClientQmlContext::bindBlock(QUaModbusDataBlock* block)
@@ -1034,17 +1032,15 @@ void QUaModbusClientQmlContext::bindBlock(QUaModbusDataBlock* block)
 	Q_ASSERT(!m_blocks.contains(strId));
 	m_blocks[strId] = QVariant::fromValue(context);
 #ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-		QObject::connect(this, &QUaModbusClientQmlContext::userChanged, context, [this, context]() {
-			context->updateLoggedUser(m_loggedUser);
-		});
+	QObject::connect(this, &QUaModbusClientQmlContext::userChanged, context, [this, context]() {
+		context->updateLoggedUser(m_loggedUser);
+	});
 #endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
-	m_connections <<
-		QObject::connect(block, &QObject::destroyed, context,
-			[this, block]() {
-				this->removeBlock(block);
-			});
+	QObject::connect(block, &QObject::destroyed, context,
+	[this, block]() {
+		this->removeBlock(block);
+	});
 	// notify changes
 	emit this->blocksChanged();
 }
@@ -1132,6 +1128,19 @@ void QUaModbusQmlContext::bindClients(QUaModbusClientList* clients)
 	// check valid arg
 	Q_ASSERT(clients);
 	if (!clients) { return; }
+	// clear previous if any
+	this->clear();
+	// un-bind previous if any
+	while (!m_connections.isEmpty())
+	{
+		QObject::disconnect(m_connections.takeFirst());
+	}
+	// bind about to clear
+	m_connections <<
+	QObject::connect(clients, &QUaModbusClientList::aboutToClear, this,
+	[this]() {
+		this->clear();
+	});
 	// bind existing
 	for (auto client : clients->clients())
 	{
@@ -1150,11 +1159,6 @@ void QUaModbusQmlContext::bindClients(QUaModbusClientList* clients)
 
 void QUaModbusQmlContext::clear()
 {
-	// unsubscribe
-	while (!m_connections.isEmpty())
-	{
-		QObject::disconnect(m_connections.takeFirst());
-	}
 	// delete client contexts
 	while (!m_clients.isEmpty())
 	{
@@ -1192,17 +1196,15 @@ void QUaModbusQmlContext::bindClient(QUaModbusClient* client)
 	Q_ASSERT(!m_clients.contains(strId));
 	m_clients[strId] = QVariant::fromValue(context);
 #ifdef QUA_ACCESS_CONTROL
-	m_connections <<
-		QObject::connect(this, &QUaModbusQmlContext::userChanged, context, [this, context]() {
-			context->updateLoggedUser(m_loggedUser);
-		});
+	QObject::connect(this, &QUaModbusQmlContext::userChanged, context, [this, context]() {
+		context->updateLoggedUser(m_loggedUser);
+	});
 #endif // QUA_ACCESS_CONTROL
 	// subscribe to destroyed
-	m_connections <<
-		QObject::connect(client, &QObject::destroyed, context,
-			[this, client]() {
-				this->removeClient(client);
-			});
+	QObject::connect(client, &QObject::destroyed, context,
+	[this, client]() {
+		this->removeClient(client);
+	});
 	// notify changes
 	emit this->clientsChanged();
 }
@@ -1211,7 +1213,8 @@ void QUaModbusQmlContext::removeClient(QUaModbusClient* client)
 {
 	QString strId = client->browseName().name();
 	Q_ASSERT(m_clients.contains(strId));
-	delete m_clients.take(strId).value<QUaModbusClientQmlContext*>();
+	auto context = m_clients.take(strId).value<QUaModbusClientQmlContext*>();
+	delete context;
 	// notify changes
 	emit this->clientsChanged();
 }

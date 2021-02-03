@@ -48,6 +48,7 @@ class QUaModbusDataBlock : public QUaBaseObjectProtected
 
 public:
 	Q_INVOKABLE explicit QUaModbusDataBlock(QUaServer *server);
+	~QUaModbusDataBlock();
 
 	// register as Q_ENUM
 	enum RegisterType 
@@ -116,6 +117,7 @@ signals:
 
 	// (internal) to safely update error in ua server thread
 	void updateLastError(const QModbusError &error);
+	void aboutToDestroy();
 
 private slots:
 	// handle UA change events (also reused in C++ API and triggers C++ API events)

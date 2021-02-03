@@ -44,10 +44,51 @@ QUaModelItemTraits::DestroyCallback<QUaNode*, 1>(
 	{
 		return QMetaObject::Connection();
 	}
+	// handle client list (root)
+	auto clientList = qobject_cast<QUaModbusClientList*>(node);
+	if (clientList)
+	{
+		return QObject::connect(clientList, &QUaModbusClientList::aboutToDestroy,
+		[callback]() {
+			callback();
+		});
+	}
+	// handle client
+	auto client = qobject_cast<QUaModbusClient*>(node);
+	if (client)
+	{
+		return QObject::connect(client, &QUaModbusClient::aboutToDestroy,
+		[callback]() {
+			callback();
+		});
+	}
+	// handle block
+	auto block = qobject_cast<QUaModbusDataBlock*>(node);
+	if (block)
+	{
+		return QObject::connect(block, &QUaModbusDataBlock::aboutToDestroy,
+		[callback]() {
+			callback();
+		});
+	}
+	// handle value
+	auto value = qobject_cast<QUaModbusValue*>(node);
+	if (value)
+	{
+		return QObject::connect(value, &QUaModbusValue::aboutToDestroy,
+		[callback]() {
+			callback();
+		});
+	}
+	// should never reach
+	Q_ASSERT(false);
+	return QMetaObject::Connection();
+	/*
 	return QObject::connect(node, &QObject::destroyed,
 		[callback]() {
 			callback();
 		});
+	*/
 }
 
 template<>

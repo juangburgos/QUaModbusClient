@@ -41,6 +41,9 @@ public:
 
 	QList<QUaModbusDataBlock*> blocks();
 
+signals:
+	void aboutToClear();
+
 private:
 	QUaModbusClient * client();
 

@@ -25,6 +25,7 @@ class QUaModbusClientList : public QUaFolderObjectProtected
 
 public:
 	Q_INVOKABLE explicit QUaModbusClientList(QUaServer *server);
+	~QUaModbusClientList();
 
 	// UA methods
 
@@ -63,6 +64,10 @@ public:
 	// XML import / export
 	QDomElement toDomElement  (QDomDocument & domDoc) const;
 	void        fromDomElement(QDomElement  & domElem, QQueue<QUaLog>& errorLogs);
+
+signals:
+	void aboutToClear();
+	void aboutToDestroy();
 
 private:
 	template<typename T>

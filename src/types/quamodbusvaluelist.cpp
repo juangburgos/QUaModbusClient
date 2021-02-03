@@ -73,6 +73,7 @@ QString QUaModbusValueList::addValue(const QUaQualifiedName& valueId)
 
 void QUaModbusValueList::clear()
 {
+	emit this->aboutToClear();
 	for (int i = 0; i < this->values().count(); i++)
 	{
 		this->values().at(i)->remove();

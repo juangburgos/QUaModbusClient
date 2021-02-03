@@ -41,6 +41,12 @@ QUaModbusClientList::QUaModbusClientList(QUaServer *server)
 	server->registerEnum(QUaModbusRtuSerialClient::ComPorts, QUaModbusRtuSerialClient::EnumComPorts());
 }
 
+QUaModbusClientList::~QUaModbusClientList()
+{
+	emit this->aboutToDestroy();
+	this->clearInmediatly();
+}
+
 QString QUaModbusClientList::addTcpClient(const QUaQualifiedName& clientId)
 {
 	return this->addClient<QUaModbusTcpClient>(clientId);
@@ -53,6 +59,7 @@ QString QUaModbusClientList::addRtuSerialClient(const QUaQualifiedName& clientId
 
 void QUaModbusClientList::clear()
 {
+	emit this->aboutToClear();
 	for (auto client : this->clients())
 	{
 		client->remove();
@@ -914,6 +921,7 @@ QList<QUaModbusClient*> QUaModbusClientList::clients()
 
 void QUaModbusClientList::clearInmediatly()
 {
+	emit this->aboutToClear();
 	for (auto client : this->clients())
 	{
 		delete client;

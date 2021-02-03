@@ -194,7 +194,6 @@ private:
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusValueList
-    QList<QMetaObject::Connection> m_connections;
     QVariantMap m_values;
     void bindValues(QUaModbusValueList* values);
     void bindValue(QUaModbusValue* value);
@@ -333,7 +332,6 @@ private:
     QUaUser* m_loggedUser;
 #endif // QUA_ACCESS_CONTROL
     // QUaModbusDataBlockList
-    QList<QMetaObject::Connection> m_connections;
     QVariantMap m_blocks;
     void bindBlocks(QUaModbusDataBlockList* blocks);
     void bindBlock(QUaModbusDataBlock* block);

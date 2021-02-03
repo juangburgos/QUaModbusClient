@@ -44,6 +44,7 @@ class QUaModbusValue : public QUaBaseObjectProtected
 
 public:
 	Q_INVOKABLE explicit QUaModbusValue(QUaServer *server);
+	~QUaModbusValue();
 
 	enum ValueType
 	{
@@ -150,6 +151,7 @@ signals:
 	void lastErrorChanged    (const QModbusError     &error        );
 	// (internal) to safely update error in ua server thread
 	void updateLastError(const QModbusError &error);
+	void aboutToDestroy();
 
 #ifndef QUAMODBUS_NOCYCLIC_WRITE
 	void cyclicWritePeriodChanged(const quint32& cyclicWritePeriod);

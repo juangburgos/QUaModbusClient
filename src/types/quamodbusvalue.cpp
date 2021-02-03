@@ -72,6 +72,16 @@ QUaModbusValue::QUaModbusValue(QUaServer *server)
 #endif // !QUAMODBUS_NOCYCLIC_WRITE
 }
 
+QUaModbusValue::~QUaModbusValue()
+{
+	emit this->aboutToDestroy();
+	// stop loop
+	if (m_loopId > 0)
+	{
+		this->client()->m_workerThread.stopLoopInThread(m_loopId);
+	}
+}
+
 QUaProperty * QUaModbusValue::type()
 {
 	if (!m_type)
@@ -147,7 +157,7 @@ void QUaModbusValue::on_cyclicWritePeriodChanged(const QVariant& value, const bo
 		return;
 	}
 	// stop previous loop
-	if (m_loopId != 0)
+	if (m_loopId > 0)
 	{
 		this->client()->m_workerThread.stopLoopInThread(m_loopId);
 	}
@@ -161,6 +171,10 @@ void QUaModbusValue::on_cyclicWritePeriodChanged(const QVariant& value, const bo
 	}
 	m_loopId = this->client()->m_workerThread.startLoopInThread(
 	[this]() {
+		if (m_loopId <= 0)
+		{
+			return;
+		}
 		auto state = this->client()->getState();
 		if (state != QModbusState::ConnectedState)
 		{

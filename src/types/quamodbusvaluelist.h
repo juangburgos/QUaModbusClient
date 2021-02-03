@@ -37,6 +37,9 @@ public:
 
 	QList<QUaModbusValue*> values();
 
+signals:
+	void aboutToClear();
+
 private:
 	QUaModbusDataBlock * block();
 
