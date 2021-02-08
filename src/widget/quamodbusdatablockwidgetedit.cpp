@@ -1,11 +1,17 @@
 #include "quamodbusdatablockwidgetedit.h"
 #include "ui_quamodbusdatablockwidgetedit.h"
 
+#include <QUaWidgetEventFilter>
+
 QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusDataBlockWidgetEdit)
 {
     ui->setupUi(this);
+	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+		Q_UNUSED(event);
+		return true;
+	};
 	// setup parity combo
 	auto metaBlockType = QMetaEnum::fromType<QModbusDataBlockType>();
 	for (int i = 0; i < metaBlockType.keyCount(); i++)
@@ -19,6 +25,15 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
 	this->setAddress(0);
 	this->setSize(10);
 	this->setSamplingTime(1000);
+	// block wheel on widgets
+	auto comboBoxTypeEventHandler = new QUaWidgetEventFilter(ui->comboBoxType);
+	comboBoxTypeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxAddressEventHandler = new QUaWidgetEventFilter(ui->spinBoxAddress);
+	spinBoxAddressEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxSizeEventHandler = new QUaWidgetEventFilter(ui->spinBoxSize);
+	spinBoxSizeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxSamplingEventHandler = new QUaWidgetEventFilter(ui->spinBoxSampling);
+	spinBoxSamplingEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 }
 
 QUaModbusDataBlockWidgetEdit::~QUaModbusDataBlockWidgetEdit()

@@ -5,17 +5,25 @@
 
 #include <QUaModbusRtuSerialClient>
 
+#include <QUaWidgetEventFilter>
+
 QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusClientWidgetEdit)
 {
     ui->setupUi(this);
+	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+		Q_UNUSED(event);
+		return true;
+	};
 	// setup type combo
 	for (int i = (int)QModbusClientType::Tcp; i < (int)QModbusClientType::Invalid; i++)
 	{
 		auto strType = QString(QMetaEnum::fromType<QModbusClientType>().valueToKey(i));
 		ui->comboBoxType->addItem(strType, i);
 	}
+	auto comboBoxTypeEventHandler = new QUaWidgetEventFilter(ui->comboBoxType);
+	comboBoxTypeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);	
 	// setup com port combo
 	auto mapComPorts = QUaModbusRtuSerialClient::EnumComPorts();
 	for (int i = 0; i < mapComPorts.keys().count(); i++)
@@ -23,6 +31,8 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		auto strComPort = QString(mapComPorts.value(mapComPorts.keys().at(i)).displayName.text());
 		ui->comboBoxComPort->addItem(strComPort, mapComPorts.keys().at(i));
 	}
+	auto comboBoxComPortEventHandler = new QUaWidgetEventFilter(ui->comboBoxComPort);
+	comboBoxComPortEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 	// setup parity combo
 	auto metaParity = QMetaEnum::fromType<QParity>();
 	for (int i = 0; i < metaParity.keyCount(); i++)
@@ -31,6 +41,8 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		auto strParity  = QString(metaParity.key(i));
 		ui->comboBoxParity->addItem(strParity, enumParity);
 	}
+	auto comboBoxParityEventHandler = new QUaWidgetEventFilter(ui->comboBoxParity);
+	comboBoxParityEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 	// setup baud rate combo
 	auto metaBaudRate = QMetaEnum::fromType<QBaudRate>();
 	for (int i = 0; i < metaBaudRate.keyCount(); i++)
@@ -39,6 +51,8 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		auto strBaudRate  = QString(metaBaudRate.key(i));
 		ui->comboBoxBaudRate->addItem(strBaudRate, enumBaudRate);
 	}
+	auto comboBoxBaudRateEventHandler = new QUaWidgetEventFilter(ui->comboBoxBaudRate);
+	comboBoxBaudRateEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 	// setup data bits combo
 	auto metaDataBits = QMetaEnum::fromType<QDataBits>();
 	for (int i = 0; i < metaDataBits.keyCount(); i++)
@@ -47,6 +61,8 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		auto strDataBits  = QString(metaDataBits.key(i));
 		ui->comboBoxDataBits->addItem(strDataBits, enumDataBits);
 	}
+	auto comboBoxDataBitsEventHandler = new QUaWidgetEventFilter(ui->comboBoxDataBits);
+	comboBoxDataBitsEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 	// setup stop bits combo
 	auto metaStopBits = QMetaEnum::fromType<QStopBits>();
 	for (int i = 0; i < metaStopBits.keyCount(); i++)
@@ -55,6 +71,8 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 		auto strStopBits  = QString(metaStopBits.key(i));
 		ui->comboBoxStopBits->addItem(strStopBits, enumStopBits);
 	}
+	auto comboBoxStopBitsEventHandler = new QUaWidgetEventFilter(ui->comboBoxStopBits);
+	comboBoxStopBitsEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 	// setup initial values
 	this->setType(QModbusClientType::Tcp);
 	this->setDeviceAddress(0);
@@ -69,6 +87,10 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 	this->setBaudRate(QBaudRate::Baud19200);
 	this->setDataBits(QSerialPort::Data8);
 	this->setStopBits(QSerialPort::OneStop);
+	auto spinBoxDeviceAddressEventHandler = new QUaWidgetEventFilter(ui->spinBoxDeviceAddress);
+	spinBoxDeviceAddressEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxPortEventHandler = new QUaWidgetEventFilter(ui->spinBoxPort);
+	spinBoxPortEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 }
 
 QUaModbusClientWidgetEdit::~QUaModbusClientWidgetEdit()

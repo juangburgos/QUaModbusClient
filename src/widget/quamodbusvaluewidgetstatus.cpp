@@ -8,11 +8,17 @@
 #undef min
 #undef max
 
+#include <QUaWidgetEventFilter>
+
 QUaModbusValueWidgetStatus::QUaModbusValueWidgetStatus(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusValueWidgetStatus)
 {
     ui->setupUi(this);
+	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+		Q_UNUSED(event);
+		return true;
+	};
 	m_valueOld  = 0;
 	m_valueCurr = 0;
 	// limits
@@ -30,6 +36,13 @@ QUaModbusValueWidgetStatus::QUaModbusValueWidgetStatus(QWidget *parent) :
 	ui->spinBoxValue->setVisible(false);
 	ui->doubleSpinBoxValue->setEnabled(false);
 	ui->doubleSpinBoxValue->setVisible(false);
+	// block wheel on widgets
+	auto spinBoxValueEventHandler = new QUaWidgetEventFilter(ui->spinBoxValue);
+	spinBoxValueEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxRegUsedEventHandler = new QUaWidgetEventFilter(ui->spinBoxRegUsed);
+	spinBoxRegUsedEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto doubleSpinBoxValueEventHandler = new QUaWidgetEventFilter(ui->doubleSpinBoxValue);
+	doubleSpinBoxValueEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 }
 
 QUaModbusValueWidgetStatus::~QUaModbusValueWidgetStatus()

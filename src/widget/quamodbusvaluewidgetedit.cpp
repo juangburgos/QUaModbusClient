@@ -1,11 +1,17 @@
 #include "quamodbusvaluewidgetedit.h"
 #include "ui_quamodbusvaluewidgetedit.h"
 
+#include <QUaWidgetEventFilter>
+
 QUaModbusValueWidgetEdit::QUaModbusValueWidgetEdit(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QUaModbusValueWidgetEdit)
 {
     ui->setupUi(this);
+	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+		Q_UNUSED(event);
+		return true;
+	};
 	// setup type combo
 	auto metaValueType = QMetaEnum::fromType<QModbusValueType>();
 	for (int i = 0; i < metaValueType.keyCount(); i++)
@@ -33,6 +39,15 @@ QUaModbusValueWidgetEdit::QUaModbusValueWidgetEdit(QWidget *parent) :
 	ui->frameCyclic->setVisible(false);
 	ui->frameCyclic->setEnabled(false);
 #endif // !QUAMODBUS_NOCYCLIC_WRITE
+	// block wheel on widgets
+	auto comboBoxTypeEventHandler = new QUaWidgetEventFilter(ui->comboBoxType);
+	comboBoxTypeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto comboBoxCyclicModeEventHandler = new QUaWidgetEventFilter(ui->comboBoxCyclicMode);
+	comboBoxCyclicModeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxOffsetEventHandler = new QUaWidgetEventFilter(ui->spinBoxOffset);
+	spinBoxOffsetEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
+	auto spinBoxCyclicPeriodEventHandler = new QUaWidgetEventFilter(ui->spinBoxCyclicPeriod);
+	spinBoxCyclicPeriodEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
 }
 
 QUaModbusValueWidgetEdit::~QUaModbusValueWidgetEdit()
