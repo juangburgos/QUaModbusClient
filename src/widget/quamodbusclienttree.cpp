@@ -345,6 +345,7 @@ QUaModbusClientTree::QUaModbusClientTree(QWidget *parent) :
 	ui->treeViewModbus->setSelectionBehavior(QAbstractItemView::SelectRows);
 	ui->treeViewModbus->setSelectionMode(QAbstractItemView::SingleSelection);
 	ui->treeViewModbus->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui->treeViewModbus->setExpandsOnDoubleClick(false);
 }
 
 QUaModbusClientTree::~QUaModbusClientTree()

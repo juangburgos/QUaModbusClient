@@ -129,6 +129,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	bool isWellConfigured() const;
+
 	bool isWritable() const;
 
 	QUaModbusValueList * list() const;
@@ -188,7 +190,7 @@ private:
 	QUaBaseDataVariable* m_value;
 	QUaBaseDataVariable* m_lastError;
 
-	void setValue(const QVector<quint16> &block, const QModbusError &blockError);
+	void setValue(const QVector<quint16> &block, const QModbusError &blockError, const bool forceIfSame = false);
 
 	void updateWellConfigured(const QModbusValueType& type, const int& addressOffset);
 

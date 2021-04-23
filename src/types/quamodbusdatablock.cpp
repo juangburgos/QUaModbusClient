@@ -16,6 +16,7 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 #endif // !QUA_ACCESS_CONTROL
 {
 	m_loopHandle = -1;
+	m_firstSample = true;
 	m_replyRead  = nullptr;
 	m_type = nullptr;
 	m_address = nullptr;
@@ -34,7 +35,7 @@ QUaModbusDataBlock::QUaModbusDataBlock(QUaServer *server)
 	samplingTime()->setDataType(QMetaType::UInt);
 	samplingTime()->setValue(1000);
 	lastError   ()->setDataTypeEnum(QMetaEnum::fromType<QModbusError>());
-	lastError   ()->setValue(QModbusError::ConnectionError);
+	lastError   ()->setValue(QModbusError::NoError);
 	// set initial conditions
 	type()        ->setWriteAccess(true);
 	address()     ->setWriteAccess(true);
@@ -285,15 +286,13 @@ void QUaModbusDataBlock::on_updateLastError(const QModbusError & error)
 	auto values = this->values()->values();
 	for (auto value : values)
 	{
-		auto oldValErr = value->getLastError();
-		if (error == QModbusError::ConnectionError && oldValErr != QModbusError::ConfigurationError)
+		// need to keep configuration error if value is still not well configured
+		auto isWellConfigured = value->isWellConfigured();
+		if (!isWellConfigured)
 		{
-			value->setLastError(QModbusError::ConnectionError);
+			continue;
 		}
-		else if (error != QModbusError::ConnectionError && oldValErr == QModbusError::NoError)
-		{
-			value->setLastError(error);
-		}
+		value->setLastError(error);
 	}
 }
 
@@ -349,7 +348,18 @@ void QUaModbusDataBlock::startLoop()
 		auto state = client->getState();
 		if (state != QModbusState::ConnectedState)
 		{
-			emit this->updateLastError(QModbusError::ConnectionError);
+			if (!m_firstSample)
+			{
+				// force update last modbus value
+				auto values = this->values()->values();
+				for (auto value : values)
+				{
+					emit value->valueChanged(value->getValue());
+				}
+				m_firstSample = true;
+			}
+			auto clientError = client->getLastError();
+			emit this->updateLastError(clientError);
 			return;
 		}
 		// create and send request		
@@ -367,7 +377,10 @@ void QUaModbusDataBlock::startLoop()
 		// check if no error
 		if (!m_replyRead)
 		{
-			emit this->updateLastError(QModbusError::ReplyAbortedError);
+			if (!client->m_disconnectRequested)
+			{
+				emit this->updateLastError(QModbusError::ReplyAbortedError);
+			}
 			return;
 		}
 		// check if finished immediately (ignore)
@@ -382,7 +395,9 @@ void QUaModbusDataBlock::startLoop()
 		QObject::connect(m_replyRead, &QModbusReply::finished, this,
 			[this]() {
 				// NOTE : exec'd in ua server thread (not in worker thread)
-				if (this->client()->m_disconnectRequested || this->client()->getState() != QModbusState::ConnectedState)
+				auto client = this->client();
+				Q_CHECK_PTR(client);
+				if (client->m_disconnectRequested || client->getState() != QModbusState::ConnectedState)
 				{
 					m_replyRead = nullptr;
 					this->setLastError(QModbusError::ReplyAbortedError);
@@ -409,11 +424,12 @@ void QUaModbusDataBlock::startLoop()
 				auto values = this->values()->values();
 				for (auto value : values)
 				{
-					value->setValue(data, error);
+					value->setValue(data, error, m_firstSample);
 				}
 				// delete reply on next event loop exec
 				m_replyRead->deleteLater();
 				m_replyRead = nullptr;
+				m_firstSample = false;
 			}, Qt::QueuedConnection);
 		}, samplingTime);
 	Q_ASSERT(m_loopHandle > 0);
@@ -450,7 +466,8 @@ void QUaModbusDataBlock::setModbusData(const QVector<quint16>& data)
 		auto state = client->getState();
 		if (state != QModbusState::ConnectedState)
 		{
-			emit this->updateLastError(QModbusError::ConnectionError);
+			auto clientError = client->getLastError();
+			emit this->updateLastError(clientError);
 			return;
 		}
 		// create data target 
@@ -700,5 +717,18 @@ void QUaModbusDataBlock::setLastError(const QModbusError & error)
 {
 	// call internal slot on_updateLastError
 	emit this->updateLastError(error);
+}
+
+bool QUaModbusDataBlock::isWellConfigured() const
+{
+	if (
+		m_registerType == QModbusDataBlockType::Invalid ||
+		m_startAddress < 0 ||
+		m_valueCount == 0
+		)
+	{
+		return false;
+	}
+	return true;
 }
 

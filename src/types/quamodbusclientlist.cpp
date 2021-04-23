@@ -1034,11 +1034,6 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& 
 		}
 		// set client config
 		client->fromDomElement(elemClient, errorLogs);
-		// connect if keepConnecting is set
-		if (client->keepConnecting()->value().toBool())
-		{
-			client->connectDevice();
-		}
 	}
 	// add Serial clients
 	QDomNodeList listSerialClients = domElem.elementsByTagName(QUaModbusRtuSerialClient::staticMetaObject.className());

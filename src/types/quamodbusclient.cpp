@@ -286,6 +286,8 @@ void QUaModbusClient::on_stateChanged(QModbusState state)
 	{
 		this->setLastError(QModbusError::NoError);
 	}
+	// make copy before modify because used in othe rplaces
+	bool disconnectRequested = m_disconnectRequested;
 	// only allow to write connection params if not connected
 	if (state == QModbusState::UnconnectedState)
 	{
@@ -303,14 +305,26 @@ void QUaModbusClient::on_stateChanged(QModbusState state)
 		serverAddress()->setWriteAccess(false);
 	}
 	// update block errors
-	if (state == QModbusState::ConnectedState)
+	if (
+		state == QModbusState::ConnectedState  || 
+		state == QModbusState::ConnectingState ||
+	   (state == QModbusState::ClosingState     && disconnectRequested) ||
+	   (state == QModbusState::UnconnectedState && disconnectRequested)
+		)
 	{
+		// NOTE : early exit
 		return;
 	}
 	auto blocks = this->dataBlocks()->blocks();
 	for (int i = 0; i < blocks.count(); i++)
 	{
-		blocks.at(i)->setLastError(QModbusError::ConnectionError);
+		auto block = blocks.at(i);
+		auto isWellConfigured = block->isWellConfigured();
+		if (!isWellConfigured)
+		{
+			continue;
+		}
+		block->setLastError(QModbusError::ConnectionError);
 	}
 }
 
@@ -321,7 +335,6 @@ void QUaModbusClient::on_errorChanged(QModbusError error)
 	// NOTe : setLastError call this, avoid recursion
 	this->lastError()->setValue(error);
 	//// TODO : send UA event
-	//if (error != QModbusError::NoError)
 	// emit
 	emit this->lastErrorChanged(error);
 }

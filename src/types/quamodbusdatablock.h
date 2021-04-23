@@ -102,6 +102,8 @@ public:
 	QModbusError getLastError() const;
 	void         setLastError(const QModbusError &error);
 
+	bool isWellConfigured() const;
+
 	QUaModbusDataBlockList * list() const;
 
 	QUaModbusClient * client() const;
@@ -129,7 +131,8 @@ private slots:
 	void on_updateLastError    (const QModbusError &error);
 
 private:
-	int m_loopHandle;
+	int  m_loopHandle;
+	bool m_firstSample;
 	QModbusReply  * m_replyRead;
 	// NOTE : only modify and access in thread
 	QModbusDataBlockType m_registerType;

@@ -331,6 +331,11 @@ void QUaModbusValue::setLastError(const QModbusError & error)
 	emit this->updateLastError(error);
 }
 
+bool QUaModbusValue::isWellConfigured() const
+{
+	return m_wellConfigured;
+}
+
 bool QUaModbusValue::isWritable() const
 {
 	auto block = this->block();
@@ -431,7 +436,8 @@ void QUaModbusValue::on_valueChanged(const QVariant & value, const bool& network
 		auto state = client->getState();
 		if (state != QModbusState::ConnectedState)
 		{
-			emit this->updateLastError(QModbusError::ConnectionError);
+			auto clientError = client->getLastError();
+			emit this->updateLastError(clientError);
 			return;
 		}
 		// create data target 
@@ -492,7 +498,11 @@ void QUaModbusValue::on_updateLastError(const QModbusError & error)
 }
 
 // programmatic change from block upstream (modbus response to read request)
-void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError &blockError)
+void QUaModbusValue::setValue(
+	const QVector<quint16>& block, 
+	const QModbusError &blockError,
+	const bool forceIfSame /*= false*/
+)
 {
 	// check configuration
 	if (!m_wellConfigured)
@@ -514,14 +524,15 @@ void QUaModbusValue::setValue(const QVector<quint16>& block, const QModbusError 
 	{
 		return;
 	}
-	if (this->getLastError() != QModbusError::NoError)
+	if (this->getLastError() != QModbusError::NoError || forceIfSame)
 	{
 		this->setLastError(QModbusError::NoError);
 	}
 	// convert to value
 	auto value = QUaModbusValue::blockToValue(block.mid(addressOffset, typeBlockSize), type);
 	// avoid update or emit if no change, improves performance
-	if (this->getValue() == value)
+	auto oldValue = this->getValue();
+	if (oldValue == value && !forceIfSame)
 	{
 		return;
 	}
@@ -541,12 +552,14 @@ void QUaModbusValue::updateWellConfigured(const QModbusValueType& type, const in
 	}
 	else
 	{
-		auto blkType = this->block()->getType();
+		auto block = this->block();
+		auto blkType = block->getType();
 		this->value()->setWriteAccess(
 			blkType == QUaModbusDataBlock::RegisterType::Coils ||
 			blkType == QUaModbusDataBlock::RegisterType::HoldingRegisters
 		);
-		this->setLastError(QModbusError::ConnectionError);
+		auto blockError = block->getLastError();
+		this->setLastError(blockError);
 		m_wellConfigured = true;
 	}
 }
