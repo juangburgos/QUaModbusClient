@@ -26,57 +26,34 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="0" colspan="2">
-    <spacer name="horizontalSpacerTop">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>288</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="0" column="2">
-    <widget class="QPushButton" name="pushButtonPerms">
-     <property name="text">
-      <string>Permissions</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="3">
+   <item row="1" column="0" colspan="4">
     <widget class="Line" name="lineTop">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QUaModbusValueWidgetEdit" name="widgetValueEdit" native="true"/>
-   </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="Line" name="lineMiddle">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="3">
-    <widget class="QUaModbusValueWidgetStatus" name="widgetValueStatus" native="true"/>
-   </item>
-   <item row="5" column="0" colspan="3">
+   <item row="5" column="0" colspan="4">
     <widget class="Line" name="lineBottom">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="6" column="0">
-    <widget class="QPushButton" name="pushButtonDelete">
+   <item row="2" column="0" colspan="4">
+    <widget class="QUaModbusValueWidgetEdit" name="widgetValueEdit" native="true"/>
+   </item>
+   <item row="0" column="3">
+    <widget class="QPushButton" name="pushButtonPerms">
      <property name="text">
-      <string>Delete</string>
+      <string>Permissions</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="3">
+    <widget class="QPushButton" name="pushButtonApply">
+     <property name="text">
+      <string>Apply</string>
      </property>
     </widget>
    </item>
@@ -93,12 +70,42 @@
      </property>
     </spacer>
    </item>
-   <item row="6" column="2">
-    <widget class="QPushButton" name="pushButtonApply">
+   <item row="6" column="0">
+    <widget class="QPushButton" name="pushButtonDelete">
      <property name="text">
-      <string>Apply</string>
+      <string>Delete</string>
      </property>
     </widget>
+   </item>
+   <item row="4" column="0" colspan="4">
+    <widget class="QUaModbusValueWidgetStatus" name="widgetValueStatus" native="true"/>
+   </item>
+   <item row="3" column="0" colspan="4">
+    <widget class="Line" name="lineMiddle">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QPushButton" name="pushButtonReset">
+     <property name="text">
+      <string>Reset</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="3">
+    <spacer name="horizontalSpacerTop">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>288</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

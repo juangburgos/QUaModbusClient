@@ -17,6 +17,7 @@ QUaModbusClientTree {
 	qproperty-iconExpand       : url(":/default/icons/drag.svg");
 	qproperty-iconCollapse     : url(":/default/icons/maximize.svg");
 	qproperty-iconAdd          : url(":/default/icons/perspective.svg");
+	qproperty-iconEdit         : url(":/default/icons/pencil.svg");
 	qproperty-iconDelete       : url(":/default/icons/perspective-1.svg");
 	qproperty-iconClear        : url(":/default/icons/trash.svg");
 	qproperty-iconConnect      : url(":/default/icons/plug.svg");
@@ -82,6 +83,11 @@ QUaModbusClientWidget QPushButton#pushButtonDelete {
 	qproperty-toolTip : "Delete Client";
 }
 
+QUaModbusClientWidget QPushButton#pushButtonReset {
+	qproperty-icon    : url(":/default/icons/reply.svg");
+	qproperty-toolTip : "Reset Changes in Client";
+}
+
 QUaModbusClientWidget QPushButton#pushButtonApply {
 	qproperty-icon    : url(":/default/icons/recycle.svg");
 	qproperty-toolTip : "Apply Changes to Client";
@@ -110,6 +116,11 @@ QUaModbusDataBlockWidget QPushButton#pushButtonDelete {
 	qproperty-toolTip : "Delete Block";
 }
 
+QUaModbusDataBlockWidget QPushButton#pushButtonReset {
+	qproperty-icon    : url(":/default/icons/reply.svg");
+	qproperty-toolTip : "Reset Changes in Block";
+}
+
 QUaModbusDataBlockWidget QPushButton#pushButtonApply {
 	qproperty-icon    : url(":/default/icons/recycle.svg");
 	qproperty-toolTip : "Apply Changes to Block";
@@ -126,6 +137,11 @@ QUaModbusValueWidget QPushButton#pushButtonPerms {
 QUaModbusValueWidget QPushButton#pushButtonDelete {
 	qproperty-icon    : url(":/default/icons/perspective-1.svg");
 	qproperty-toolTip : "Delete Value";
+}
+
+QUaModbusValueWidget QPushButton#pushButtonReset {
+	qproperty-icon    : url(":/default/icons/reply.svg");
+	qproperty-toolTip : "Reset Changes in Value";
 }
 
 QUaModbusValueWidget QPushButton#pushButtonApply {

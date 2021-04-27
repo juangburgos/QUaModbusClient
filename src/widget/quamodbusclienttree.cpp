@@ -727,6 +727,12 @@ void QUaModbusClientTree::setupTreeContextMenu()
 				});
 				auto client = qobject_cast<QUaModbusClient*>(node);
 				contextMenu.addSeparator();
+				// edit
+				contextMenu.addAction(m_iconEdit, tr("Edit"), this,
+				[this, client]() {
+					Q_CHECK_PTR(client);
+					emit this->editClientClicked(client);
+				});
 				// connect
 				bool isConnected = client->getState() == QModbusState::ConnectedState;
 				contextMenu.addAction(m_iconConnect, isConnected? tr("Disconnect Client") : tr("Connect Client"), this,
@@ -801,6 +807,13 @@ void QUaModbusClientTree::setupTreeContextMenu()
 				});
 				auto block = qobject_cast<QUaModbusDataBlock*>(node);
 				contextMenu.addSeparator();
+				// edit
+				contextMenu.addAction(m_iconEdit, tr("Edit"), this,
+				[this, block]() {
+					Q_CHECK_PTR(block);
+					emit this->editBlockClicked(block);
+				});
+				contextMenu.addSeparator();
 				// values
 				contextMenu.addAction(m_iconAdd, tr("Add Value"), this,
 				[this, block]() {
@@ -859,6 +872,12 @@ void QUaModbusClientTree::setupTreeContextMenu()
 			// for values only
 			{
 				auto value = qobject_cast<QUaModbusValue*>(node);
+				// edit
+				contextMenu.addAction(m_iconEdit, tr("Edit"), this,
+				[this, value]() {
+					Q_CHECK_PTR(value);
+					emit this->editValueClicked(value);
+				});
 				contextMenu.addSeparator();
 				// delete value
 				contextMenu.addAction(m_iconDelete, tr("Delete"), this,
@@ -1046,15 +1065,6 @@ void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
 		// tcp
 		cliTcp->setNetworkAddress(widgetNewClient->ipAddress());
 		cliTcp->setNetworkPort(widgetNewClient->networkPort());
-		// start connecting to client if keepConnecting was set to true
-		// NOTE : removed, because is not the same "keep connecting after failure" than
-		//        "auto connect at startup", which should be handled at higher level in the app
-		/*
-		if (cliTcp->getKeepConnecting())
-		{
-			cliTcp->connectDevice();
-		}
-		*/
 	}
 	break;
 	case QModbusClientType::Serial:
@@ -1079,15 +1089,6 @@ void QUaModbusClientTree::showNewClientDialog(QUaModbusClientDialog & dialog)
 		cliSerial->setBaudRate(widgetNewClient->baudRate());
 		cliSerial->setDataBits(widgetNewClient->dataBits());
 		cliSerial->setStopBits(widgetNewClient->stopBits());
-		// start connecting to client if keepConnecting was set to true
-		// NOTE : removed, because is not the same "keep connecting after failure" than
-		//        "auto connect at startup", which should be handled at higher level in the app
-		/*
-		if (cliSerial->getKeepConnecting())
-		{
-			cliSerial->connectDevice();
-		}
-		*/
 	}
 	break;
 	case QModbusClientType::Invalid:
@@ -1384,6 +1385,16 @@ void QUaModbusClientTree::setIconAdd(const QIcon& icon)
 	m_iconAdd = icon;
 }
 
+QIcon QUaModbusClientTree::iconEdit() const
+{
+	return m_iconEdit;
+}
+
+void QUaModbusClientTree::setIconEdit(const QIcon& icon)
+{
+	m_iconEdit = icon;
+}
+
 QIcon QUaModbusClientTree::iconDelete() const
 {
 	return m_iconDelete;
@@ -1442,6 +1453,18 @@ QColor QUaModbusClientTree::colorLogInfo() const
 void QUaModbusClientTree::setColorLogInfo(const QColor& color)
 {
 	m_colorLogInfo = color;
+}
+
+QByteArray QUaModbusClientTree::headerState() const
+{
+	auto header = ui->treeViewModbus->header();
+	return header->saveState();
+}
+
+void QUaModbusClientTree::setHeaderState(const QByteArray& state)
+{
+	auto header = ui->treeViewModbus->header();
+	header->restoreState(state);
 }
 
 void QUaModbusClientTree::on_checkBoxCase_toggled(bool checked)

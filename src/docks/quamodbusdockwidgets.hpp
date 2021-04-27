@@ -20,6 +20,8 @@
 #include <QUaModbusDataBlockWidget>
 #include <QUaModbusValueWidget>
 
+#include <QSettings>
+
 template <class T>
 class QUaModbusDockWidgets : public QObject
 {
@@ -31,6 +33,9 @@ public:
 	void updateWidgetsPermissions();
 	void clearWidgets();
 	void closeConfig();
+
+	void loadSettings(const QSettings& settings);
+	void saveSettings(QSettings& settings);
 
 	// XML import / export
 	QDomElement toDomElement(QDomDocument & domDoc) const;
@@ -133,6 +138,21 @@ inline void QUaModbusDockWidgets<T>::closeConfig()
 }
 
 template<class T>
+inline void QUaModbusDockWidgets<T>::loadSettings(const QSettings& settings)
+{
+	if (settings.contains("QUaModbusClientTree::headerState"))
+	{
+		m_modbusTreeWidget->setHeaderState(settings.value("QUaModbusClientTree::headerState").toByteArray());
+	}
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::saveSettings(QSettings& settings)
+{
+	settings.setValue("QUaModbusClientTree::headerState", m_modbusTreeWidget->headerState());
+}
+
+template<class T>
 inline QDomElement QUaModbusDockWidgets<T>::toDomElement(QDomDocument & domDoc) const
 {
 	// add element
@@ -231,6 +251,14 @@ inline void QUaModbusDockWidgets<T>::createModbusWidgetsDocks()
 	);
 	m_clientWidget->setEnabled(false);
 	m_clientWidget->setupPermissionsModel(m_thiz->getPermsComboModel());
+	// clear widgets before clearing blocks
+	QObject::connect(m_clientWidget, &QUaModbusClientWidget::aboutToClear, m_thiz,
+	[this]() {
+		m_thiz->clearAllWidgets();
+		// disable modbus widgets
+		m_clientWidget->setEnabled(false);
+		m_blockWidget ->setEnabled(false);
+	});
 
 	m_blockWidget = new QUaModbusDataBlockWidget(m_thiz);
 	this->getDockManager()->addDock(
@@ -314,18 +342,39 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 	[this](QUaModbusClient * client) {
 		Q_UNUSED(client);
 		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusClients, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusClients, true);
+	});
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editClientClicked, this,
+	[this](QUaModbusClient * client) {
+		Q_UNUSED(client);
+		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusClients, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusClients, true);
 	});
 	// open client block widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::blockDoubleClicked, this,
 	[this](QUaModbusDataBlock * block) {
 		Q_UNUSED(block);
 		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+	});
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editBlockClicked, this,
+	[this](QUaModbusDataBlock * block) {
+		Q_UNUSED(block);
+		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
 	});
 	// open client edit widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::valueDoubleClicked, this,
 	[this](QUaModbusValue * value) {
 		Q_UNUSED(value);
 		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusValues, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusValues, true);
+	});
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editValueClicked, this,
+	[this](QUaModbusValue * value) {
+		Q_UNUSED(value);
+		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusValues, true);
+		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusValues, true);
 	});
 	// clear widgets before clearing clients
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, m_thiz,
@@ -336,14 +385,6 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 		m_clientWidget->setEnabled(false);
 		m_blockWidget ->setEnabled(false);
 		m_valueWidget ->setEnabled(false);
-	});
-	// clear widgets before clearing blocks
-	QObject::connect(m_clientWidget, &QUaModbusClientWidget::aboutToClear, m_thiz,
-	[this]() {
-		m_thiz->clearAllWidgets();
-		// disable modbus widgets
-		m_clientWidget->setEnabled(false);
-		m_blockWidget ->setEnabled(false);
 	});
 }
 

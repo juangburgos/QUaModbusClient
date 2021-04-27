@@ -40,6 +40,7 @@ class QUaModbusClientTree : public QWidget
 	Q_PROPERTY(QIcon iconExpand       READ iconExpand       WRITE setIconExpand      )
 	Q_PROPERTY(QIcon iconCollapse     READ iconCollapse     WRITE setIconCollapse    )
 	Q_PROPERTY(QIcon iconAdd          READ iconAdd          WRITE setIconAdd         )
+	Q_PROPERTY(QIcon iconEdit         READ iconEdit         WRITE setIconEdit        )
 	Q_PROPERTY(QIcon iconDelete       READ iconDelete       WRITE setIconDelete      )
 	Q_PROPERTY(QIcon iconClear        READ iconClear        WRITE setIconClear       )
 	Q_PROPERTY(QIcon iconConnect      READ iconConnect      WRITE setIconConnect     )
@@ -120,6 +121,9 @@ public:
 	QIcon iconAdd   () const;
 	void  setIconAdd(const QIcon& icon);
 
+	QIcon iconEdit() const;
+	void  setIconEdit(const QIcon& icon);
+
 	QIcon iconDelete() const;
 	void  setIconDelete(const QIcon& icon);
 
@@ -136,6 +140,9 @@ public:
 	QColor colorLogInfo() const;
 	void setColorLogInfo(const QColor& color);
 
+	QByteArray headerState() const;
+	void setHeaderState(const QByteArray& state);
+
 signals:
 	void nodeSelectionChanged(
 		QUaNode * nodePrev, 
@@ -146,6 +153,9 @@ signals:
 	void clientDoubleClicked (QUaModbusClient    * client);
 	void blockDoubleClicked  (QUaModbusDataBlock * block );
 	void valueDoubleClicked  (QUaModbusValue     * value );
+	void editClientClicked   (QUaModbusClient    * client);
+	void editBlockClicked    (QUaModbusDataBlock * block );
+	void editValueClicked    (QUaModbusValue     * value );
 	void aboutToClear();
 
 public slots:
@@ -184,6 +194,7 @@ private:
 	QIcon m_iconExpand;
 	QIcon m_iconCollapse;
 	QIcon m_iconAdd;
+	QIcon m_iconEdit;
 	QIcon m_iconDelete;
 	QIcon m_iconClear;
 	QIcon m_iconConnect;

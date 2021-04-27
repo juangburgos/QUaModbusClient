@@ -321,7 +321,7 @@ void QUaModbus::on_about()
 			"Version : %1\n"
 			"Commit  : %2\n"
 			"Source  : https://github.com/juangburgos/QUaModbusClient\n"
-            "Copyright 2020 - juangburgos\n\n"
+            "Copyright 2020-2021 juangburgos\n\n"
 			"Icons made by 'prettycons' from https://www.flaticon.com/\n"
 			"Made with Qt https://www.qt.io/\n"
 		).arg(strVersion).arg(strBuild)
@@ -431,14 +431,29 @@ void QUaModbus::setupWidgets()
 		Q_UNUSED(client);
 		this->setIsDockVisible(QUaModbus::m_strModbusClients, true);
 	});
-	// open client block widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editClientClicked, this,
+	[this](QUaModbusClient * client) {
+		Q_UNUSED(client);
+		this->setIsDockVisible(QUaModbus::m_strModbusClients, true);
+	});
+	// open block edit widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::blockDoubleClicked, this,
 	[this](QUaModbusDataBlock * block) {
 		Q_UNUSED(block);
 		this->setIsDockVisible(QUaModbus::m_strModbusBlocks, true);
 	});
-	// open client edit widget when double clicked
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editBlockClicked, this,
+	[this](QUaModbusDataBlock * block) {
+		Q_UNUSED(block);
+		this->setIsDockVisible(QUaModbus::m_strModbusBlocks, true);
+	});
+	// open value edit widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::valueDoubleClicked, this,
+	[this](QUaModbusValue * value) {
+		Q_UNUSED(value);
+		this->setIsDockVisible(QUaModbus::m_strModbusValues, true);
+	});
+	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editValueClicked, this,
 	[this](QUaModbusValue * value) {
 		Q_UNUSED(value);
 		this->setIsDockVisible(QUaModbus::m_strModbusValues, true);
@@ -587,6 +602,10 @@ bool QUaModbus::setIsDockVisible(const QString& strDockName, const bool& visible
 		return true;
 	}
 	dock->toggleView(visible);
+	if (visible)
+	{
+		dock->setAsCurrentTab();
+	}
 	return true;
 }
 

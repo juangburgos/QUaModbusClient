@@ -56,7 +56,7 @@ Build using the generated VisualStudio solution (for Windows) or the generated M
 
 ```bash
 # Windows
-msbuild quamodbus.sln /m /p:Configuration=Release
+msbuild /m:8 /p:CL_MPCount=8 /p:Configuration=Release quamodbus.sln
 
 # Linux
 make -s -j$(nproc)

@@ -55,6 +55,11 @@ void QUaModbusValueWidget::bindValue(QUaModbusValue * value)
 	[this]() {
 		this->bindValue(nullptr);
 	});
+	m_connections <<
+	QObject::connect(ui->pushButtonReset, &QPushButton::clicked, value,
+	[this, value]() {
+		this->bindValue(value);
+	});
 	// enable
 	this->setEnabled(true);
 	// bind edit widget

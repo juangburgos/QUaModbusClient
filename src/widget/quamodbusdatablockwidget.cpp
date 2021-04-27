@@ -55,6 +55,11 @@ void QUaModbusDataBlockWidget::bindBlock(QUaModbusDataBlock * block)
 	[this]() {
 		this->bindBlock(nullptr);
 	});
+	m_connections <<
+	QObject::connect(ui->pushButtonReset, &QPushButton::clicked, block,
+	[this, block]() {
+		this->bindBlock(block);
+	});
 	// enable
 	this->setEnabled(true);
 	// bind edit widget

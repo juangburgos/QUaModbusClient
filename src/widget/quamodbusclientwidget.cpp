@@ -57,6 +57,11 @@ void QUaModbusClientWidget::bindClient(QUaModbusClient * client)
 	[this]() {
 		this->bindClient(nullptr);
 	});
+	m_connections <<
+	QObject::connect(ui->pushButtonReset, &QPushButton::clicked, client,
+	[this, client]() {
+		this->bindClient(client);
+	});
 	// enable
 	this->setEnabled(true);
 	// bind edit widget
