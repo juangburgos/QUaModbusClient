@@ -33,6 +33,7 @@ public:
 	void updateWidgetsPermissions();
 	void clearWidgets();
 	void closeConfig();
+	void showDefaultWidgets();
 
 	void loadSettings(const QSettings& settings);
 	void saveSettings(QSettings& settings);
@@ -135,6 +136,16 @@ inline void QUaModbusDockWidgets<T>::closeConfig()
 {
 	// clear
 	this->clearWidgets();
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::showDefaultWidgets()
+{
+	this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusTree, true);
+	this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusTree, true);
+	auto dockModbusTree = this->getDockManager()->dock(QUaModbusDockWidgets<T>::m_strModbusTree);
+	auto manager = dockModbusTree->dockManager();
+	manager->addDockWidgetTab(QAd::LeftDockWidgetArea, dockModbusTree);
 }
 
 template<class T>
