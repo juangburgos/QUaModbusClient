@@ -65,6 +65,7 @@ private:
 
 	// helpers
 	QUaAcDocking * getDockManager() const;
+	void showDock(const QString& strDockName);
 
 	const static QString m_strMenuPath;
 	const static QString m_strModbusTree;
@@ -141,8 +142,7 @@ inline void QUaModbusDockWidgets<T>::closeConfig()
 template<class T>
 inline void QUaModbusDockWidgets<T>::showDefaultWidgets()
 {
-	this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusTree, true);
-	this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusTree, true);
+	this->showDock(QUaModbusDockWidgets<T>::m_strModbusTree);
 	auto dockModbusTree = this->getDockManager()->dock(QUaModbusDockWidgets<T>::m_strModbusTree);
 	auto manager = dockModbusTree->dockManager();
 	manager->addDockWidgetTab(QAd::LeftDockWidgetArea, dockModbusTree);
@@ -352,40 +352,34 @@ inline void QUaModbusDockWidgets<T>::setupModbusTreeWidget()
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::clientDoubleClicked, this,
 	[this](QUaModbusClient * client) {
 		Q_UNUSED(client);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusClients, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusClients, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusClients);
 	});
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editClientClicked, this,
 	[this](QUaModbusClient * client) {
 		Q_UNUSED(client);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusClients, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusClients, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusClients);
 	});
 	// open client block widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::blockDoubleClicked, this,
 	[this](QUaModbusDataBlock * block) {
 		Q_UNUSED(block);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusBlocks);
 	});
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editBlockClicked, this,
 	[this](QUaModbusDataBlock * block) {
 		Q_UNUSED(block);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusBlocks, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusBlocks);
 	});
 	// open client edit widget when double clicked
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::valueDoubleClicked, this,
 	[this](QUaModbusValue * value) {
 		Q_UNUSED(value);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusValues, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusValues, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusValues);
 	});
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::editValueClicked, this,
 	[this](QUaModbusValue * value) {
 		Q_UNUSED(value);
-		this->getDockManager()->setIsDockVisible(QUaModbusDockWidgets<T>::m_strModbusValues, true);
-		this->getDockManager()->setIsDockActive (QUaModbusDockWidgets<T>::m_strModbusValues, true);
+		this->showDock(QUaModbusDockWidgets<T>::m_strModbusValues);
 	});
 	// clear widgets before clearing clients
 	QObject::connect(m_modbusTreeWidget, &QUaModbusClientTree::aboutToClear, m_thiz,
@@ -430,6 +424,25 @@ template<class T>
 inline QUaAcDocking * QUaModbusDockWidgets<T>::getDockManager() const
 {
 	return m_thiz->getDockManager();
+}
+
+template<class T>
+inline void QUaModbusDockWidgets<T>::showDock(const QString& strDockName)
+{
+	auto manager = this->getDockManager();
+	auto perms = manager->dockPermissions(strDockName);
+	if (perms && !perms->canUserRead(m_thiz->loggedUser()))
+	{
+		QMessageBox::critical(
+			m_thiz,
+			tr("Permissions Error"),
+			tr("You are not allowed to perform this action.\n\nPlease contact an administrator."),
+			QMessageBox::StandardButton::Ok
+		);
+		return;
+	}
+	manager->setIsDockVisible(strDockName, true);
+	manager->setIsDockActive(strDockName, true);
 }
 
 #endif // QUAMODBUSDOCKWIDGETS_H
