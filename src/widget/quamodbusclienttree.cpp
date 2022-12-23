@@ -105,7 +105,7 @@ QUaModelItemTraits::NewChildCallback<QUaNode*, 1>(
 	auto clientList = qobject_cast<QUaModbusClientList*>(node);
 	if (clientList)
 	{
-		return QObject::connect(node, &QUaNode::childAdded,
+        return QObject::connect(node, &QUaNode::childAdded, clientList,
 			[callback](QUaNode* child) {
 				// only clients
 				auto client = qobject_cast<QUaModbusClient*>(child);
@@ -121,7 +121,7 @@ QUaModelItemTraits::NewChildCallback<QUaNode*, 1>(
 	if (client)
 	{
 		auto blockList = client->dataBlocks();
-		return QObject::connect(blockList, &QUaNode::childAdded,
+        return QObject::connect(blockList, &QUaNode::childAdded, client,
 			[callback](QUaNode* child) {
 				// only blocks
 				auto block = qobject_cast<QUaModbusDataBlock*>(child);
@@ -137,7 +137,7 @@ QUaModelItemTraits::NewChildCallback<QUaNode*, 1>(
 	if (block)
 	{
 		auto valueList = block->values();
-		return QObject::connect(valueList, &QUaNode::childAdded,
+        return QObject::connect(valueList, &QUaNode::childAdded, block,
 			[callback](QUaNode* child) {
 				// only values
 				auto value = qobject_cast<QUaModbusValue*>(child);
@@ -165,7 +165,8 @@ QUaModelItemTraits::GetChildren<QUaNode*, 1>(QUaNode* node)
 	auto clientList = qobject_cast<QUaModbusClientList*>(node);
 	if (clientList)
 	{
-		for (auto client : clientList->clients())
+        auto clients = clientList->clients();
+        for (auto & client : clients)
 		{
 			retList << static_cast<QUaNode*>(client);
 		}
@@ -176,7 +177,8 @@ QUaModelItemTraits::GetChildren<QUaNode*, 1>(QUaNode* node)
 	if (client)
 	{
 		auto blockList = client->dataBlocks();
-		for (auto block : blockList->blocks())
+        auto blocks = blockList->blocks();
+        for (auto & block : blocks)
 		{
 			retList << static_cast<QUaNode*>(block);
 		}
@@ -187,7 +189,8 @@ QUaModelItemTraits::GetChildren<QUaNode*, 1>(QUaNode* node)
 	if (block)
 	{
 		auto valueList = block->values();
-		for (auto value : valueList->values())
+        auto values = valueList->values();
+        for (auto & value : values)
 		{
 			retList << static_cast<QUaNode*>(value);
 		}
@@ -652,9 +655,9 @@ void QUaModbusClientTree::exportAllCsv(const QString & strBaseName)
 	QString strBase        = infoBaseName.baseName();
 	QString strSuff        = infoBaseName.completeSuffix();
 	QString strPath        = infoBaseName.absolutePath();
-	QString strClientsName = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_clients").arg(strSuff);
-	QString strBlocksName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_blocks" ).arg(strSuff);
-	QString strValuesName  = QString("%1/%2%3.%4").arg(strPath).arg(strBase).arg("_values" ).arg(strSuff);
+    QString strClientsName = QString("%1/%2%3.%4").arg(strPath, strBase, "_clients", strSuff);
+    QString strBlocksName  = QString("%1/%2%3.%4").arg(strPath, strBase, "_blocks" , strSuff);
+    QString strValuesName  = QString("%1/%2%3.%4").arg(strPath, strBase, "_values" , strSuff);
 	this->saveContentsCsvToFile(m_listClients->csvClients(), strClientsName);
 	this->saveContentsCsvToFile(m_listClients->csvBlocks (), strBlocksName );
 	this->saveContentsCsvToFile(m_listClients->csvValues (), strValuesName );
@@ -1105,7 +1108,11 @@ void QUaModbusClientTree::saveContentsCsvToFile(const QString & strContents, con
 	QString strSaveFile = !strFileName.isEmpty() ? strFileName :
 		QFileDialog::getSaveFileName(this, tr("Save File"),
 		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
-		tr("CSV (*.csv *.txt)"));
+        tr("CSV (*.csv *.txt)")
+#if defined(Q_OS_LINUX) && QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 12
+        , nullptr, QFileDialog::DontUseNativeDialog
+#endif
+        );
 	// ignore if empty
 	if (strSaveFile.isEmpty() || strSaveFile.isNull())
 	{
@@ -1142,7 +1149,11 @@ QString QUaModbusClientTree::loadContentsCsvFromFile()
 	// read from file
 	QString strLoadFile = QFileDialog::getOpenFileName(this, tr("Open File"),
 		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
-		tr("CSV (*.csv *.txt)"));
+        tr("CSV (*.csv *.txt)")
+#if defined(Q_OS_LINUX) && QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 12
+        , nullptr, QFileDialog::DontUseNativeDialog
+#endif
+        );
 	// validate
 	if (strLoadFile.isEmpty())
 	{
@@ -1204,7 +1215,11 @@ void QUaModbusClientTree::exportAllCsv()
 	// ask for base name
 	QString strBaseName = QFileDialog::getSaveFileName(this, tr("Select Base File Name"),
 		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
-		tr("CSV (*.csv *.txt)"));
+        tr("CSV (*.csv *.txt)")
+#if defined(Q_OS_LINUX) && QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 12
+        , nullptr, QFileDialog::DontUseNativeDialog
+#endif
+        );
 	// ignore if empty
 	if (strBaseName.isEmpty() || strBaseName.isNull())
 	{

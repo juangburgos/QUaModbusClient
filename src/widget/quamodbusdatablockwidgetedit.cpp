@@ -8,7 +8,7 @@ QUaModbusDataBlockWidgetEdit::QUaModbusDataBlockWidgetEdit(QWidget *parent) :
     ui(new Ui::QUaModbusDataBlockWidgetEdit)
 {
     ui->setupUi(this);
-	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+    QUaWidgetEventFilterCallback blockWheel = [](const QEvent* event) {
 		Q_UNUSED(event);
 		return true;
 	};

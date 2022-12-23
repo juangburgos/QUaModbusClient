@@ -12,7 +12,7 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
     ui(new Ui::QUaModbusClientWidgetEdit)
 {
     ui->setupUi(this);
-	QUaWidgetEventFilterCallback blockWheel = [this](const QEvent* event) {
+    QUaWidgetEventFilterCallback blockWheel = [](const QEvent* event) {
 		Q_UNUSED(event);
 		return true;
 	};
@@ -26,10 +26,11 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 	comboBoxTypeEventHandler->installEventCallback(QEvent::Wheel, blockWheel);	
 	// setup com port combo
 	auto mapComPorts = QUaModbusRtuSerialClient::EnumComPorts();
-	for (int i = 0; i < mapComPorts.keys().count(); i++)
+    auto comPortsKeys = mapComPorts.keys();
+    for (int i = 0; i < comPortsKeys.count(); i++)
 	{
-		auto strComPort = QString(mapComPorts.value(mapComPorts.keys().at(i)).displayName.text());
-		ui->comboBoxComPort->addItem(strComPort, mapComPorts.keys().at(i));
+        auto strComPort = QString(mapComPorts.value(comPortsKeys.at(i)).displayName.text());
+        ui->comboBoxComPort->addItem(strComPort, comPortsKeys.at(i));
 	}
 	auto comboBoxComPortEventHandler = new QUaWidgetEventFilter(ui->comboBoxComPort);
 	comboBoxComPortEventHandler->installEventCallback(QEvent::Wheel, blockWheel);
@@ -81,7 +82,7 @@ QUaModbusClientWidgetEdit::QUaModbusClientWidgetEdit(QWidget *parent) :
 	this->setIpAddress("127.0.0.1");
 	if (mapComPorts.count() > 0)
 	{
-		this->setComPort(QString(mapComPorts.value(mapComPorts.keys().at(0)).displayName.text()));
+        this->setComPort(QString(mapComPorts.value(comPortsKeys.at(0)).displayName.text()));
 	}
 	this->setParity(QParity::EvenParity);
 	this->setBaudRate(QBaudRate::Baud19200);

@@ -31,7 +31,7 @@ QUaModbus::QUaModbus(QWidget *parent)
 	m_strTitle        = QString("%1 - %2");
 	m_strConfigFile   = QString();
 	m_strLastPathUsed = QString();
-	this->setWindowTitle(m_strTitle.arg(QUaModbus::m_strUntitiled).arg(QUaModbus::m_strAppName));
+    this->setWindowTitle(m_strTitle.arg(QUaModbus::m_strUntitiled, QUaModbus::m_strAppName));
 	// setup opc ua information model and server
 	this->setupInfoModel();
 	// setup widgets and dock
@@ -75,7 +75,11 @@ void QUaModbus::on_openConfig()
 	// read from file
 	QString strConfigFileName = QFileDialog::getOpenFileName(this, tr("Open File"),
 		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
-		tr("XML (*.xml)"));
+        tr("XML (*.xml)")
+#if defined(Q_OS_LINUX) && QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 12
+        , nullptr, QFileDialog::DontUseNativeDialog
+#endif
+        );
 	// validate
 	if (strConfigFileName.isEmpty())
 	{
@@ -138,7 +142,7 @@ void QUaModbus::on_openConfig()
 		// update file name
 		m_strConfigFile = strConfigFileName;
 		// update title
-		this->setWindowTitle(m_strTitle.arg(strConfigFileName).arg(QUaModbus::m_strAppName));
+        this->setWindowTitle(m_strTitle.arg(strConfigFileName, QUaModbus::m_strAppName));
 	}
 	else
 	{
@@ -166,7 +170,7 @@ void QUaModbus::on_saveConfig()
 		auto byteContents = this->xmlConfig();
 		streamConfig << byteContents;
 		// update title
-		this->setWindowTitle(m_strTitle.arg(m_strConfigFile).arg(QUaModbus::m_strAppName));
+        this->setWindowTitle(m_strTitle.arg(m_strConfigFile, QUaModbus::m_strAppName));
 	}
 	else
 	{
@@ -186,7 +190,11 @@ void QUaModbus::on_saveAsConfig()
 	// select file
 	QString strConfigFileName = QFileDialog::getSaveFileName(this, tr("Save File"),
 		m_strLastPathUsed.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) : m_strLastPathUsed,
-		tr("XML (*.xml *.txt)"));
+        tr("XML (*.xml *.txt)")
+#if defined(Q_OS_LINUX) && QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 12
+        , nullptr, QFileDialog::DontUseNativeDialog
+#endif
+        );
 	// ignore if empty
 	if (strConfigFileName.isEmpty() || strConfigFileName.isNull())
 	{
@@ -227,7 +235,7 @@ bool QUaModbus::on_closeConfig(const bool& force)
 	// update file name
 	m_strConfigFile = QString();
 	// update title
-	this->setWindowTitle(m_strTitle.arg(QUaModbus::m_strUntitiled).arg(QUaModbus::m_strAppName));
+    this->setWindowTitle(m_strTitle.arg(QUaModbus::m_strUntitiled, QUaModbus::m_strAppName));
 	// success
 	return true;
 }
@@ -261,12 +269,12 @@ void QUaModbus::on_about()
 	QString   strVerPath;
 	QFileInfo infoVerFile;
 	// try application path
-	strVerPath  = QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(strVerFile);
+    strVerPath  = QString("%1/%2").arg(QCoreApplication::applicationDirPath(), strVerFile);
 	infoVerFile = QFileInfo(strVerPath);
 	// else try current path
 	if (!infoVerFile.exists())
 	{
-		strVerPath  = QString("%1/%2").arg(QDir::currentPath()).arg(strVerFile);
+        strVerPath  = QString("%1/%2").arg(QDir::currentPath(), strVerFile);
 		infoVerFile = QFileInfo(strVerPath);
 	}
 	if (!infoVerFile.exists())
@@ -324,7 +332,7 @@ void QUaModbus::on_about()
             "Copyright 2020-2021 juangburgos\n\n"
 			"Icons made by 'prettycons' from https://www.flaticon.com/\n"
 			"Made with Qt https://www.qt.io/\n"
-		).arg(strVersion).arg(strBuild)
+        ).arg(strVersion, strBuild)
 	);
 }
 
@@ -505,12 +513,12 @@ void QUaModbus::setupStyle()
 	QString   strDebugThemeDir = QString("%1/../../../../res/style/default")
 		.arg(QCoreApplication::applicationDirPath());
 	// try application path
-	strThemePath  = QString("%1/%2").arg(strDebugThemeDir).arg(strThemeFile);
+    strThemePath  = QString("%1/%2").arg(strDebugThemeDir, strThemeFile);
 	infoThemeFile = QFileInfo(strThemePath);
 	// else try current path
 	if (!infoThemeFile.exists())
 	{
-		strThemePath  = QString("%1/%2").arg(QDir::currentPath()).arg(strThemeFile);
+        strThemePath  = QString("%1/%2").arg(QDir::currentPath(), strThemeFile);
 		infoThemeFile = QFileInfo(strThemePath);
 	}
 	// else use embedded
